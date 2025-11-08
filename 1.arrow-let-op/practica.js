@@ -75,3 +75,27 @@ var card8 = new Card(8);
 var card15 = new Card(15);
 console.log("8: " + validCard(card8));
 console.log("15: " + validCard(card15));
+
+/* Ejercicio 4 - Combinar operadores y condicionales
+Escribe una función que reciba una carta y clasifique su valor devolviendo:
+
+- "negativa" si el valor es menor a 0
+- "cero" si el valor es 0
+- "positiva" si el valor es mayor a 0
+*/
+
+console.log("################# EJERCICIO 4 #################");
+
+function evaluate(card) {
+
+  if(card.value < 0) return "Negativa";
+  if(card.value == 0) return "Cero";
+  if(card.value > 0) return "Positiva";
+  throw new Error("Unknown card value.")
+} 
+
+var cardMinus2 = new Card(-2);
+var card0 = new Card(0);
+console.log("0: " + evaluate(card0));
+console.log("-2: " + evaluate(cardMinus2));
+console.log("8: " + evaluate(card8));
