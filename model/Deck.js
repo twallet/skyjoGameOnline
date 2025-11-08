@@ -1,13 +1,8 @@
 import { Card } from "./Card.js";
 
 export class Deck {
-  static skyjo = {
-    values: [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-    quantities: [5, 10, 15, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10],
-  };
-
   static generateDeck(game) {
-    var deck = new Deck();
+    var deck = new Deck(game);
     for (let i = 0; i < game.values.length; i++) {
       for (let j = 0; j < game.quantities[i]; j++) {
         deck.addCard(new Card(game.values[i]));
@@ -16,8 +11,9 @@ export class Deck {
     return deck;
   }
 
-  constructor() {
+  constructor(game) {
     this._deck = [];
+    this._game = game;
   }
 
   get cardsDeck() {
@@ -43,5 +39,19 @@ export class Deck {
       this._deck[az] = this._deck[k];
       this._deck[k] = tempCard;
     }
+  }
+
+  countCards() {
+    let countText = "";
+    this._game.values.forEach(
+      (value) =>
+        (countText +=
+          "Value " +
+          value +
+          ": " +
+          this._deck.filter((card) => card.value == value).length +
+          " cards\n")
+    );
+    return countText;
   }
 }

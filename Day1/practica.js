@@ -3,6 +3,8 @@ Define una función flecha para crear una carta con un valor dado. La función d
 
 import { Deck } from "../model/Deck.js";
 import { Card } from "../model/Card.js";
+import { Dealer } from "../model/Dealer.js";
+import { SKYJO } from "../model/Dealer.js";
 
 console.log("################# EJERCICIO 1 #################");
 let createCard = (value) => new Card(value);
@@ -13,7 +15,7 @@ console.log("Card value: " + card5.value);
 Define una constante mazo como un array vacío. Luego, usando una variable cantidadCartas, agrega al mazo cartas con un valor específico según las reglas del juego. Usa un ciclo para agregar varias cartas.*/
 
 console.log("################# EJERCICIO 2 #################");
-var deck = Deck.generateDeck(Deck.skyjo);
+var deck = Deck.generateDeck(SKYJO);
 console.log("Deck length: " + deck.cardsDeck.length);
 console.log("Deck cards: [" + deck.show() + "]");
 
@@ -22,7 +24,7 @@ Escribe una función flecha que reciba una carta y devuelva true si su valor est
 
 console.log("################# EJERCICIO 3 #################");
 var validCard = (card) => {
-  return Deck.skyjo.values.includes(card.value);
+  return SKYJO.values.includes(card.value);
 };
 var card8 = new Card(8);
 var card15 = new Card(15);
