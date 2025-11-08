@@ -70,7 +70,9 @@ Escribe una función flecha que reciba una carta y devuelva true si su valor est
 
 console.log("################# EJERCICIO 3 #################");
 
-var validCard = card => {return SKYJO.values.includes(card.value)};
+var validCard = (card) => {
+  return SKYJO.values.includes(card.value);
+};
 var card8 = new Card(8);
 var card15 = new Card(15);
 console.log("8: " + validCard(card8));
@@ -87,12 +89,11 @@ Escribe una función que reciba una carta y clasifique su valor devolviendo:
 console.log("################# EJERCICIO 4 #################");
 
 function evaluate(card) {
-
-  if(card.value < 0) return "Negativa";
-  if(card.value == 0) return "Cero";
-  if(card.value > 0) return "Positiva";
-  throw new Error("Unknown card value.")
-} 
+  if (card.value < 0) return "Negativa";
+  if (card.value == 0) return "Cero";
+  if (card.value > 0) return "Positiva";
+  throw new Error("Unknown card value.");
+}
 
 var cardMinus2 = new Card(-2);
 var card0 = new Card(0);
