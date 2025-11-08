@@ -1,14 +1,18 @@
 import { Card } from "./Card.js";
 import { Deck } from "./Deck.js";
-
-export const SKYJO = {
-  values: [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-  quantities: [5, 10, 15, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10],
-};
+import { SKYJO } from "../games/skyjo.js";
 
 export class Dealer {
   constructor(players) {
-    this._players = [];
+    this._players = Array.from({ length: players }, () => []);
     this._deck = new Deck(SKYJO);
+  }
+
+  deal(cardsNumber) {
+    for (let n = 0; n < cardsNumber; n++) {
+      for (let p = 0; p < this._players.length; p++) {
+        this._players[p].push(this._deck.dealNextCard());
+      }
+    }
   }
 }

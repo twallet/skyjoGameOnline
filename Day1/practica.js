@@ -4,7 +4,7 @@ Define una función flecha para crear una carta con un valor dado. La función d
 import { Deck } from "../model/Deck.js";
 import { Card } from "../model/Card.js";
 import { Dealer } from "../model/Dealer.js";
-import { SKYJO } from "../model/Dealer.js";
+import { SKYJO } from "../games/skyjo.js";
 
 console.log("################# EJERCICIO 1 #################");
 let createCard = (value) => new Card(value);

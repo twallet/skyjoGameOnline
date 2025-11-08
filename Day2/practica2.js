@@ -1,6 +1,6 @@
 import { Deck } from "../model/Deck.js";
 import { Card } from "../model/Card.js";
-import { SKYJO } from "../model/Dealer.js";
+import { SKYJO } from "../games/skyjo.js";
 
 console.log("################# EJERCICIO Shuffle #################");
 var deck = Deck.generateDeck(SKYJO);

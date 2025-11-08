@@ -28,6 +28,10 @@ export class Deck {
     }
   }
 
+  dealNextCard() {
+    return this._deck.pop();
+  }
+
   show() {
     return this._deck.map((card) => card.value).join(",");
   }
