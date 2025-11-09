@@ -4,7 +4,6 @@ export class Player {
   constructor(name) {
     this._name = name;
     this._hand = new Hand();
-    //console.log("Player created: " + name);
   }
 
   get name() {

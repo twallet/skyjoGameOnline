@@ -1,5 +1,6 @@
 import { Player } from "./Player.js";
 import { Deck } from "./Deck.js";
+import { Hand } from "./Hand.js";
 
 export class Dealer {
   constructor(game, players) {
@@ -9,8 +10,6 @@ export class Dealer {
     console.log("Starting " + game.name + "...");
     let playersNames = "";
     playersNames = players.map((player) => player.name).join(", ");
-    //console.log("Deck created");
-    //this._deck.show();
     console.log("We have " + players.length + " players: " + playersNames);
   }
 
@@ -22,22 +21,21 @@ export class Dealer {
     return this._deck;
   }
 
+  shuffle() {
+    this._deck.shuffle();
+    console.log("Deck shuffled: " + this._deck.show());
+  }
+
   deal() {
     for (let n = 0; n < this._game.handSize; n++) {
       for (let p = 0; p < this._players.length; p++) {
         this._players[p].hand.add(this._deck.dealNextCard());
       }
     }
-    //console.log("Deck dealed");
     for (let p = 0; p < this._players.length; p++) {
       console.log(
         "" + this._players[p].name + "'s hand: " + this._players[p].hand.show()
       );
     }
-  }
-
-  shuffle() {
-    this._deck.shuffle();
-    console.log("Deck shuffled: " + this._deck.show());
   }
 }
