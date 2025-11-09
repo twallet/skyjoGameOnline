@@ -4,6 +4,7 @@ export class Game {
   #values;
   #quantities;
   #handsize;
+  #lines;
 
   /**
    * Create a new game configuration.
@@ -11,8 +12,9 @@ export class Game {
    * @param {number[]} possibleValues Numeric values available for the deck.
    * @param {number[]} quantities Amount of cards per value.
    * @param {number} handsize Initial hand size for each player.
+   * @param {number} lines Lines to divide the hand.
    */
-  constructor(name, possibleValues, quantities, handsize) {
+  constructor(name, possibleValues, quantities, handsize, lines) {
     this.#name = Game.#validateName(name);
     this.#values = Game.#validateValues(possibleValues);
     this.#quantities = Game.#validateQuantities(
@@ -20,6 +22,7 @@ export class Game {
       this.#values.length
     );
     this.#handsize = Game.#validateHandsize(handsize);
+    this.#lines = Game.#validateLines(lines);
   }
 
   // Return the public name of the game.
@@ -40,6 +43,11 @@ export class Game {
   // Return the initial hand size per player.
   get handsize() {
     return this.#handsize;
+  }
+
+  // Return the hand lines.
+  get lines() {
+    return this.#lines;
   }
 
   static #validateName(name) {
@@ -91,5 +99,13 @@ export class Game {
     }
 
     return handsize;
+  }
+
+  static #validateLines(lines) {
+    if (!Number.isInteger(lines) || lines < 1) {
+      throw new TypeError("Game lines must be a positive integer");
+    }
+
+    return lines;
   }
 }

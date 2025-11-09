@@ -5,12 +5,13 @@ describe("Game", () => {
     const possibleValues = [-2, -1, 0, 1, 2, 3, 4, 5, 10];
     const quantities = [5, 5, 10, 10, 10, 10, 10, 10, 2];
 
-    const game = new Game("  Skyjo  ", possibleValues, quantities, 3);
+    const game = new Game("  Skyjo  ", possibleValues, quantities, 3, 1);
 
     expect(game.name).toBe("Skyjo");
     expect(game.values).toEqual(possibleValues);
     expect(game.quantities).toEqual(quantities);
     expect(game.handsize).toBe(3);
+    expect(game.lines).toBe(1);
 
     const valuesSnapshot = game.values;
     valuesSnapshot.push(99);
@@ -72,6 +73,15 @@ describe("Game", () => {
     (badHandsize) => {
       expect(() => new Game("Skyjo", [1], [1], badHandsize)).toThrow(
         "Game handsize must be a positive integer"
+      );
+    }
+  );
+
+  test.each([0, -1, 1.5, "3", null, undefined])(
+    "rejects invalid lines %p",
+    (badLines) => {
+      expect(() => new Game("Skyjo", [1], [1], 3, badLines)).toThrow(
+        "Game lines must be a positive integer"
       );
     }
   );
