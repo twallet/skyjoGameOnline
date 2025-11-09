@@ -13,9 +13,7 @@ describe("Player", () => {
   test.each([null, undefined, 123, {}, [], () => {}])(
     "rejects non-string name value %p",
     (badName) => {
-      expect(() => new Player(badName)).toThrow(
-        "Player name must be a string"
-      );
+      expect(() => new Player(badName)).toThrow("Player name must be a string");
     }
   );
 
@@ -36,4 +34,3 @@ describe("Player", () => {
     );
   });
 });
-
