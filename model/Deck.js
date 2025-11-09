@@ -6,7 +6,7 @@ export class Deck {
     var deck = new Deck(game);
     for (let i = 0; i < game.values.length; i++) {
       for (let j = 0; j < game.quantities[i]; j++) {
-        deck.addCard(new Card(game.values[i]));
+        deck.add(new Card(game.values[i]));
       }
     }
     return deck;
@@ -23,7 +23,7 @@ export class Deck {
   }
 
   // Place a card on top of the deck.
-  addCard(card) {
+  add(card) {
     this._deck.push(card);
   }
 

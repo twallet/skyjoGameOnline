@@ -7,9 +7,12 @@ export class Dealer {
     this._deck = Deck.generateDeck(game);
     this._game = game;
     console.log("Starting " + game.name + "...");
-    let playersNames = "";
-    playersNames = players.map((player) => player.name).join(", ");
-    console.log("We have " + players.length + " players: " + playersNames);
+    console.log(
+      "We have " +
+        players.length +
+        " players: " +
+        players.map((player) => player.name).join(", ")
+    );
   }
 
   // Expose the players currently managed by the dealer.
