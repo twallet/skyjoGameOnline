@@ -18,4 +18,4 @@ var hugo = new Player("Hugo", skyjo);
 var dealer = new Dealer(skyjo, [tom, vero, theo, hugo, merlin]);
 dealer.shuffle();
 dealer.deal();
-console.log("Deck: " + dealer.deck.show());
+console.log(`Remaining deck: ${dealer.deck.size()} cards`);

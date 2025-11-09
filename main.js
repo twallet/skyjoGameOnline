@@ -43,7 +43,7 @@ function App() {
         `Game: ${skyjo.name}`,
         `Players: ${players.map((player) => player.name).join(", ")}`,
         ...entries,
-        `Deck: ${dealer.deck.show()}`,
+        `${dealer.deck.size()} cards in deck.`,
       ]);
     } catch (error) {
       console.error("Unable to start Skyjo game", error);

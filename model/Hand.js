@@ -16,13 +16,13 @@ export class Hand {
   }
 
   // Return an array with the numeric values of the cards in hand.
-  values() {
+  cards() {
     return this.#cards.map((card) => card.value);
   }
 
   // Return a string summarizing the hand content.
   show() {
-    const cardValues = this.values();
+    const cardValues = this.cards();
     const rows = [];
     for (let start = 0; start < cardValues.length; start += this.#lines) {
       rows.push(cardValues.slice(start, start + this.#lines));

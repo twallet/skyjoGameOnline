@@ -46,15 +46,9 @@ export class Deck {
     return this.#cards.pop();
   }
 
-  // Provide a string summary showing deck size and card order.
-  show() {
-    return (
-      "[" +
-      this.#cards.map((card) => card.value).join(",") +
-      "] (" +
-      this.#cards.length +
-      " cards)"
-    );
+  // Provide size of the deck.
+  size() {
+    return this.#cards.length;
   }
 
   // Randomize card order in place using Fisher-Yates.

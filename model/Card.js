@@ -10,11 +10,10 @@ export class Card {
 
     this.#value = value;
     this.#visible = false;
-    Object.freeze(this);
   }
 
   get value() {
-    return this.#visible ? "X" : this.#value;
+    return this.#visible ? this.#value : "X";
   }
 
   static #validate(value, game) {

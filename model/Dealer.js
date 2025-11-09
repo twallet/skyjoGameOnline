@@ -35,7 +35,7 @@ export class Dealer {
   // Shuffle the deck and log the new card order.
   shuffle() {
     this.#deck.shuffle();
-    console.log("Deck shuffled: " + this.#deck.show());
+    console.log(`Deck of ${this.#deck.size()} cards shuffled.`);
   }
 
   // Deal the required number of cards to each player and log the resulting hands.
@@ -45,11 +45,9 @@ export class Dealer {
         this.#players[p].hand.add(this.#deck.dealNextCard());
       }
     }
-
+    console.log(`Dealed ${this.#handSize} cards per player:`);
     for (let p = 0; p < this.#players.length; p++) {
-      console.log(
-        `${this.#players[p].name}'s hand: ${this.#players[p].hand.show()}`
-      );
+      console.log(`${this.#players[p].name} ${this.#players[p].hand.show()}`);
     }
   }
 
