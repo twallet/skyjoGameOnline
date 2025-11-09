@@ -49,11 +49,11 @@ export class Deck {
   // Provide a string summary showing deck size and card order.
   show() {
     return (
-      "(" +
-      this.#cards.length +
-      " cards) [" +
+      "[" +
       this.#cards.map((card) => card.value).join(",") +
-      "]"
+      "] (" +
+      this.#cards.length +
+      " cards)"
     );
   }
 

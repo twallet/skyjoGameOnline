@@ -20,7 +20,7 @@ export class Hand {
 
   // Return a string summarizing the hand content.
   show() {
-    return `(${this.size} cards) [${this.values().join(", ")}]`;
+    return `[${this.values().join(", ")}] (${this.size} cards)`;
   }
 
   // Getter exposing the current size of the hand.
