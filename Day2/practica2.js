@@ -21,4 +21,4 @@ var vero = new Player("Vero");
 var theo = new Player("Theo");
 var dealer = new Dealer(SKYJO, [tom, vero, theo]);
 dealer.shuffle();
-//dealer.deal(3);
+dealer.deal();

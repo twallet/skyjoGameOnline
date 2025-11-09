@@ -9,8 +9,8 @@ export class Dealer {
     console.log("Starting " + game.name + "...");
     let playersNames = "";
     playersNames = players.map((player) => player.name).join(", ");
-    console.log("Deck created");
-    this._deck.show();
+    //console.log("Deck created");
+    //this._deck.show();
     console.log("We have " + players.length + " players: " + playersNames);
   }
 
@@ -18,11 +18,24 @@ export class Dealer {
     return this._players;
   }
 
-  deal(cardsNumber) {
-    for (let n = 0; n < cardsNumber; n++) {
+  get deck() {
+    return this._deck;
+  }
+
+  deal() {
+    for (let n = 0; n < this._game.handSize; n++) {
       for (let p = 0; p < this._players.length; p++) {
-        this._players[p].push(this._deck.dealNextCard());
+        this._players[p].hand.add(this._deck.dealNextCard());
       }
+    }
+    console.log("Deck dealed");
+    for (let p = 0; p < this._players.length; p++) {
+      console.log(
+        "Hand for " +
+          this._players[p].name +
+          ": " +
+          this._players[p].hand.show()
+      );
     }
   }
 
