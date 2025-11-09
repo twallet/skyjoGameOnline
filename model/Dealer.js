@@ -5,6 +5,7 @@ export class Dealer {
   constructor(game, players) {
     this._players = players;
     this._deck = Deck.generateDeck(game);
+    this._game = game;
     console.log("Starting " + game.name + "...");
     let playersNames = "";
     playersNames = players.map((player) => player.name).join(", ");
@@ -27,5 +28,7 @@ export class Dealer {
 
   shuffle() {
     this._deck.shuffle();
+    console.log("Deck shuffled");
+    this._deck.show();
   }
 }

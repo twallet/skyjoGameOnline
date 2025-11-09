@@ -11,9 +11,8 @@ export class Deck {
     return deck;
   }
 
-  constructor(game) {
+  constructor() {
     this._deck = [];
-    this._game = game;
   }
 
   get cardsDeck() {
@@ -29,11 +28,13 @@ export class Deck {
   }
 
   show() {
-    console.log("Deck length: " + this._deck.length);
     console.log(
-      "Deck cards: [" + this._deck.map((card) => card.value).join(",") + "]"
+      "Deck: " +
+        this._deck.length +
+        " cards: [" +
+        this._deck.map((card) => card.value).join(",") +
+        "]"
     );
-    //console.log(this.countCards());
   }
 
   shuffle() {
@@ -43,19 +44,5 @@ export class Deck {
       this._deck[az] = this._deck[k];
       this._deck[k] = tempCard;
     }
-  }
-
-  countCards() {
-    let countText = "";
-    this._game.values.forEach(
-      (value) =>
-        (countText +=
-          "Value " +
-          value +
-          ": " +
-          this._deck.filter((card) => card.value == value).length +
-          " cards\n")
-    );
-    return countText;
   }
 }
