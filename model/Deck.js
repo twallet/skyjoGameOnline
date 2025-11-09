@@ -21,11 +21,7 @@ export class Deck {
   }
 
   addCard(card) {
-    if (card instanceof Card) {
-      this._deck.push(card);
-    } else {
-      throw new Error("Wrong type. Only Card objects can be added to deck.");
-    }
+    this._deck.push(card);
   }
 
   dealNextCard() {

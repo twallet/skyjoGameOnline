@@ -1,11 +1,18 @@
-import { Card } from "./Card.js";
+import { Player } from "./Player.js";
 import { Deck } from "./Deck.js";
-import { SKYJO } from "../games/skyjo.js";
 
 export class Dealer {
-  constructor(players) {
-    this._players = Array.from({ length: players }, () => []);
-    this._deck = new Deck(SKYJO);
+  constructor(game, players) {
+    this._players = players;
+    this._deck = new Deck(game);
+    console.log("Starting " + game.name + "...");
+    let playersNames = "";
+    playersNames = players.map((player) => player.name).join(", ");
+    console.log("We have " + players.length + " players: " + playersNames);
+  }
+
+  get players() {
+    return this._players;
   }
 
   deal(cardsNumber) {
@@ -14,5 +21,9 @@ export class Dealer {
         this._players[p].push(this._deck.dealNextCard());
       }
     }
+  }
+
+  shuffle() {
+    this._deck.shuffle();
   }
 }
