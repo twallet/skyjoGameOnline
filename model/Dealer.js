@@ -1,4 +1,4 @@
-import { Deck } from "./Deck.js";
+import { Deck } from "./deck.js";
 
 export class Dealer {
   // Create a dealer that manages the deck and players for the provided game.

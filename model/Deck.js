@@ -1,4 +1,4 @@
-import { Card } from "./Card.js";
+import { Card } from "./card.js";
 
 export class Deck {
   // Build and return a complete deck matching the game's card distribution.

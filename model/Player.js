@@ -1,4 +1,4 @@
-import { Hand } from "./Hand.js";
+import { Hand } from "./hand.js";
 
 export class Player {
   // Create a player with a display name and an empty hand.
