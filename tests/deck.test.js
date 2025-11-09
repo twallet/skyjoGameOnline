@@ -22,6 +22,7 @@ describe("Deck", () => {
     expect(deck.cardsDeck).toHaveLength(expectedCardCount);
 
     const tally = deck.cardsDeck.reduce((map, card) => {
+      card.visible = true;
       map.set(card.value, (map.get(card.value) ?? 0) + 1);
       return map;
     }, new Map());

@@ -16,6 +16,17 @@ export class Card {
     return this.#visible ? this.#value : "X";
   }
 
+  /**
+   * @param {boolean} visibility
+   */
+  set visible(visibility) {
+    if (typeof visibility !== "boolean") {
+      throw new TypeError("Card visibility must be a boolean");
+    }
+
+    this.#visible = visibility;
+  }
+
   static #validate(value, game) {
     if (value === null || value === undefined) {
       throw new Error("Card value must not be null or undefined");

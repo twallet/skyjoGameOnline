@@ -8,7 +8,7 @@ describe("Hand", () => {
     const hand = new Hand();
 
     expect(hand.size).toBe(0);
-    expect(hand.values()).toEqual([]);
+    expect(hand.cards()).toEqual([]);
     expect(hand.lines).toBe(1);
     expect(hand.show()).toBe("(0 cards) []");
   });
@@ -24,12 +24,20 @@ describe("Hand", () => {
     expect(hand.size).toBe(2);
   });
 
-  test("lists the numeric values of its cards", () => {
+  test("lists the visible values of its cards (hidden by default)", () => {
     const hand = new Hand();
-    hand.add(new Card(-2, skyjo));
-    hand.add(new Card(10, skyjo));
+    const cardOne = new Card(-2, skyjo);
+    const cardTwo = new Card(10, skyjo);
 
-    expect(hand.values()).toEqual([-2, 10]);
+    hand.add(cardOne);
+    hand.add(cardTwo);
+
+    expect(hand.cards()).toEqual(["X", "X"]);
+
+    cardOne.visible = true;
+    cardTwo.visible = true;
+
+    expect(hand.cards()).toEqual([-2, 10]);
   });
 
   test("validates that only card instances can be added", () => {
@@ -46,7 +54,9 @@ describe("Hand", () => {
       { length: 12 },
       (_, index) => skyjo.values[index % skyjo.values.length]
     ).forEach((value) => {
-      hand.add(new Card(value, skyjo));
+      const card = new Card(value, skyjo);
+      card.visible = true;
+      hand.add(card);
     });
 
     expect(hand.show()).toBe(
