@@ -28,12 +28,12 @@ export class Deck {
   }
 
   show() {
-    console.log(
-      "Deck: " +
-        this._deck.length +
-        " cards: [" +
-        this._deck.map((card) => card.value).join(",") +
-        "]"
+    return (
+      "(" +
+      this._deck.length +
+      " cards) [" +
+      this._deck.map((card) => card.value).join(",") +
+      "]"
     );
   }
 

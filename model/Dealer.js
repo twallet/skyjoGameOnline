@@ -28,20 +28,16 @@ export class Dealer {
         this._players[p].hand.add(this._deck.dealNextCard());
       }
     }
-    console.log("Deck dealed");
+    //console.log("Deck dealed");
     for (let p = 0; p < this._players.length; p++) {
       console.log(
-        "Hand for " +
-          this._players[p].name +
-          ": " +
-          this._players[p].hand.show()
+        "" + this._players[p].name + "'s hand: " + this._players[p].hand.show()
       );
     }
   }
 
   shuffle() {
     this._deck.shuffle();
-    console.log("Deck shuffled");
-    this._deck.show();
+    console.log("Deck shuffled: " + this._deck.show());
   }
 }

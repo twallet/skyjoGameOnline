@@ -9,9 +9,9 @@ export class Hand {
 
   show() {
     return (
-      "" +
+      "(" +
       this._cards.length +
-      " cards: [" +
+      " cards) [" +
       this._cards.map((card) => card.value).join(",") +
       "]"
     );
