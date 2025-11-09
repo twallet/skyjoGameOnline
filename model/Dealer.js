@@ -4,10 +4,12 @@ import { Deck } from "./Deck.js";
 export class Dealer {
   constructor(game, players) {
     this._players = players;
-    this._deck = new Deck(game);
+    this._deck = Deck.generateDeck(game);
     console.log("Starting " + game.name + "...");
     let playersNames = "";
     playersNames = players.map((player) => player.name).join(", ");
+    console.log("Deck created");
+    this._deck.show();
     console.log("We have " + players.length + " players: " + playersNames);
   }
 

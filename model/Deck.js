@@ -29,7 +29,11 @@ export class Deck {
   }
 
   show() {
-    return this._deck.map((card) => card.value).join(",");
+    console.log("Deck length: " + this._deck.length);
+    console.log(
+      "Deck cards: [" + this._deck.map((card) => card.value).join(",") + "]"
+    );
+    //console.log(this.countCards());
   }
 
   shuffle() {
