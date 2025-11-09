@@ -2,10 +2,12 @@ import { Card } from "./card.js";
 
 export class Hand {
   #cards;
+  #lines;
 
   // Initialize a hand with an empty set of cards.
-  constructor() {
+  constructor(lines = 1) {
     this.#cards = [];
+    this.#lines = Hand.#validateLines(lines);
   }
 
   // Add a card to the hand.
@@ -20,7 +22,20 @@ export class Hand {
 
   // Return a string summarizing the hand content.
   show() {
-    return `[${this.values().join(", ")}] (${this.size} cards)`;
+    const cardValues = this.values();
+
+    if (cardValues.length === 0) {
+      return `[] (${this.size} cards)`;
+    }
+
+    const rows = [];
+    for (let start = 0; start < cardValues.length; start += this.#lines) {
+      rows.push(cardValues.slice(start, start + this.#lines));
+    }
+
+    const matrix = `[${rows.map((row) => `[${row.join(", ")}]`).join(", ")}]`;
+
+    return `${matrix} (${this.size} cards)`;
   }
 
   // Getter exposing the current size of the hand.
@@ -34,5 +49,14 @@ export class Hand {
       throw new TypeError("Hand can only store card objects");
     }
     return card;
+  }
+
+  // Ensure the provided value is a positive integer.
+  static #validateLines(lines) {
+    if (!Number.isInteger(lines) || lines < 1) {
+      throw new TypeError("Hand lines must be a positive integer");
+    }
+
+    return lines;
   }
 }

@@ -37,4 +37,19 @@ describe("Hand", () => {
     expect(() => hand.add(null)).toThrow("Hand can only store card objects");
     expect(() => hand.add({})).toThrow("Hand can only store card objects");
   });
+
+  test("formats the values respecting the configured lines", () => {
+    const hand = new Hand(4);
+
+    Array.from(
+      { length: 12 },
+      (_, index) => skyjo.values[index % skyjo.values.length]
+    ).forEach((value) => {
+      hand.add(new Card(value, skyjo));
+    });
+
+    expect(hand.show()).toBe(
+      "[[-2, -1, 0, 1], [2, 3, 4, 5], [10, -2, -1, 0]] (12 cards)"
+    );
+  });
 });
