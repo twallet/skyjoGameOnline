@@ -1,4 +1,3 @@
-import { Deck } from "../model/Deck.js";
 import { Dealer } from "../model/Dealer.js";
 import { Player } from "../model/Player.js";
 import { SKYJO } from "../games/skyjo.js";
