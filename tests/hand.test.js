@@ -9,7 +9,7 @@ describe("Hand", () => {
 
     expect(hand.size).toBe(0);
     expect(hand.values()).toEqual([]);
-    expect(hand.show()).toBe("(0 cards) []");
+    expect(hand.show()).toBe("[] (0 cards)");
   });
 
   test("adds cards and updates the size", () => {
