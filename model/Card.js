@@ -5,6 +5,17 @@ export class Card {
   #value;
 
   constructor(value, game) {
+    Card.#validate(value, game);
+
+    this.#value = value;
+    Object.freeze(this);
+  }
+
+  get value() {
+    return this.#value;
+  }
+
+  static #validate(value, game) {
     if (value === null || value === undefined) {
       throw new Error("Card value must not be null or undefined");
     }
@@ -20,12 +31,5 @@ export class Card {
     if (!game.values.includes(value)) {
       throw new Error("Card value not available in the game: " + game.name);
     }
-
-    this.#value = value;
-    Object.freeze(this);
-  }
-
-  get value() {
-    return this.#value;
   }
 }

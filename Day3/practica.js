@@ -6,3 +6,13 @@ const game = new Game(
   [5, 10, 15, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10],
   12
 );
+
+var tom = new Player("Tom");
+var vero = new Player("Vero");
+var theo = new Player("Theo");
+var merlin = new Player("Merlin");
+var hugo = new Player("Hugo");
+var dealer = new Dealer(SKYJO, [tom, vero, theo, hugo, merlin]);
+dealer.shuffle();
+dealer.deal();
+console.log("Deck: " + dealer.deck.show());
