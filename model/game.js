@@ -5,6 +5,8 @@ export class Game {
   #quantities;
   #handsize;
   #lines;
+  #minPlayers;
+  #maxPlayers;
 
   /**
    * Create a new game configuration.
@@ -13,8 +15,10 @@ export class Game {
    * @param {number[]} quantities Amount of cards per value.
    * @param {number} handsize Initial hand size for each player.
    * @param {number} lines Lines to divide the hand.
+   * @param {number} minPlayers Minimum number of players.
+   * @param {number} maxPlayers Maximum number of players.
    */
-  constructor(name, possibleValues, quantities, handsize, lines) {
+  constructor(name, possibleValues, quantities, handsize, lines, min, max) {
     this.#name = Game.#validateName(name);
     this.#values = Game.#validateValues(possibleValues);
     this.#quantities = Game.#validateQuantities(
@@ -23,6 +27,8 @@ export class Game {
     );
     this.#handsize = Game.#validateHandsize(handsize);
     this.#lines = Game.#validateLines(lines);
+    this.#minPlayers = Game.#validateMin(min);
+    this.#maxPlayers = Game.#validateMax(max, this.#minPlayers);
   }
 
   // Return the public name of the game.
@@ -48,6 +54,26 @@ export class Game {
   // Return the hand lines.
   get lines() {
     return this.#lines;
+  }
+
+  // Return the minimum amount of players.
+  get minPlayers() {
+    return this.#minPlayers;
+  }
+
+  // Preserve backwards compatibility with legacy min getter.
+  get min() {
+    return this.#minPlayers;
+  }
+
+  // Return the maximum amount of players.
+  get maxPlayers() {
+    return this.#maxPlayers;
+  }
+
+  // Preserve backwards compatibility with legacy max getter.
+  get max() {
+    return this.#maxPlayers;
   }
 
   static #validateName(name) {
@@ -107,5 +133,27 @@ export class Game {
     }
 
     return lines;
+  }
+
+  static #validateMin(min) {
+    if (!Number.isInteger(min) || min < 1) {
+      throw new TypeError("Game min players must be a positive integer");
+    }
+
+    return min;
+  }
+
+  static #validateMax(max, min) {
+    if (!Number.isInteger(max) || max < 1) {
+      throw new TypeError("Game max players must be a positive integer");
+    }
+
+    if (max < min) {
+      throw new TypeError(
+        "Game max players must be greater than or equal to min players"
+      );
+    }
+
+    return max;
   }
 }

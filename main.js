@@ -10,7 +10,9 @@ const skyjo = new Game(
   [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
   [5, 10, 15, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10],
   12,
-  4
+  4,
+  2,
+  8
 );
 
 function App() {
@@ -20,9 +22,11 @@ function App() {
   const [newPlayerName, setNewPlayerName] = useState("");
 
   const handleStartGame = () => {
-    if (playerNames.length < 2) {
+    if (playerNames.length < skyjo.minPlayers) {
       setLogEntries([]);
-      setErrorMessage("Add at least two players before starting the game.");
+      setErrorMessage(
+        `Add at least ${skyjo.minPlayers} players before starting the game.`
+      );
       return;
     }
 
@@ -73,7 +77,12 @@ function App() {
   return React.createElement(
     "main",
     { className: "app-container" },
-    React.createElement("h1", null, "Skyjo"),
+    React.createElement("img", {
+      src: "./images/skyjo_box.webp",
+      alt: "Skyjo game box",
+      className: "skyjo-image",
+      style: { width: "10%", height: "auto" },
+    }),
     React.createElement(
       "section",
       { className: "players" },
