@@ -1,22 +1,38 @@
+import { Card } from "./card.js";
+
 export class Hand {
-  // Initialize an empty hand for cards drawn during play.
+  #cards;
+
+  // Initialize a hand with an empty set of cards.
   constructor() {
-    this._cards = [];
+    this.#cards = [];
   }
 
-  // Store a new card in the hand.
+  // Add a card to the hand.
   add(card) {
-    this._cards.push(card);
+    this.#cards.push(this.#validateCard(card));
   }
 
-  // Return a string summarizing card count and values in the hand.
+  // Return an array with the numeric values of the cards in hand.
+  values() {
+    return this.#cards.map((card) => card.value);
+  }
+
+  // Return a string summarizing the hand content.
   show() {
-    return (
-      "(" +
-      this._cards.length +
-      " cards) [" +
-      this._cards.map((card) => card.value).join(",") +
-      "]"
-    );
+    return `(${this.size} cards) [${this.values().join(", ")}]`;
+  }
+
+  // Getter exposing the current size of the hand.
+  get size() {
+    return this.#cards.length;
+  }
+
+  // Ensure the provided value is a Card instance.
+  #validateCard(card) {
+    if (!(card instanceof Card)) {
+      throw new TypeError("Hand can only store card objects");
+    }
+    return card;
   }
 }
