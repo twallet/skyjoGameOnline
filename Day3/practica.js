@@ -1,4 +1,6 @@
 import { Game } from "../model/game.js";
+import { Player } from "../model/player.js";
+import { Dealer } from "../model/dealer.js";
 
 const game = new Game(
   "Skyjo",
@@ -12,7 +14,7 @@ var vero = new Player("Vero");
 var theo = new Player("Theo");
 var merlin = new Player("Merlin");
 var hugo = new Player("Hugo");
-var dealer = new Dealer(SKYJO, [tom, vero, theo, hugo, merlin]);
+var dealer = new Dealer(game, [tom, vero, theo, hugo, merlin]);
 dealer.shuffle();
 dealer.deal();
 console.log("Deck: " + dealer.deck.show());

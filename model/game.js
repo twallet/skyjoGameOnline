@@ -1,36 +1,95 @@
-// Clase que representa la configuración base de un juego.
+// Represents the base configuration of a card game.
 export class Game {
+  #name;
+  #values;
+  #quantities;
+  #handsize;
+
   /**
-   * Crea una nueva instancia de juego.
-   * @param {string} name Nombre del juego.
-   * @param {number[]} possibleValues Valores posibles para las cartas.
-   * @param {number[]} quantities Cantidades disponibles para cada valor.
-   * @param {number} handsize Tamaño de la mano inicial para cada jugador.
+   * Create a new game configuration.
+   * @param {string} name Display name of the game.
+   * @param {number[]} possibleValues Numeric values available for the deck.
+   * @param {number[]} quantities Amount of cards per value.
+   * @param {number} handsize Initial hand size for each player.
    */
   constructor(name, possibleValues, quantities, handsize) {
-    this._name = name;
-    this._values = possibleValues;
-    this._quantities = quantities;
-    this._handsize = handsize;
+    this.#name = Game.#validateName(name);
+    this.#values = Game.#validateValues(possibleValues);
+    this.#quantities = Game.#validateQuantities(
+      quantities,
+      this.#values.length
+    );
+    this.#handsize = Game.#validateHandsize(handsize);
   }
 
-  // Devuelve el nombre del juego.
+  // Return the public name of the game.
   get name() {
-    return this._name;
+    return this.#name;
   }
 
-  // Regresa el arreglo con los valores posibles de las cartas.
+  // Provide the numeric values available in the deck.
   get values() {
-    return this._values;
+    return [...this.#values];
   }
 
-  // Regresa las cantidades disponibles por cada valor.
+  // Provide the amount of cards per numeric value.
   get quantities() {
-    return this._quantities;
+    return [...this.#quantities];
   }
 
-  // Devuelve el tamaño de la mano inicial.
+  // Return the initial hand size per player.
   get handsize() {
-    return this._handsize;
+    return this.#handsize;
+  }
+
+  static #validateName(name) {
+    if (typeof name !== "string") {
+      throw new TypeError("Game name must be a string");
+    }
+
+    const trimmed = name.trim();
+    if (!trimmed) {
+      throw new TypeError("Game name must not be empty");
+    }
+
+    return trimmed;
+  }
+
+  static #validateValues(values) {
+    if (!Array.isArray(values) || values.length === 0) {
+      throw new TypeError("Game values must be a non-empty array of numbers");
+    }
+
+    const validated = values.map((value) => {
+      if (typeof value !== "number" || !Number.isFinite(value)) {
+        throw new TypeError("Game values must be finite numbers");
+      }
+      return value;
+    });
+
+    return validated;
+  }
+
+  static #validateQuantities(quantities, expectedLength) {
+    if (!Array.isArray(quantities) || quantities.length !== expectedLength) {
+      throw new TypeError("Game quantities must match the length of values");
+    }
+
+    const validated = quantities.map((quantity) => {
+      if (!Number.isInteger(quantity) || quantity < 0) {
+        throw new TypeError("Game quantities must be non-negative integers");
+      }
+      return quantity;
+    });
+
+    return validated;
+  }
+
+  static #validateHandsize(handsize) {
+    if (!Number.isInteger(handsize) || handsize < 1) {
+      throw new TypeError("Game handsize must be a positive integer");
+    }
+
+    return handsize;
   }
 }
