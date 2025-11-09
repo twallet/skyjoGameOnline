@@ -12,7 +12,7 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\Day2\\practica2.js"
+            "program": "${workspaceFolder}\\Day3\\practica.js"
         }
     ]
 }

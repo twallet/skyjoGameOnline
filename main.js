@@ -29,7 +29,7 @@ function App() {
     setErrorMessage("");
 
     try {
-      const players = playerNames.map((name) => new Player(name));
+      const players = playerNames.map((name) => new Player(name, skyjo));
       const dealer = new Dealer(skyjo, players);
 
       dealer.shuffle();

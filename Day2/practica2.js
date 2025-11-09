@@ -15,11 +15,11 @@ console.log(deck.countCards());
 */
 
 console.log("################# EJERCICIO Deal #################");
-var tom = new Player("Tom");
-var vero = new Player("Vero");
-var theo = new Player("Theo");
-var merlin = new Player("Merlin");
-var hugo = new Player("Hugo");
+var tom = new Player("Tom", SKYJO);
+var vero = new Player("Vero", SKYJO);
+var theo = new Player("Theo", SKYJO);
+var merlin = new Player("Merlin", SKYJO);
+var hugo = new Player("Hugo", SKYJO);
 var dealer = new Dealer(SKYJO, [tom, vero, theo, hugo, merlin]);
 dealer.shuffle();
 dealer.deal();

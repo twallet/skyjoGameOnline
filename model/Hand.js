@@ -23,11 +23,6 @@ export class Hand {
   // Return a string summarizing the hand content.
   show() {
     const cardValues = this.values();
-
-    if (cardValues.length === 0) {
-      return `[] (${this.size} cards)`;
-    }
-
     const rows = [];
     for (let start = 0; start < cardValues.length; start += this.#lines) {
       rows.push(cardValues.slice(start, start + this.#lines));
@@ -35,12 +30,17 @@ export class Hand {
 
     const matrix = `[${rows.map((row) => `[${row.join(", ")}]`).join(", ")}]`;
 
-    return `${matrix} (${this.size} cards)`;
+    return `(${this.size} cards) ${matrix}`;
   }
 
   // Getter exposing the current size of the hand.
   get size() {
     return this.#cards.length;
+  }
+
+  // Getter exposing the configured number of lines.
+  get lines() {
+    return this.#lines;
   }
 
   // Ensure the provided value is a Card instance.

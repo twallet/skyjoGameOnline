@@ -3,16 +3,18 @@
  */
 export class Card {
   #value;
+  #visible;
 
   constructor(value, game) {
     Card.#validate(value, game);
 
     this.#value = value;
+    this.#visible = false;
     Object.freeze(this);
   }
 
   get value() {
-    return this.#value;
+    return this.#visible ? "X" : this.#value;
   }
 
   static #validate(value, game) {

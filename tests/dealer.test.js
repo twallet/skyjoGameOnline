@@ -23,7 +23,7 @@ describe("Dealer", () => {
 
   test("constructs with validated game and players", () => {
     const game = buildSampleGame();
-    const players = [new Player("Alice"), new Player("Bob")];
+    const players = [new Player("Alice", game), new Player("Bob", game)];
 
     const dealer = new Dealer(game, players);
 
@@ -36,7 +36,8 @@ describe("Dealer", () => {
   });
 
   test("players getter returns a defensive copy", () => {
-    const dealer = new Dealer(buildSampleGame(), [new Player("Alice")]);
+    const game = buildSampleGame();
+    const dealer = new Dealer(game, [new Player("Alice", game)]);
 
     const snapshot = dealer.players;
     snapshot.pop();
@@ -46,7 +47,7 @@ describe("Dealer", () => {
 
   test("deal distributes the expected amount of cards", () => {
     const game = buildSampleGame();
-    const players = [new Player("Alice"), new Player("Bob")];
+    const players = [new Player("Alice", game), new Player("Bob", game)];
     const dealer = new Dealer(game, players);
 
     dealer.deal();
@@ -62,14 +63,16 @@ describe("Dealer", () => {
       values: [0],
       quantities: [4],
       handSize: 1,
+      lines: 1,
     };
-    const dealer = new Dealer(legacyGame, [new Player("Alice")]);
+    const dealer = new Dealer(legacyGame, [new Player("Alice", legacyGame)]);
 
     expect(dealer.handSize).toBe(1);
   });
 
   test("rejects an invalid game definition", () => {
-    expect(() => new Dealer(null, [new Player("Alice")])).toThrow(
+    const game = buildSampleGame();
+    expect(() => new Dealer(null, [new Player("Alice", game)])).toThrow(
       "Dealer requires a game definition object"
     );
   });

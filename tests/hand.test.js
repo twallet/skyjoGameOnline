@@ -9,7 +9,8 @@ describe("Hand", () => {
 
     expect(hand.size).toBe(0);
     expect(hand.values()).toEqual([]);
-    expect(hand.show()).toBe("[] (0 cards)");
+    expect(hand.lines).toBe(1);
+    expect(hand.show()).toBe("(0 cards) []");
   });
 
   test("adds cards and updates the size", () => {
@@ -49,7 +50,7 @@ describe("Hand", () => {
     });
 
     expect(hand.show()).toBe(
-      "[[-2, -1, 0, 1], [2, 3, 4, 5], [10, -2, -1, 0]] (12 cards)"
+      "(12 cards) [[-2, -1, 0, 1], [2, 3, 4, 5], [10, -2, -1, 0]]"
     );
   });
 });
