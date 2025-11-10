@@ -1,4 +1,6 @@
 import express from "express";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { GameRoomService } from "../services/GameRoomService.js";
 import { Game } from "../model/game.js";
@@ -9,6 +11,9 @@ const app = express();
 const port = process.env.PORT ?? 4000;
 
 app.use(express.json());
+const currentDir = path.dirname(fileURLToPath(import.meta.url));
+const staticRoot = path.resolve(currentDir, "..");
+app.use(express.static(staticRoot));
 
 const skyjo = new Game(
   "Skyjo",
@@ -43,7 +48,7 @@ const playerColors = Array.from({ length: skyjo.maxPlayers }, (_, index) => {
   return `hsl(${hue}, 70%, 85%)`;
 });
 
-app.get("/", (req, res) => {
+app.get("/health", (req, res) => {
   res.json({ status: "ok", message: "Skyjo rooms API" });
 });
 
