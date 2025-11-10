@@ -59,6 +59,13 @@ function App() {
   const handleAddPlayer = () => {
     const trimmedName = newPlayerName.trim();
 
+    if (playerNames.length >= skyjo.maxPlayers) {
+      setErrorMessage(
+        `You cannot add more than ${skyjo.maxPlayers} players to the game.`
+      );
+      return;
+    }
+
     if (!trimmedName) {
       setErrorMessage("Player name must not be empty.");
       return;
@@ -105,7 +112,11 @@ function App() {
         }),
         React.createElement(
           "button",
-          { type: "button", onClick: handleAddPlayer },
+          {
+            type: "button",
+            onClick: handleAddPlayer,
+            disabled: playerNames.length >= skyjo.maxPlayers,
+          },
           "New player"
         )
       )
@@ -115,9 +126,9 @@ function App() {
       {
         type: "button",
         onClick: handleStartGame,
-        disabled: playerNames.length < 2,
+        disabled: playerNames.length < skyjo.minPlayers,
       },
-      "Start game"
+      "Start"
     ),
     errorMessage
       ? React.createElement(
