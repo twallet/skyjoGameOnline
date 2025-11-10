@@ -34,7 +34,7 @@ export function GameSetupView({
             onClick: onStartGame,
             disabled: !canStartGame,
           },
-          "Deal"
+          "Start"
         ),
         React.createElement("img", {
           src: "./images/deck.jpg",
@@ -71,7 +71,7 @@ export function GameSetupView({
         { className: "new-player-controls" },
         React.createElement("input", {
           type: "text",
-          placeholder: "Player name",
+          placeholder: "My name",
           value: newPlayerName,
           onChange: (event) => onNewPlayerNameChange(event.target.value),
         }),
@@ -82,7 +82,7 @@ export function GameSetupView({
             onClick: onAddPlayer,
             disabled: !canAddPlayer,
           },
-          "Add"
+          "Play"
         )
       )
     ),
