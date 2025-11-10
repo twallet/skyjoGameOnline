@@ -8,5 +8,8 @@
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
     "server": "node ./server/index.js",
     "prepare": "husky"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
   }
 }

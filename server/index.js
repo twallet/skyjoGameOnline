@@ -43,6 +43,10 @@ const playerColors = Array.from({ length: skyjo.maxPlayers }, (_, index) => {
   return `hsl(${hue}, 70%, 85%)`;
 });
 
+app.get("/", (req, res) => {
+  res.json({ status: "ok", message: "Skyjo rooms API" });
+});
+
 function resolveRoom(roomId) {
   return GameRoomService.getOrCreate(
     roomId,
