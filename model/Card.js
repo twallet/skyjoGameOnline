@@ -3,6 +3,8 @@
  */
 export class Card {
   #value;
+  #image;
+  #backImage;
   #visible;
 
   constructor(value, game) {
@@ -10,10 +12,16 @@ export class Card {
 
     this.#value = value;
     this.#visible = false;
+    this.#image = game.imageFor(value);
+    this.#backImage = game.backImage();
   }
 
   get value() {
     return this.#visible ? this.#value : "X";
+  }
+
+  get image() {
+    return this.#visible ? this.#image : this.#backImage;
   }
 
   /**

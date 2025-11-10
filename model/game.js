@@ -3,6 +3,8 @@ export class Game {
   #name;
   #values;
   #quantities;
+  #images;
+  #backImage;
   #handsize;
   #lines;
   #minPlayers;
@@ -13,18 +15,32 @@ export class Game {
    * @param {string} name Display name of the game.
    * @param {number[]} possibleValues Numeric values available for the deck.
    * @param {number[]} quantities Amount of cards per value.
+   * @param {string[]} images Card images asociated to its value.
+   * @param {string} backImage Card back image.
    * @param {number} handsize Initial hand size for each player.
    * @param {number} lines Lines to divide the hand.
    * @param {number} minPlayers Minimum number of players.
    * @param {number} maxPlayers Maximum number of players.
    */
-  constructor(name, possibleValues, quantities, handsize, lines, min, max) {
+  constructor(
+    name,
+    possibleValues,
+    quantities,
+    images,
+    backImage,
+    handsize,
+    lines,
+    min,
+    max
+  ) {
     this.#name = Game.#validateName(name);
     this.#values = Game.#validateValues(possibleValues);
     this.#quantities = Game.#validateQuantities(
       quantities,
       this.#values.length
     );
+    this.#images = Game.#validateImages(images, this.#values.length);
+    this.#backImage = Game.#validateBackImage(backImage);
     this.#handsize = Game.#validateHandsize(handsize);
     this.#lines = Game.#validateLines(lines);
     this.#minPlayers = Game.#validateMin(min);
@@ -44,6 +60,11 @@ export class Game {
   // Provide the amount of cards per numeric value.
   get quantities() {
     return [...this.#quantities];
+  }
+
+  // Provide the card's images.
+  get images() {
+    return [...this.#images];
   }
 
   // Return the initial hand size per player.
@@ -74,6 +95,10 @@ export class Game {
   // Preserve backwards compatibility with legacy max getter.
   get max() {
     return this.#maxPlayers;
+  }
+
+  get backImage() {
+    return this.#backImage;
   }
 
   static #validateName(name) {
@@ -117,6 +142,40 @@ export class Game {
     });
 
     return validated;
+  }
+
+  static #validateImages(images, expectedLength) {
+    if (!Array.isArray(images) || images.length !== expectedLength) {
+      throw new TypeError("Card images paths must match the length of values");
+    }
+
+    const validated = images.map((imagePath, index) =>
+      Game.#validateImagePath(imagePath, `Card image path at index ${index}`)
+    );
+
+    return validated;
+  }
+
+  static #validateBackImage(backImage) {
+    return Game.#validateImagePath(backImage, "Card back image path");
+  }
+
+  static #validateImagePath(imagePath, label) {
+    if (typeof imagePath !== "string") {
+      throw new TypeError(`${label} must be a string`);
+    }
+
+    const trimmed = imagePath.trim();
+    if (!trimmed) {
+      throw new TypeError(`${label} must not be empty`);
+    }
+
+    const isValidImage = /\.(png|jpe?g|gif|svg|webp)$/i.test(trimmed);
+    if (!isValidImage) {
+      throw new TypeError(`${label} must point to a supported image file`);
+    }
+
+    return trimmed;
   }
 
   static #validateHandsize(handsize) {
