@@ -1,3 +1,4 @@
+import { resolveLogger, noopLogger } from "../utils/logger.js";
 import { Dealer } from "./dealer.js";
 import { Player } from "./player.js";
 
@@ -11,9 +12,11 @@ export class GameSession {
   #logEntries = [];
   #deckSnapshot = null;
   static #MAX_PLAYER_NAME_LENGTH = 15;
+  #logger;
 
-  constructor(game) {
+  constructor(game, logger = noopLogger) {
     this.#game = GameSession.#validateGame(game);
+    this.#logger = resolveLogger(logger);
   }
 
   /**
@@ -37,10 +40,20 @@ export class GameSession {
       return new Player(name, this.#game, color ?? undefined);
     });
 
+    this.#logger.info(
+      `GameSession: starting ${this.#game.name} for players ${this.#players
+        .map((player) => player.name)
+        .join(", ")}`
+    );
+
     this.#dealer = new Dealer(this.#game, this.#players);
     this.#dealer.shuffle();
     this.#dealer.deal();
     this.#dealer.deck.showFirstCard();
+
+    this.#logger.info(
+      `GameSession: dealer prepared deck with ${this.#dealer.deck.size()} cards`
+    );
 
     this.#logEntries = GameSession.#buildInitialLog(
       this.#game,
@@ -85,6 +98,7 @@ export class GameSession {
     this.#players = [];
     this.#logEntries = [];
     this.#deckSnapshot = null;
+    this.#logger.info("GameSession: reset complete");
   }
 
   /**

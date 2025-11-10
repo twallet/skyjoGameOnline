@@ -6,6 +6,7 @@ import React, {
 
 import { Game } from "../model/game.js";
 import { GameRoomService } from "../services/GameRoomService.js";
+import { consoleLogger } from "../utils/logger.js";
 import { GamePlayView } from "./GamePlayView.js";
 import { GameSetupView } from "./GameSetupView.js";
 
@@ -45,7 +46,13 @@ export function App() {
     });
   }, []);
   const gameRoom = useMemo(
-    () => GameRoomService.getOrCreate("local-room", skyjo, playerColors),
+    () =>
+      GameRoomService.getOrCreate(
+        "local-room",
+        skyjo,
+        playerColors,
+        consoleLogger
+      ),
     [playerColors]
   );
 

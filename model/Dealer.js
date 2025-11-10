@@ -13,8 +13,6 @@ export class Dealer {
     this.#players = Dealer.#validatePlayers(players);
     this.#handSize = Dealer.#resolveHandSize(this.#game);
     this.#deck = Deck.generateDeck(this.#game);
-
-    Dealer.#announceGame(this.#game, this.#players);
   }
 
   // Expose the players currently managed by the dealer.
@@ -32,24 +30,18 @@ export class Dealer {
     return this.#handSize;
   }
 
-  // Shuffle the deck and log the new card order.
+  // Shuffle the deck using the underlying deck implementation.
   shuffle() {
     this.#deck.shuffle();
-    //console.log(`Deck of ${this.#deck.size()} cards shuffled.`);
   }
 
-  // Deal the required number of cards to each player and log the resulting hands.
+  // Deal the required number of cards to each player.
   deal() {
     for (let n = 0; n < this.#handSize; n++) {
       for (let p = 0; p < this.#players.length; p++) {
         this.#players[p].hand.add(this.#deck.dealNextCard());
       }
     }
-    /*console.log(`Dealed ${this.#handSize} cards per player:`);
-    for (let p = 0; p < this.#players.length; p++) {
-      console.log(`${this.#players[p].name} ${this.#players[p].hand.show()}`);
-    }
-    */
   }
 
   static #validateGame(game) {
@@ -102,14 +94,5 @@ export class Dealer {
     }
 
     return handSize;
-  }
-
-  static #announceGame(game, players) {
-    console.log(`Starting ${game.name}...`);
-    console.log(
-      `We have ${players.length} players: ${players
-        .map((player) => player.name)
-        .join(", ")}`
-    );
   }
 }

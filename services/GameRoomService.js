@@ -1,4 +1,5 @@
 import { GameSession } from "../model/gameSession.js";
+import { consoleLogger, resolveLogger, noopLogger } from "../utils/logger.js";
 
 /**
  * Provides a facade between the UI layer and the core GameSession.
@@ -13,15 +14,28 @@ export class GameRoomService {
    * @param {string[]} [playerColors]
    * @returns {GameRoomService}
    */
-  static getOrCreate(roomId, game, playerColors = []) {
+  static getOrCreate(roomId, game, playerColors = [], logger = consoleLogger) {
     if (typeof roomId !== "string" || roomId.trim() === "") {
       throw new TypeError("Room id must be a non-empty string");
     }
 
     const trimmedId = roomId.trim();
     if (!GameRoomService.#registry.has(trimmedId)) {
-      const service = new GameRoomService(game, playerColors, trimmedId);
+      const service = new GameRoomService(
+        game,
+        playerColors,
+        trimmedId,
+        logger
+      );
       GameRoomService.#registry.set(trimmedId, service);
+      service.#logger.info(
+        `GameRoomService: created room '${trimmedId}' with game ${game.name}`
+      );
+    } else {
+      const existing = GameRoomService.#registry.get(trimmedId);
+      existing.#logger.info(
+        `GameRoomService: reusing existing room '${trimmedId}'`
+      );
     }
 
     return GameRoomService.#registry.get(trimmedId);
@@ -37,7 +51,15 @@ export class GameRoomService {
       return false;
     }
 
-    return GameRoomService.#registry.delete(roomId.trim());
+    const trimmed = roomId.trim();
+    const existing = GameRoomService.#registry.get(trimmed);
+    if (!existing) {
+      return false;
+    }
+
+    GameRoomService.#registry.delete(trimmed);
+    existing.#logger.info(`GameRoomService: removed room '${trimmed}'`);
+    return true;
   }
 
   /**
@@ -51,11 +73,16 @@ export class GameRoomService {
   #playerNames = [];
   #playerColors;
   #roomId;
+  #logger;
 
-  constructor(game, playerColors = [], roomId = null) {
-    this.#session = new GameSession(game);
+  constructor(game, playerColors = [], roomId = null, logger = noopLogger) {
+    this.#logger = resolveLogger(logger);
+    this.#session = new GameSession(game, this.#logger);
     this.#playerColors = Array.isArray(playerColors) ? [...playerColors] : [];
     this.#roomId = roomId ?? null;
+    this.#logger.info(
+      `GameRoomService: initialized room '${this.#roomId ?? "unknown"}'`
+    );
   }
 
   get roomId() {
@@ -73,6 +100,10 @@ export class GameRoomService {
    */
   addPlayer(rawName) {
     this.#playerNames = this.#session.addPlayer(this.#playerNames, rawName);
+    const latestName = this.#playerNames[this.#playerNames.length - 1];
+    this.#logger.info(
+      `GameRoomService: player '${latestName}' joined room '${this.#roomId}'`
+    );
     return this.playerNames;
   }
 
@@ -89,11 +120,15 @@ export class GameRoomService {
    * @returns {{ players: import("../model/player.js").Player[], logEntries: string[], deck: { size: number, topCard: { value: string | number, image: string, visible: boolean } | null } }}
    */
   startGame() {
+    this.#logger.info(
+      `GameRoomService: starting game for room '${this.#roomId}'`
+    );
     return this.#session.start(this.#playerNames, this.#playerColors);
   }
 
   resetRoom() {
     this.#session.reset();
     this.#playerNames = [];
+    this.#logger.info(`GameRoomService: room '${this.#roomId}' reset`);
   }
 }

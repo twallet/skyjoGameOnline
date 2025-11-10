@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 import { Game } from "../model/game.js";
 import { GameRoomService } from "../services/GameRoomService.js";
 
@@ -29,6 +30,12 @@ const skyjo = new Game(
   8
 );
 
+const createTestLogger = () => ({
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+});
+
 describe("GameRoomService", () => {
   beforeEach(() => {
     GameRoomService.clearRegistry();
@@ -36,7 +43,13 @@ describe("GameRoomService", () => {
 
   it("adds players and exposes current names", () => {
     const colors = ["#ffaaaa", "#aaffaa"];
-    const service = GameRoomService.getOrCreate("room-1", skyjo, colors);
+    const logger = createTestLogger();
+    const service = GameRoomService.getOrCreate(
+      "room-1",
+      skyjo,
+      colors,
+      logger
+    );
 
     expect(service.playerNames).toEqual([]);
     expect(service.canAddPlayer()).toBe(true);
@@ -47,19 +60,25 @@ describe("GameRoomService", () => {
     expect(service.playerNames).toEqual(["Alice", "Bob"]);
     expect(service.canStartGame()).toBe(true);
     expect(service.roomId).toBe("room-1");
-    expect(GameRoomService.getOrCreate("room-1", skyjo, colors)).toBe(service);
+    expect(GameRoomService.getOrCreate("room-1", skyjo, colors, logger)).toBe(
+      service
+    );
+    expect(logger.info).toHaveBeenCalled();
   });
 
   it("refuses to start when not enough players", () => {
-    const service = GameRoomService.getOrCreate("room-2", skyjo);
+    const logger = createTestLogger();
+    const service = GameRoomService.getOrCreate("room-2", skyjo, [], logger);
     service.addPlayer("Alice");
 
     expect(service.canStartGame()).toBe(false);
     expect(() => service.startGame()).toThrow(/at least 2 players/i);
+    expect(logger.info).toHaveBeenCalled();
   });
 
   it("starts a game and resets correctly", () => {
-    const service = GameRoomService.getOrCreate("room-3", skyjo);
+    const logger = createTestLogger();
+    const service = GameRoomService.getOrCreate("room-3", skyjo, [], logger);
     service.addPlayer("Alice");
     service.addPlayer("Bob");
 
@@ -73,5 +92,6 @@ describe("GameRoomService", () => {
     expect(service.canStartGame()).toBe(false);
     expect(GameRoomService.remove("room-3")).toBe(true);
     expect(GameRoomService.remove("room-3")).toBe(false);
+    expect(logger.info).toHaveBeenCalled();
   });
 });
