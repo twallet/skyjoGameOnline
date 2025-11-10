@@ -61,7 +61,7 @@ export function GameSetupView({
                     backgroundColor: playerColors[index % playerColors.length],
                   },
                 },
-                name
+                React.createElement("span", null, name)
               )
             )
           )
