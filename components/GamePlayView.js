@@ -1,8 +1,11 @@
 import React from "https://esm.sh/react@18?dev";
 
-export function GamePlayView({ activePlayers, logEntries, deck }) {
+export function GamePlayView({ activePlayers, deck, roomId }) {
   const players = Array.isArray(activePlayers) ? activePlayers : [];
-  const safeLogEntries = Array.isArray(logEntries) ? logEntries : [];
+  const displayedRoomId =
+    typeof roomId === "string" && roomId.trim().length > 0
+      ? roomId.trim()
+      : null;
 
   const layouts = {
     0: {
@@ -178,11 +181,6 @@ export function GamePlayView({ activePlayers, logEntries, deck }) {
                 alt: deck.firstCard.alt ?? "Visible top card",
               })
             : null
-        ),
-        React.createElement(
-          "div",
-          { className: "deck-entry__meta" },
-          `${deck.size ?? 0} cards`
         )
       );
     }
@@ -236,25 +234,18 @@ export function GamePlayView({ activePlayers, logEntries, deck }) {
   return React.createElement(
     "main",
     { className: "app-container" },
+    displayedRoomId
+      ? React.createElement(
+          "span",
+          { className: "room-badge", title: "Room identifier" },
+          `Room ${displayedRoomId}`
+        )
+      : null,
     React.createElement(
       "section",
       { className: "players" },
       React.createElement("h2", null, "Skyjo"),
       React.createElement("ul", { style: gridListStyle }, playerEntries)
-    ),
-    React.createElement(
-      "section",
-      { className: "log" },
-      React.createElement("h2", null, "Log"),
-      safeLogEntries.length > 0
-        ? React.createElement(
-            "ul",
-            null,
-            safeLogEntries.map((entry, index) =>
-              React.createElement("li", { key: `log-${index}` }, entry)
-            )
-          )
-        : React.createElement("p", null, "No events yet.")
     )
   );
 }

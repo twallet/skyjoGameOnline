@@ -340,8 +340,8 @@ export function App() {
   if (gameStarted) {
     return React.createElement(GamePlayView, {
       activePlayers,
-      logEntries,
       deck: deckView,
+      roomId,
     });
   }
 
