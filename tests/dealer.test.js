@@ -59,6 +59,19 @@ describe("Dealer", () => {
     });
   });
 
+  test("shuffle delegates to the deck and logs the outcome", () => {
+    const game = buildSampleGame();
+    const dealer = new Dealer(game, [new Player("Alice", game)]);
+    const shuffleSpy = jest.spyOn(dealer.deck, "shuffle");
+
+    dealer.shuffle();
+
+    expect(shuffleSpy).toHaveBeenCalledTimes(1);
+    expect(console.log).toHaveBeenCalledWith(
+      `Deck of ${dealer.deck.size()} cards shuffled.`
+    );
+  });
+
   test("supports games exposing handSize instead of handsize", () => {
     const legacyGame = {
       name: "Legacy",

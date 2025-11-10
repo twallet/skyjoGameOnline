@@ -1,66 +1,81 @@
-import { Card } from "../model/card.js";
 import { Hand } from "../model/hand.js";
+import { Card } from "../model/card.js";
 
-const skyjo = { name: "Skyjo", values: [-2, -1, 0, 1, 2, 3, 4, 5, 10] };
+const buildGame = () => ({
+  name: "Test Game",
+  values: [1, 2, 3, 4],
+});
+
+const buildCard = (value, { visible = false } = {}) => {
+  const game = buildGame();
+  const card = new Card(value, game);
+  if (visible) {
+    card.visible = true;
+  }
+  return card;
+};
 
 describe("Hand", () => {
-  test("starts empty by default", () => {
+  test("constructs an empty hand with default single line", () => {
     const hand = new Hand();
 
     expect(hand.size).toBe(0);
-    expect(hand.cards()).toEqual([]);
     expect(hand.lines).toBe(1);
-    expect(hand.show()).toBe("(0 cards) []");
   });
 
-  test("adds cards and updates the size", () => {
+  test("accepts a custom number of lines", () => {
+    const hand = new Hand(3);
+
+    expect(hand.lines).toBe(3);
+  });
+
+  test("add stores card instances and increases size", () => {
     const hand = new Hand();
-    const goodCard = new Card(0, skyjo);
+    const firstCard = buildCard(1);
+    const secondCard = buildCard(2);
 
-    hand.add(goodCard);
-    expect(hand.size).toBe(1);
+    hand.add(firstCard);
+    hand.add(secondCard);
 
-    hand.add(new Card(5, skyjo));
     expect(hand.size).toBe(2);
-  });
-
-  test("lists the visible values of its cards (hidden by default)", () => {
-    const hand = new Hand();
-    const cardOne = new Card(-2, skyjo);
-    const cardTwo = new Card(10, skyjo);
-
-    hand.add(cardOne);
-    hand.add(cardTwo);
-
     expect(hand.cards()).toEqual(["X", "X"]);
-
-    cardOne.visible = true;
-    cardTwo.visible = true;
-
-    expect(hand.cards()).toEqual([-2, 10]);
   });
 
-  test("validates that only card instances can be added", () => {
+  test("cards returns card values without exposing internal storage", () => {
+    const hand = new Hand();
+    const card = buildCard(3, { visible: true });
+
+    hand.add(card);
+
+    const snapshot = hand.cards();
+    snapshot[0] = 99;
+
+    expect(hand.cards()).toEqual([3]);
+  });
+
+  test("show prints a matrix respecting configured lines", () => {
+    const hand = new Hand(2);
+    hand.add(buildCard(1, { visible: true }));
+    hand.add(buildCard(2, { visible: true }));
+    hand.add(buildCard(3, { visible: true }));
+
+    expect(hand.show()).toBe("(3 cards) [[1, 2], [3]]");
+  });
+
+  test("rejects non-card entries", () => {
     const hand = new Hand();
 
-    expect(() => hand.add(null)).toThrow("Hand can only store card objects");
-    expect(() => hand.add({})).toThrow("Hand can only store card objects");
-  });
-
-  test("formats the values respecting the configured lines", () => {
-    const hand = new Hand(4);
-
-    Array.from(
-      { length: 12 },
-      (_, index) => skyjo.values[index % skyjo.values.length]
-    ).forEach((value) => {
-      const card = new Card(value, skyjo);
-      card.visible = true;
-      hand.add(card);
-    });
-
-    expect(hand.show()).toBe(
-      "(12 cards) [[-2, -1, 0, 1], [2, 3, 4, 5], [10, -2, -1, 0]]"
+    expect(() => hand.add({ value: 5 })).toThrow(
+      "Hand can only store card objects"
     );
   });
+
+  test.each([0, -1, 1.5, "2", null])(
+    "rejects invalid line definitions %p",
+    (badLines) => {
+      expect(() => new Hand(badLines)).toThrow(
+        "Hand lines must be a positive integer"
+      );
+    }
+  );
 });

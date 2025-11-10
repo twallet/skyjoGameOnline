@@ -22,6 +22,13 @@ describe("Game", () => {
     expect(valuesSnapshot).not.toEqual(game.values);
   });
 
+  test("exposes legacy min/max getters for backwards compatibility", () => {
+    const game = new Game("Skyjo", [1], [1], 3, 1, 2, 8);
+
+    expect(game.min).toBe(game.minPlayers);
+    expect(game.max).toBe(game.maxPlayers);
+  });
+
   test.each([null, undefined, 123, {}, [], () => {}])(
     "rejects non-string name %p",
     (badName) => {
