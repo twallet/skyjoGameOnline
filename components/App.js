@@ -13,6 +13,41 @@ import { RoomApi } from "../services/RoomApi.js";
 import { GamePlayView } from "./GamePlayView.js";
 import { GameSetupView } from "./GameSetupView.js";
 
+const DECK_BASE_IMAGE = "images/deck.png";
+
+function buildDeckView(deckSnapshot) {
+  if (!deckSnapshot) {
+    return null;
+  }
+
+  const topCard = deckSnapshot.topCard ?? null;
+  return {
+    size: deckSnapshot.size ?? 0,
+    baseImage: DECK_BASE_IMAGE,
+    firstCard: topCard
+      ? {
+          image: topCard.image,
+          visible: Boolean(topCard.visible),
+          alt: topCard.visible
+            ? `Top card ${topCard.value}`
+            : "Hidden top card",
+        }
+      : null,
+  };
+}
+
+function normalizePlayerSnapshots(players) {
+  if (!Array.isArray(players)) {
+    return [];
+  }
+
+  return players.map((player) => ({
+    name: player.name,
+    color: player.color ?? null,
+    handMatrix: Array.isArray(player.hand?.matrix) ? player.hand.matrix : [],
+  }));
+}
+
 const skyjo = new Game(
   "Skyjo",
   [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
@@ -55,6 +90,7 @@ export function App() {
     players: [],
     canAddPlayer: true,
     canStartGame: false,
+    gameStarted: false,
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -104,6 +140,7 @@ export function App() {
           players: data.players ?? [],
           canAddPlayer: Boolean(data.canAddPlayer),
           canStartGame: Boolean(data.canStartGame),
+          gameStarted: Boolean(data.gameStarted),
         });
         setPlayerNames(data.players ?? []);
         setErrorMessage("");
@@ -111,24 +148,11 @@ export function App() {
         const snapshot = data.snapshot ?? null;
         if (snapshot) {
           setGameStarted(true);
-          setLogEntries(snapshot.logEntries ?? []);
-          setActivePlayers(snapshot.players ?? []);
-          setDeckView(
-            snapshot.deck
-              ? {
-                  baseImage: "images/deck.png",
-                  firstCard: snapshot.deck.topCard
-                    ? {
-                        image: snapshot.deck.topCard.image,
-                        visible: snapshot.deck.topCard.visible,
-                        alt: snapshot.deck.topCard.visible
-                          ? `Top card ${snapshot.deck.topCard.value}`
-                          : "Hidden top card",
-                      }
-                    : null,
-                }
-              : null
+          setLogEntries(
+            Array.isArray(snapshot.logEntries) ? snapshot.logEntries : []
           );
+          setActivePlayers(normalizePlayerSnapshots(snapshot.players));
+          setDeckView(buildDeckView(snapshot.deck));
         } else {
           setGameStarted(false);
           setLogEntries([]);
@@ -231,24 +255,14 @@ export function App() {
 
       setErrorMessage("");
       setLogEntries(entries);
-      setActivePlayers(players);
-      setDeckView({
-        baseImage: "images/deck.png",
-        firstCard: deck.topCard
-          ? {
-              image: deck.topCard.image,
-              visible: deck.topCard.visible,
-              alt: deck.topCard.visible
-                ? `Top card ${deck.topCard.value}`
-                : "Hidden top card",
-            }
-          : null,
-      });
+      setActivePlayers(normalizePlayerSnapshots(players));
+      setDeckView(buildDeckView(deck));
       setGameStarted(true);
       setRoomState((prev) => ({
         ...prev,
         canAddPlayer: false,
         canStartGame: false,
+        gameStarted: true,
       }));
       loadRoomState(roomId, { silent: true });
     } catch (error) {
@@ -273,9 +287,11 @@ export function App() {
         players: updatedNames,
         canAddPlayer: updatedNames.length < skyjo.maxPlayers,
         canStartGame: updatedNames.length >= skyjo.minPlayers,
+        gameStarted: false,
       }));
       setNewPlayerName("");
       setErrorMessage("");
+      await loadRoomState(roomId, { silent: true });
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : String(error));
     }

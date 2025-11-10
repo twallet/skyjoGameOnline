@@ -237,6 +237,15 @@ body {
   z-index: 1;
 }
 
+.deck-entry__meta {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1b3f73;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 
 .hero {
   width: 100%;

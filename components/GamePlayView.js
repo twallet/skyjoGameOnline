@@ -1,6 +1,9 @@
 import React from "https://esm.sh/react@18?dev";
 
 export function GamePlayView({ activePlayers, logEntries, deck }) {
+  const players = Array.isArray(activePlayers) ? activePlayers : [];
+  const safeLogEntries = Array.isArray(logEntries) ? logEntries : [];
+
   const layouts = {
     0: {
       columns: 3,
@@ -100,7 +103,7 @@ export function GamePlayView({ activePlayers, logEntries, deck }) {
     },
   };
 
-  const playerCount = activePlayers.length;
+  const playerCount = players.length;
   const layout = layouts[playerCount] ?? layouts[Math.min(playerCount, 8)];
 
   const gridItems = [];
@@ -116,7 +119,7 @@ export function GamePlayView({ activePlayers, logEntries, deck }) {
     });
   }
 
-  activePlayers.forEach((player, index) => {
+  players.forEach((player, index) => {
     const seat = layout.seats[index] ?? layout.seats[layout.seats.length - 1];
     gridItems.push({
       type: "player",
@@ -175,9 +178,18 @@ export function GamePlayView({ activePlayers, logEntries, deck }) {
                 alt: deck.firstCard.alt ?? "Visible top card",
               })
             : null
+        ),
+        React.createElement(
+          "div",
+          { className: "deck-entry__meta" },
+          `${deck.size ?? 0} cards`
         )
       );
     }
+
+    const handMatrix = Array.isArray(item.player.handMatrix)
+      ? item.player.handMatrix
+      : [];
 
     return React.createElement(
       "li",
@@ -197,8 +209,7 @@ export function GamePlayView({ activePlayers, logEntries, deck }) {
       React.createElement(
         "div",
         { className: "player-entry__hand" },
-
-        item.player.hand.cardsMatrix().map((row, rowIndex) =>
+        handMatrix.map((row, rowIndex) =>
           React.createElement(
             "div",
             {
@@ -231,6 +242,19 @@ export function GamePlayView({ activePlayers, logEntries, deck }) {
       React.createElement("h2", null, "Skyjo"),
       React.createElement("ul", { style: gridListStyle }, playerEntries)
     ),
-    React.createElement("section", { className: "log", hidden: true })
+    React.createElement(
+      "section",
+      { className: "log" },
+      React.createElement("h2", null, "Log"),
+      safeLogEntries.length > 0
+        ? React.createElement(
+            "ul",
+            null,
+            safeLogEntries.map((entry, index) =>
+              React.createElement("li", { key: `log-${index}` }, entry)
+            )
+          )
+        : React.createElement("p", null, "No events yet.")
+    )
   );
 }
