@@ -61,6 +61,14 @@ export class Deck {
     }
   }
 
+  showFirstCard() {
+    if (this.#cards.length === 0) {
+      return;
+    }
+
+    this.#cards[0].visible = true;
+  }
+
   static #validateGameDefinition(game) {
     if (!game || typeof game !== "object") {
       throw new TypeError("Deck requires a game definition object");

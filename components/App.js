@@ -41,6 +41,7 @@ export function App() {
   const [newPlayerName, setNewPlayerName] = useState("");
   const [gameStarted, setGameStarted] = useState(false);
   const [activePlayers, setActivePlayers] = useState([]);
+  const [deckView, setDeckView] = useState(null);
 
   const playerColors = useMemo(
     () =>
@@ -71,6 +72,10 @@ export function App() {
 
       dealer.shuffle();
       dealer.deal();
+      dealer.deck.showFirstCard();
+
+      const deckCards = dealer.deck.cardsDeck;
+      const firstCard = deckCards.length > 0 ? deckCards[0] : null;
 
       const entries = players.map(
         (player) => `${player.name}: ${player.hand.show()}`
@@ -83,12 +88,26 @@ export function App() {
         `${dealer.deck.size()} cards in deck.`,
       ]);
       setActivePlayers(players);
+      setDeckView({
+        baseImage: "images/deck.png",
+        firstCard: firstCard
+          ? {
+              image: firstCard.image,
+              visible: firstCard.value !== "X",
+              alt:
+                firstCard.value !== "X"
+                  ? `Top card ${firstCard.value}`
+                  : "Hidden top card",
+            }
+          : null,
+      });
       setGameStarted(true);
     } catch (error) {
       console.error("Unable to start Skyjo game", error);
       setLogEntries([]);
       setErrorMessage(error instanceof Error ? error.message : String(error));
       setActivePlayers([]);
+      setDeckView(null);
       setGameStarted(false);
     }
   };
@@ -105,6 +124,11 @@ export function App() {
 
     if (!trimmedName) {
       setErrorMessage("Player name must not be empty.");
+      return;
+    }
+
+    if (trimmedName.length > 15) {
+      setErrorMessage("Player name must not exceed 15 characters.");
       return;
     }
 
@@ -126,6 +150,7 @@ export function App() {
     return React.createElement(GamePlayView, {
       activePlayers,
       logEntries,
+      deck: deckView,
     });
   }
 

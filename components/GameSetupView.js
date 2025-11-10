@@ -37,7 +37,7 @@ export function GameSetupView({
           "Start"
         ),
         React.createElement("img", {
-          src: "./images/deck.jpg",
+          src: "./images/deck.png",
           alt: "Deck of Skyjo cards",
           className: "hero-image",
         })

@@ -74,6 +74,16 @@ body {
   color: #4c6079;
 }
 
+.deck ul {
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-start;
+}
+
 .player-entry {
   display: inline-flex;
   align-items: center;
@@ -137,6 +147,48 @@ body {
   box-shadow: 0 14px 22px rgba(15, 23, 42, 0.3);
   z-index: 1;
 }
+
+.deck-entry {
+  background: transparent;
+  gap: 0.75rem;
+  box-shadow: none;
+}
+
+.deck-entry__images {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.deck-entry__image {
+  width: 56px;
+  height: 80px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: none;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background-color: transparent;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  position: relative;
+  transform-origin: center;
+}
+
+.deck-entry__image--top-card {
+  transform: rotate(-3deg);
+}
+
+.deck-entry__image--base {
+  width: 68px;
+  height: 96px;
+  border: none;
+}
+
+.deck-entry__image:hover {
+  transform: scale(1.2);
+  box-shadow: 0 14px 22px rgba(15, 23, 42, 0.3);
+  z-index: 1;
+}
+
 
 .hero {
   width: 100%;
