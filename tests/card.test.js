@@ -1,9 +1,35 @@
 import { Card } from "../model/card.js";
 
-const buildGame = (values = [5, 10, -2]) => ({
-  name: "Sample",
-  values,
-});
+const buildGame = (values = [5, 10, -2]) => {
+  const images = values.map(
+    (_, index) => `images/test-theme-${index}.jpg`
+  );
+  const back = "images/back.jpg";
+
+  return {
+    name: "Sample",
+    values,
+    imageFor(value) {
+      const valueIndex = values.indexOf(value);
+      if (valueIndex === -1) {
+        throw new Error(`No image for value ${value}`);
+      }
+
+      return images[valueIndex];
+    },
+    backImage: back,
+  };
+};
+
+const buildLegacyGame = (values = [5, 10, -2]) => {
+  const baseGame = buildGame(values);
+  return {
+    ...baseGame,
+    backImage() {
+      return baseGame.backImage;
+    },
+  };
+};
 
 describe("Card", () => {
   test("initializes hidden by default and reveals on visibility", () => {
@@ -14,6 +40,26 @@ describe("Card", () => {
     card.visible = true;
 
     expect(card.value).toBe(5);
+  });
+
+  test("exposes themed card images when visible", () => {
+    const game = buildGame();
+    const card = new Card(5, game);
+
+    expect(card.image).toBe("images/back.jpg");
+
+    card.visible = true;
+
+    expect(card.image).toBe("images/test-theme-0.jpg");
+  });
+
+  test("supports legacy games exposing back image as a function", () => {
+    const legacyGame = buildLegacyGame();
+    const card = new Card(10, legacyGame);
+
+    expect(card.image).toBe("images/back.jpg");
+    card.visible = true;
+    expect(card.image).toBe("images/test-theme-1.jpg");
   });
 
   test("rejects non-boolean visibility assignments", () => {

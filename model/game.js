@@ -101,6 +101,15 @@ export class Game {
     return this.#backImage;
   }
 
+  imageFor(value) {
+    // Devuelve la imagen correspondiente al valor dado
+    const index = this.#values.indexOf(value);
+    if (index === -1) {
+      throw new Error(`No existe imagen para el valor: ${value}`);
+    }
+    return this.#images[index];
+  }
+
   static #validateName(name) {
     if (typeof name !== "string") {
       throw new TypeError("Game name must be a string");

@@ -1,16 +1,24 @@
 import { Deck } from "../model/deck.js";
 import { Game } from "../model/game.js";
 
-const buildSampleGame = () =>
-  new Game(
+const buildSampleGame = () => {
+  const values = [-2, -1, 0, 1, 2, 3, 4, 5, 10];
+  const images = values.map(
+    (_, index) => `images/sample-theme-${index}.jpg`
+  );
+
+  return new Game(
     "Skyjo",
-    [-2, -1, 0, 1, 2, 3, 4, 5, 10],
+    values,
     [5, 5, 10, 10, 10, 10, 10, 10, 2],
+    images,
+    "images/back.jpg",
     3,
     1,
     2,
     8
   );
+};
 
 describe("Deck", () => {
   test("generateDeck creates the expected amount of cards", () => {

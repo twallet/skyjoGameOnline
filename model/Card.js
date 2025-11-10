@@ -13,7 +13,9 @@ export class Card {
     this.#value = value;
     this.#visible = false;
     this.#image = game.imageFor(value);
-    this.#backImage = game.backImage();
+    const backImage =
+      typeof game.backImage === "function" ? game.backImage() : game.backImage;
+    this.#backImage = backImage;
   }
 
   get value() {

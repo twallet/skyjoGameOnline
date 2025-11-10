@@ -2,16 +2,24 @@ import { Game } from "../model/game.js";
 import { Hand } from "../model/hand.js";
 import { Player } from "../model/player.js";
 
-const buildSampleGame = () =>
-  new Game(
+const buildSampleGame = () => {
+  const values = [-2, -1, 0, 1, 2, 3, 4, 5, 10];
+  const images = values.map(
+    (_, index) => `images/sample-theme-${index}.jpg`
+  );
+
+  return new Game(
     "Skyjo",
-    [-2, -1, 0, 1, 2, 3, 4, 5, 10],
+    values,
     [5, 5, 10, 10, 10, 10, 10, 10, 2],
-    12,
+    images,
+    "images/back.jpg",
+    3,
     4,
     2,
     8
   );
+};
 
 describe("Player", () => {
   test("stores a trimmed name and creates a fresh hand by default", () => {

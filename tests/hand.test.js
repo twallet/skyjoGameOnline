@@ -1,10 +1,26 @@
 import { Hand } from "../model/hand.js";
 import { Card } from "../model/card.js";
 
-const buildGame = () => ({
-  name: "Test Game",
-  values: [1, 2, 3, 4],
-});
+const buildGame = () => {
+  const values = [1, 2, 3, 4];
+  const images = values.map(
+    (_, index) => `images/test-theme-${index}.jpg`
+  );
+
+  return {
+    name: "Test Game",
+    values,
+    imageFor(value) {
+      const valueIndex = values.indexOf(value);
+      if (valueIndex === -1) {
+        throw new Error(`No image defined for value ${value}`);
+      }
+
+      return images[valueIndex];
+    },
+    backImage: "images/back.jpg",
+  };
+};
 
 const buildCard = (value, { visible = false } = {}) => {
   const game = buildGame();
