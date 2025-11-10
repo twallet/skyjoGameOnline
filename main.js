@@ -93,12 +93,12 @@ function App() {
     React.createElement(
       "section",
       { className: "players" },
-      React.createElement("h2", null, "Players"),
+      React.createElement("h2", null, `Players: ${playerNames.length}`),
       React.createElement(
         "p",
         null,
         playerNames.length > 0
-          ? `${playerNames.length} players: ${playerNames.join(", ")}`
+          ? `${playerNames.join(", ")}`
           : "No players added yet."
       ),
       React.createElement(
