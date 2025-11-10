@@ -19,10 +19,10 @@ describe("Player", () => {
     const player = new Player("  Alice  ", game);
 
     expect(player.name).toBe("Alice");
+    expect(player.color).toBeNull();
     expect(player.hand).toBeInstanceOf(Hand);
     expect(player.hand.size).toBe(0);
     expect(player.hand.lines).toBe(game.lines);
-    expect(player.game).toBe(game);
   });
 
   test.each([null, undefined, 123, {}, [], () => {}])(
@@ -51,18 +51,21 @@ describe("Player", () => {
     );
   });
 
-  test("allows injecting an existing hand instance", () => {
+  test("stores a provided color when supplied", () => {
     const game = buildSampleGame();
-    const existingHand = new Hand(game.lines);
-    const player = new Player("Bob", game, existingHand);
+    const player = new Player("Dana", game, "#ffeeaa");
 
-    expect(player.hand).toBe(existingHand);
+    expect(player.color).toBe("#ffeeaa");
   });
 
-  test("rejects injected hand that is not a Hand instance", () => {
+  test("rejects invalid color values", () => {
     const game = buildSampleGame();
-    expect(() => new Player("Carol", game, {})).toThrow(
-      "Player hand must be a Hand instance"
+
+    expect(() => new Player("Eli", game, "   ")).toThrow(
+      "Player color must not be empty"
+    );
+    expect(() => new Player("Eli", game, 123)).toThrow(
+      "Player color must be a string"
     );
   });
 });

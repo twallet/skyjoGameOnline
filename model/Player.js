@@ -3,15 +3,15 @@ import { Hand } from "./hand.js";
 export class Player {
   #name;
   #hand;
-  #game;
+  #color;
 
-  // Create a player with a display name and an empty hand.
-  constructor(name, game, hand) {
+  // Create a player with a display name and optional color tag.
+  constructor(name, game, color) {
     this.#name = Player.#validateName(name);
-    this.#game = Player.#validateGame(game);
-    this.#hand = Player.#validateHand(
-      hand !== undefined ? hand : new Hand(this.#game.lines)
-    );
+    const validatedGame = Player.#validateGame(game);
+
+    this.#hand = new Hand(validatedGame.lines);
+    this.#color = Player.#validateColor(color);
   }
 
   // Return the player's name.
@@ -19,9 +19,9 @@ export class Player {
     return this.#name;
   }
 
-  // Return the game configuration associated with the player.
-  get game() {
-    return this.#game;
+  // Return the color assigned to the player, if any.
+  get color() {
+    return this.#color;
   }
 
   // Provide access to the hand associated with the player.
@@ -56,11 +56,21 @@ export class Player {
     return game;
   }
 
-  static #validateHand(hand) {
-    if (!(hand instanceof Hand)) {
-      throw new TypeError("Player hand must be a Hand instance");
+  static #validateColor(color) {
+    if (color === undefined || color === null) {
+      return null;
     }
 
-    return hand;
+    if (typeof color !== "string") {
+      throw new TypeError("Player color must be a string");
+    }
+
+    const trimmed = color.trim();
+
+    if (!trimmed) {
+      throw new TypeError("Player color must not be empty");
+    }
+
+    return trimmed;
   }
 }

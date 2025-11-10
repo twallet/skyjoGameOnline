@@ -21,6 +21,7 @@ function App() {
   const [playerNames, setPlayerNames] = useState([]);
   const [newPlayerName, setNewPlayerName] = useState("");
   const [gameStarted, setGameStarted] = useState(false);
+  const [activePlayers, setActivePlayers] = useState([]);
   const playerColors = useMemo(
     () =>
       Array.from({ length: skyjo.maxPlayers }, (_, index) => {
@@ -42,7 +43,10 @@ function App() {
     setErrorMessage("");
 
     try {
-      const players = playerNames.map((name) => new Player(name, skyjo));
+      const players = playerNames.map(
+        (name, index) =>
+          new Player(name, skyjo, playerColors[index % playerColors.length])
+      );
       const dealer = new Dealer(skyjo, players);
 
       dealer.shuffle();
@@ -58,11 +62,13 @@ function App() {
         ...entries,
         `${dealer.deck.size()} cards in deck.`,
       ]);
+      setActivePlayers(players);
       setGameStarted(true);
     } catch (error) {
       console.error("Unable to start Skyjo game", error);
       setLogEntries([]);
       setErrorMessage(error instanceof Error ? error.message : String(error));
+      setActivePlayers([]);
       setGameStarted(false);
     }
   };
@@ -96,6 +102,37 @@ function App() {
     return React.createElement(
       "main",
       { className: "app-container" },
+      React.createElement(
+        "section",
+        { className: "players" },
+        React.createElement("h2", null, "Players"),
+        React.createElement(
+          "ul",
+          null,
+          activePlayers.map((player) =>
+            React.createElement(
+              "li",
+              {
+                key: player.name,
+                className: "player-entry player-entry--active",
+                style: {
+                  backgroundColor: player.color ?? "rgba(255,255,255,0.85)",
+                },
+              },
+              React.createElement(
+                "span",
+                { className: "player-entry__name" },
+                player.name
+              ),
+              React.createElement(
+                "span",
+                { className: "player-entry__hand" },
+                player.hand.show()
+              )
+            )
+          )
+        )
+      ),
       React.createElement(
         "section",
         { className: "log" },
