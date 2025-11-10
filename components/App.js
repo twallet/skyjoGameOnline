@@ -1,4 +1,8 @@
-import React, { useMemo, useState } from "https://esm.sh/react@18?dev";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+} from "https://esm.sh/react@18?dev";
 
 import { Game } from "../model/game.js";
 import { GameRoomService } from "../services/GameRoomService.js";
@@ -34,16 +38,14 @@ const skyjo = new Game(
 );
 
 export function App() {
-  const playerColors = useMemo(
-    () =>
-      Array.from({ length: skyjo.maxPlayers }, (_, index) => {
-        const hue = Math.round((index * 360) / skyjo.maxPlayers);
-        return `hsl(${hue}, 70%, 85%)`;
-      }),
-    []
-  );
+  const playerColors = useMemo(() => {
+    return Array.from({ length: skyjo.maxPlayers }, (_, index) => {
+      const hue = Math.round((index * 360) / skyjo.maxPlayers);
+      return `hsl(${hue}, 70%, 85%)`;
+    });
+  }, []);
   const gameRoom = useMemo(
-    () => new GameRoomService(skyjo, playerColors),
+    () => GameRoomService.getOrCreate("local-room", skyjo, playerColors),
     [playerColors]
   );
 
@@ -54,6 +56,12 @@ export function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [activePlayers, setActivePlayers] = useState([]);
   const [deckView, setDeckView] = useState(null);
+  useEffect(() => {
+    return () => {
+      gameRoom.resetRoom();
+      GameRoomService.remove("local-room");
+    };
+  }, [gameRoom]);
 
   const handleStartGame = () => {
     try {

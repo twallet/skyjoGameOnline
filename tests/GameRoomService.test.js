@@ -30,9 +30,13 @@ const skyjo = new Game(
 );
 
 describe("GameRoomService", () => {
+  beforeEach(() => {
+    GameRoomService.clearRegistry();
+  });
+
   it("adds players and exposes current names", () => {
     const colors = ["#ffaaaa", "#aaffaa"];
-    const service = new GameRoomService(skyjo, colors);
+    const service = GameRoomService.getOrCreate("room-1", skyjo, colors);
 
     expect(service.playerNames).toEqual([]);
     expect(service.canAddPlayer()).toBe(true);
@@ -42,10 +46,12 @@ describe("GameRoomService", () => {
 
     expect(service.playerNames).toEqual(["Alice", "Bob"]);
     expect(service.canStartGame()).toBe(true);
+    expect(service.roomId).toBe("room-1");
+    expect(GameRoomService.getOrCreate("room-1", skyjo, colors)).toBe(service);
   });
 
   it("refuses to start when not enough players", () => {
-    const service = new GameRoomService(skyjo);
+    const service = GameRoomService.getOrCreate("room-2", skyjo);
     service.addPlayer("Alice");
 
     expect(service.canStartGame()).toBe(false);
@@ -53,7 +59,7 @@ describe("GameRoomService", () => {
   });
 
   it("starts a game and resets correctly", () => {
-    const service = new GameRoomService(skyjo);
+    const service = GameRoomService.getOrCreate("room-3", skyjo);
     service.addPlayer("Alice");
     service.addPlayer("Bob");
 
@@ -65,5 +71,7 @@ describe("GameRoomService", () => {
     service.resetRoom();
     expect(service.playerNames).toEqual([]);
     expect(service.canStartGame()).toBe(false);
+    expect(GameRoomService.remove("room-3")).toBe(true);
+    expect(GameRoomService.remove("room-3")).toBe(false);
   });
 });
