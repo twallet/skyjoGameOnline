@@ -1,4 +1,5 @@
 import React, {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -64,31 +65,87 @@ export function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [activePlayers, setActivePlayers] = useState([]);
   const [deckView, setDeckView] = useState(null);
+  const [initialRoomBootstrapped, setInitialRoomBootstrapped] = useState(false);
+
+  const activeRoomIdRef = useRef(roomId);
+  const isFetchingRoomRef = useRef(false);
 
   useEffect(() => {
-    if (!roomId) {
-      return;
-    }
+    activeRoomIdRef.current = roomId;
+  }, [roomId]);
 
-    let cancelled = false;
+  const loadRoomState = useCallback(
+    async (targetRoomId = roomId, { silent = false } = {}) => {
+      const normalizedRoomId =
+        typeof targetRoomId === "string" && targetRoomId.trim().length > 0
+          ? targetRoomId.trim().toUpperCase()
+          : roomId;
 
-    async function loadRoomState() {
-      setIsLoading(true);
+      if (!normalizedRoomId) {
+        return;
+      }
+
+      if (silent && isFetchingRoomRef.current) {
+        return;
+      }
+
+      isFetchingRoomRef.current = true;
+      if (!silent) {
+        setIsLoading(true);
+      }
+
       try {
-        const data = await RoomApi.getRoom(roomId);
-        if (!cancelled) {
-          setRoomState(data);
-          setPlayerNames(data.players ?? []);
+        const data = await RoomApi.getRoom(normalizedRoomId);
+        if (activeRoomIdRef.current !== normalizedRoomId) {
+          return;
+        }
+
+        setRoomState({
+          players: data.players ?? [],
+          canAddPlayer: Boolean(data.canAddPlayer),
+          canStartGame: Boolean(data.canStartGame),
+        });
+        setPlayerNames(data.players ?? []);
+        setErrorMessage("");
+
+        const snapshot = data.snapshot ?? null;
+        if (snapshot) {
+          setGameStarted(true);
+          setLogEntries(snapshot.logEntries ?? []);
+          setActivePlayers(snapshot.players ?? []);
+          setDeckView(
+            snapshot.deck
+              ? {
+                  baseImage: "images/deck.png",
+                  firstCard: snapshot.deck.topCard
+                    ? {
+                        image: snapshot.deck.topCard.image,
+                        visible: snapshot.deck.topCard.visible,
+                        alt: snapshot.deck.topCard.visible
+                          ? `Top card ${snapshot.deck.topCard.value}`
+                          : "Hidden top card",
+                      }
+                    : null,
+                }
+              : null
+          );
+        } else {
+          setGameStarted(false);
           setLogEntries([]);
           setActivePlayers([]);
           setDeckView(null);
-          setGameStarted(false);
+        }
+
+        if (!silent) {
           setNewPlayerName("");
-          setErrorMessage("");
         }
       } catch (error) {
-        if (!cancelled) {
-          consoleLogger.error("Failed to load room state", error);
+        if (activeRoomIdRef.current !== normalizedRoomId) {
+          return;
+        }
+
+        consoleLogger.error("Failed to load room state", error);
+        if (!silent) {
           setErrorMessage(
             error instanceof Error ? error.message : String(error)
           );
@@ -98,20 +155,71 @@ export function App() {
             canStartGame: false,
           });
           setPlayerNames([]);
+          setLogEntries([]);
+          setActivePlayers([]);
+          setDeckView(null);
+          setGameStarted(false);
         }
       } finally {
-        if (!cancelled) {
+        if (activeRoomIdRef.current === normalizedRoomId && !silent) {
           setIsLoading(false);
+        }
+        isFetchingRoomRef.current = false;
+      }
+    },
+    [roomId]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function bootstrapInitialRoom() {
+      try {
+        await RoomApi.createRoom(initialRoomIdRef.current);
+      } catch (error) {
+        consoleLogger.error("Unable to bootstrap initial room", error);
+      } finally {
+        if (!cancelled) {
+          setInitialRoomBootstrapped(true);
         }
       }
     }
 
-    loadRoomState();
+    bootstrapInitialRoom();
 
     return () => {
       cancelled = true;
     };
-  }, [roomId, playerColors]);
+  }, []);
+
+  useEffect(() => {
+    if (!roomId) {
+      return;
+    }
+
+    if (
+      roomId === initialRoomIdRef.current &&
+      initialRoomBootstrapped === false
+    ) {
+      return;
+    }
+
+    loadRoomState(roomId, { silent: false });
+  }, [roomId, loadRoomState, initialRoomBootstrapped]);
+
+  useEffect(() => {
+    if (!roomId) {
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      loadRoomState(roomId, { silent: true });
+    }, 4000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [roomId, loadRoomState]);
 
   const handleStartGame = async () => {
     try {
@@ -137,6 +245,12 @@ export function App() {
           : null,
       });
       setGameStarted(true);
+      setRoomState((prev) => ({
+        ...prev,
+        canAddPlayer: false,
+        canStartGame: false,
+      }));
+      loadRoomState(roomId, { silent: true });
     } catch (error) {
       consoleLogger.error("Unable to start Skyjo game", error);
       setLogEntries([]);

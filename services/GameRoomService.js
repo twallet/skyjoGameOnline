@@ -6,6 +6,18 @@ import { consoleLogger, resolveLogger, noopLogger } from "../utils/logger.js";
  */
 export class GameRoomService {
   static #registry = new Map();
+  static peek(roomId) {
+    if (typeof roomId !== "string") {
+      return null;
+    }
+
+    const trimmed = roomId.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    return GameRoomService.#registry.get(trimmed) ?? null;
+  }
 
   /**
    * Retrieve an existing room or create a new one for the provided identifier.
@@ -74,12 +86,14 @@ export class GameRoomService {
   #playerColors;
   #roomId;
   #logger;
+  #lastSnapshot = null;
 
   constructor(game, playerColors = [], roomId = null, logger = noopLogger) {
     this.#logger = resolveLogger(logger);
     this.#session = new GameSession(game, this.#logger);
     this.#playerColors = Array.isArray(playerColors) ? [...playerColors] : [];
     this.#roomId = roomId ?? null;
+    this.#lastSnapshot = null;
     this.#logger.info(
       `GameRoomService: initialized room '${this.#roomId ?? "unknown"}'`
     );
@@ -99,6 +113,10 @@ export class GameRoomService {
    * @returns {string[]}
    */
   addPlayer(rawName) {
+    if (this.#lastSnapshot) {
+      throw new Error("Cannot add players after the game has started.");
+    }
+
     this.#playerNames = this.#session.addPlayer(this.#playerNames, rawName);
     const latestName = this.#playerNames[this.#playerNames.length - 1];
     this.#logger.info(
@@ -108,10 +126,16 @@ export class GameRoomService {
   }
 
   canAddPlayer() {
+    if (this.#lastSnapshot) {
+      return false;
+    }
     return this.#session.canAddPlayer(this.#playerNames.length);
   }
 
   canStartGame() {
+    if (this.#lastSnapshot) {
+      return false;
+    }
     return this.#session.canStartGame(this.#playerNames.length);
   }
 
@@ -120,15 +144,26 @@ export class GameRoomService {
    * @returns {{ players: import("../model/player.js").Player[], logEntries: string[], deck: { size: number, topCard: { value: string | number, image: string, visible: boolean } | null } }}
    */
   startGame() {
+    if (this.#lastSnapshot) {
+      throw new Error("Game has already started for this room.");
+    }
+
     this.#logger.info(
       `GameRoomService: starting game for room '${this.#roomId}'`
     );
-    return this.#session.start(this.#playerNames, this.#playerColors);
+    const snapshot = this.#session.start(this.#playerNames, this.#playerColors);
+    this.#lastSnapshot = snapshot;
+    return snapshot;
+  }
+
+  getSnapshot() {
+    return this.#lastSnapshot;
   }
 
   resetRoom() {
     this.#session.reset();
     this.#playerNames = [];
+    this.#lastSnapshot = null;
     this.#logger.info(`GameRoomService: room '${this.#roomId}' reset`);
   }
 }

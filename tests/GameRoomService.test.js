@@ -86,12 +86,33 @@ describe("GameRoomService", () => {
 
     expect(snapshot.players).toHaveLength(2);
     expect(snapshot.logEntries.length).toBeGreaterThanOrEqual(4);
+    expect(service.canAddPlayer()).toBe(false);
+    expect(service.canStartGame()).toBe(false);
+    expect(service.getSnapshot()).toBe(snapshot);
 
     service.resetRoom();
     expect(service.playerNames).toEqual([]);
     expect(service.canStartGame()).toBe(false);
+    expect(service.canAddPlayer()).toBe(true);
+    expect(service.getSnapshot()).toBe(null);
     expect(GameRoomService.remove("room-3")).toBe(true);
     expect(GameRoomService.remove("room-3")).toBe(false);
     expect(logger.info).toHaveBeenCalled();
+  });
+
+  it("prevents adding players once the game has started", () => {
+    const logger = createTestLogger();
+    const service = GameRoomService.getOrCreate("room-4", skyjo, [], logger);
+    service.addPlayer("Alice");
+    service.addPlayer("Bob");
+
+    service.startGame();
+
+    expect(() => service.addPlayer("Charlie")).toThrow(
+      "Cannot add players after the game has started."
+    );
+    expect(() => service.startGame()).toThrow(
+      "Game has already started for this room."
+    );
   });
 });

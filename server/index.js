@@ -56,6 +56,10 @@ function resolveRoom(roomId) {
   );
 }
 
+function findRoom(roomId) {
+  return GameRoomService.peek(roomId);
+}
+
 app.post("/rooms", (req, res) => {
   const roomId = (req.body?.roomId ?? "").trim().toUpperCase();
   const finalId = roomId || generateRoomId();
@@ -109,19 +113,20 @@ app.post("/rooms/:roomId/reset", (req, res) => {
 
 app.get("/rooms/:roomId", (req, res) => {
   const { roomId } = req.params;
+  const room = findRoom(roomId);
 
-  if (
-    !GameRoomService.getOrCreate(roomId, skyjo, playerColors, consoleLogger)
-  ) {
+  if (!room) {
     return res.status(404).json({ error: "Room not found." });
   }
 
-  const room = resolveRoom(roomId);
+  const snapshot = room.getSnapshot();
   return res.status(200).json({
     roomId: room.roomId ?? roomId,
     players: room.playerNames,
     canAddPlayer: room.canAddPlayer(),
     canStartGame: room.canStartGame(),
+    gameStarted: Boolean(snapshot),
+    snapshot: snapshot ? serializeSnapshot(snapshot) : null,
   });
 });
 
