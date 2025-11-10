@@ -1,111 +1,144 @@
 import React from "https://esm.sh/react@18?dev";
 
 export function GamePlayView({ activePlayers, logEntries, deck }) {
-  const seatCoordinates = {
-    "top-left": { row: 1, col: 1 },
-    "top-center": { row: 1, col: 2 },
-    "top-right": { row: 1, col: 3 },
-    "middle-left": { row: 2, col: 1 },
-    "middle-right": { row: 2, col: 3 },
-    "bottom-left": { row: 3, col: 1 },
-    "bottom-center": { row: 3, col: 2 },
-    "bottom-right": { row: 3, col: 3 },
-    "extra-bottom-left": { row: 4, col: 1 },
-    "extra-bottom-center": { row: 4, col: 2 },
-    "extra-bottom-right": { row: 4, col: 3 },
-  };
-
-  const layoutsByCount = {
-    0: [],
-    1: ["middle-left"],
-    2: ["middle-left", "middle-right"],
-    3: ["top-center", "bottom-left", "bottom-right"],
-    4: ["top-center", "bottom-left", "bottom-right", "extra-bottom-center"],
-    5: [
-      "top-left",
-      "bottom-left",
-      "bottom-right",
-      "extra-bottom-center",
-      "top-right",
-    ],
-    6: [
-      "top-left",
-      "bottom-left",
-      "bottom-right",
-      "extra-bottom-center",
-      "top-right",
-      "top-center",
-    ],
-    7: [
-      "top-left",
-      "bottom-left",
-      "bottom-right",
-      "extra-bottom-center",
-      "top-right",
-      "top-center",
-      "middle-left",
-    ],
-    8: [
-      "top-left",
-      "bottom-left",
-      "bottom-right",
-      "extra-bottom-center",
-      "top-right",
-      "top-center",
-      "middle-left",
-      "middle-right",
-    ],
-  };
-
-  const deckPositionByCount = {
-    0: { row: 2, col: 2 },
-    1: { row: 2, col: 2 },
-    2: { row: 2, col: 2 },
-    3: { row: 3, col: 2 },
-    4: { row: 3, col: 2 },
-    5: { row: 3, col: 2 },
-    6: { row: 3, col: 2 },
-    7: { row: 3, col: 2 },
-    8: { row: 3, col: 2 },
+  const layouts = {
+    0: {
+      columns: 3,
+      rows: 1,
+      deck: { rowStart: 1, rowEnd: 2, colStart: 2, colEnd: 3 },
+      seats: [],
+    },
+    1: {
+      columns: 3,
+      rows: 1,
+      deck: { rowStart: 1, rowEnd: 2, colStart: 2, colEnd: 3 },
+      seats: [{ row: 1, col: 1 }],
+    },
+    2: {
+      columns: 3,
+      rows: 1,
+      deck: { rowStart: 1, rowEnd: 2, colStart: 2, colEnd: 3 },
+      seats: [
+        { row: 1, col: 1 },
+        { row: 1, col: 3 },
+      ],
+    },
+    3: {
+      columns: 3,
+      rows: 2,
+      deck: { rowStart: 1, rowEnd: 2, colStart: 2, colEnd: 3 },
+      seats: [
+        { row: 1, col: 1 },
+        { row: 1, col: 3 },
+        { row: 2, col: 2 },
+      ],
+    },
+    4: {
+      columns: 3,
+      rows: 3,
+      deck: { rowStart: 2, rowEnd: 3, colStart: 2, colEnd: 3 },
+      seats: [
+        { row: 2, col: 1 },
+        { row: 1, col: 2 },
+        { row: 2, col: 3 },
+        { row: 3, col: 2 },
+      ],
+    },
+    5: {
+      columns: 4,
+      rows: 3,
+      deck: { rowStart: 2, rowEnd: 3, colStart: 2, colEnd: 4 },
+      seats: [
+        { row: 2, col: 1 },
+        { row: 1, col: 2 },
+        { row: 1, col: 3 },
+        { row: 2, col: 4 },
+        { row: 3, col: 2 },
+      ],
+    },
+    6: {
+      columns: 4,
+      rows: 3,
+      deck: { rowStart: 2, rowEnd: 3, colStart: 2, colEnd: 4 },
+      seats: [
+        { row: 2, col: 1 },
+        { row: 1, col: 2 },
+        { row: 1, col: 3 },
+        { row: 2, col: 4 },
+        { row: 3, col: 2 },
+        { row: 3, col: 3 },
+      ],
+    },
+    7: {
+      columns: 4,
+      rows: 4,
+      deck: { rowStart: 2, rowEnd: 4, colStart: 2, colEnd: 4 },
+      seats: [
+        { row: 2, col: 1 },
+        { row: 1, col: 2 },
+        { row: 1, col: 3 },
+        { row: 2, col: 4 },
+        { row: 4, col: 2 },
+        { row: 4, col: 3 },
+        { row: 3, col: 1 },
+      ],
+    },
+    8: {
+      columns: 4,
+      rows: 4,
+      deck: { rowStart: 2, rowEnd: 4, colStart: 2, colEnd: 4 },
+      seats: [
+        { row: 2, col: 1 },
+        { row: 1, col: 2 },
+        { row: 1, col: 3 },
+        { row: 2, col: 4 },
+        { row: 4, col: 2 },
+        { row: 4, col: 3 },
+        { row: 3, col: 1 },
+        { row: 3, col: 4 },
+      ],
+    },
   };
 
   const playerCount = activePlayers.length;
-  const playerLayout =
-    layoutsByCount[playerCount] ?? layoutsByCount[Math.min(playerCount, 8)];
-  const fallbackSeat = "extra-bottom-right";
+  const layout = layouts[playerCount] ?? layouts[Math.min(playerCount, 8)];
 
   const gridItems = [];
 
   if (deck) {
-    const deckPosition =
-      deckPositionByCount[playerCount] ?? deckPositionByCount[8];
     gridItems.push({
       type: "deck",
       key: "deck",
-      row: deckPosition.row,
-      col: deckPosition.col,
+      rowStart: layout.deck.rowStart,
+      rowEnd: layout.deck.rowEnd,
+      colStart: layout.deck.colStart,
+      colEnd: layout.deck.colEnd,
     });
   }
 
   activePlayers.forEach((player, index) => {
-    const seatKey = playerLayout[index] ?? fallbackSeat;
-    const seat = seatCoordinates[seatKey] ?? seatCoordinates["bottom-center"];
+    const seat = layout.seats[index] ?? layout.seats[layout.seats.length - 1];
     gridItems.push({
       type: "player",
       key: `player-${player.name}`,
       player,
-      row: seat.row,
-      col: seat.col,
+      rowStart: seat.row,
+      rowEnd: seat.row + 1,
+      colStart: seat.col,
+      colEnd: seat.col + 1,
     });
   });
 
   const maxRow =
-    gridItems.reduce((largest, item) => Math.max(largest, item.row), 1) || 1;
+    gridItems.reduce(
+      (largest, item) => Math.max(largest, item.rowEnd - 1),
+      1
+    ) || 1;
 
   const gridListStyle = {
     display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    gridTemplateRows: `repeat(${maxRow}, auto)`,
+    gridTemplateColumns: `repeat(${layout.columns}, minmax(0, 1fr))`,
+    gridTemplateRows: `repeat(${Math.max(maxRow, layout.rows)}, auto)`,
     gap: "0.75rem",
     justifyItems: "stretch",
     alignItems: "center",
@@ -114,8 +147,8 @@ export function GamePlayView({ activePlayers, logEntries, deck }) {
 
   const playerEntries = gridItems.map((item) => {
     const baseStyle = {
-      gridColumn: `${item.col}`,
-      gridRow: `${item.row}`,
+      gridColumn: `${item.colStart} / ${item.colEnd}`,
+      gridRow: `${item.rowStart} / ${item.rowEnd}`,
       justifySelf: "stretch",
     };
 
