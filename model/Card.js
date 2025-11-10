@@ -11,7 +11,7 @@ export class Card {
     Card.#validate(value, game);
 
     this.#value = value;
-    this.#visible = true;
+    this.#visible = false;
     this.#image = game.imageFor(value);
     const backImage =
       typeof game.backImage === "function" ? game.backImage() : game.backImage;
