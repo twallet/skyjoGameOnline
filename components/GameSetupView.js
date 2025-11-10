@@ -1,6 +1,12 @@
 import React from "https://esm.sh/react@18?dev";
 
 export function GameSetupView({
+  isLoading,
+  roomId,
+  roomIdInput,
+  onRoomIdInputChange,
+  onApplyRoomId,
+  onCreateRoom,
   playerNames,
   playerColors,
   newPlayerName,
@@ -45,6 +51,45 @@ export function GameSetupView({
     ),
     React.createElement(
       "section",
+      { className: "room" },
+      React.createElement("h2", null, "Room"),
+      React.createElement(
+        "p",
+        { className: "room__current" },
+        "Current room: ",
+        React.createElement("strong", null, roomId)
+      ),
+      React.createElement(
+        "div",
+        { className: "room__controls" },
+        React.createElement("input", {
+          type: "text",
+          placeholder: "Enter room id",
+          value: roomIdInput,
+          onChange: (event) => onRoomIdInputChange(event.target.value),
+        }),
+        React.createElement(
+          "button",
+          {
+            type: "button",
+            onClick: onApplyRoomId,
+            disabled: isLoading,
+          },
+          "Join"
+        ),
+        React.createElement(
+          "button",
+          {
+            type: "button",
+            onClick: onCreateRoom,
+            disabled: isLoading,
+          },
+          "New Room"
+        )
+      )
+    ),
+    React.createElement(
+      "section",
       { className: "players" },
       React.createElement("h2", null, "Players"),
       playerNames.length > 0
@@ -74,13 +119,14 @@ export function GameSetupView({
           placeholder: "My name",
           value: newPlayerName,
           onChange: (event) => onNewPlayerNameChange(event.target.value),
+          disabled: isLoading,
         }),
         React.createElement(
           "button",
           {
             type: "button",
             onClick: onAddPlayer,
-            disabled: !canAddPlayer,
+            disabled: !canAddPlayer || isLoading,
           },
           "Play"
         )

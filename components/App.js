@@ -1,12 +1,14 @@
 import React, {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "https://esm.sh/react@18?dev";
 
 import { Game } from "../model/game.js";
 import { GameRoomService } from "../services/GameRoomService.js";
 import { consoleLogger } from "../utils/logger.js";
+import { generateRoomId } from "../utils/id.js";
 import { GamePlayView } from "./GamePlayView.js";
 import { GameSetupView } from "./GameSetupView.js";
 
@@ -45,34 +47,107 @@ export function App() {
       return `hsl(${hue}, 70%, 85%)`;
     });
   }, []);
-  const gameRoom = useMemo(
-    () =>
-      GameRoomService.getOrCreate(
-        "local-room",
-        skyjo,
-        playerColors,
-        consoleLogger
-      ),
-    [playerColors]
-  );
+  const initialRoomIdRef = useRef(generateRoomId());
+  const [roomId, setRoomId] = useState(initialRoomIdRef.current);
+  const [roomIdInput, setRoomIdInput] = useState(initialRoomIdRef.current);
+  const [roomState, setRoomState] = useState({
+    players: [],
+    canAddPlayer: true,
+    canStartGame: false,
+  });
+  const [gameRoom, setGameRoom] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [logEntries, setLogEntries] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
-  const [playerNames, setPlayerNames] = useState(gameRoom.playerNames);
+  const [playerNames, setPlayerNames] = useState([]);
   const [newPlayerName, setNewPlayerName] = useState("");
   const [gameStarted, setGameStarted] = useState(false);
   const [activePlayers, setActivePlayers] = useState([]);
   const [deckView, setDeckView] = useState(null);
+
+  useEffect(() => {
+    if (!roomId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadRoomState() {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/rooms/${roomId}`);
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.error ?? "Unable to load room state.");
+        }
+        const data = await response.json();
+        if (!cancelled) {
+          setRoomState(data);
+          setPlayerNames(data.players ?? []);
+          setLogEntries([]);
+          setActivePlayers([]);
+          setDeckView(null);
+          setGameStarted(false);
+          setNewPlayerName("");
+          const resolvedRoom = GameRoomService.getOrCreate(
+            data.roomId ?? roomId,
+            skyjo,
+            playerColors,
+            consoleLogger
+          );
+          setGameRoom(resolvedRoom);
+          setErrorMessage("");
+        }
+      } catch (error) {
+        if (!cancelled) {
+          consoleLogger.error("Failed to load room state", error);
+          setErrorMessage(
+            error instanceof Error ? error.message : String(error)
+          );
+          setRoomState({
+            players: [],
+            canAddPlayer: true,
+            canStartGame: false,
+          });
+          setPlayerNames([]);
+          setGameRoom(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadRoomState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [roomId, playerColors]);
+
   useEffect(() => {
     return () => {
-      gameRoom.resetRoom();
-      GameRoomService.remove("local-room");
+      if (gameRoom) {
+        gameRoom.resetRoom();
+        GameRoomService.remove(roomId);
+      }
     };
-  }, [gameRoom]);
+  }, [gameRoom, roomId]);
 
-  const handleStartGame = () => {
+  const handleStartGame = async () => {
     try {
-      const { players, logEntries: entries, deck } = gameRoom.startGame();
+      const response = await fetch(`/rooms/${roomId}/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error ?? "Unable to start Skyjo game.");
+      }
+      const { players, logEntries: entries, deck } = await response.json();
+
       setErrorMessage("");
       setLogEntries(entries);
       setActivePlayers(players);
@@ -90,9 +165,7 @@ export function App() {
       });
       setGameStarted(true);
     } catch (error) {
-      console.error("Unable to start Skyjo game", error);
-      gameRoom.resetRoom();
-      setPlayerNames(gameRoom.playerNames);
+      consoleLogger.error("Unable to start Skyjo game", error);
       setLogEntries([]);
       setErrorMessage(error instanceof Error ? error.message : String(error));
       setActivePlayers([]);
@@ -101,10 +174,25 @@ export function App() {
     }
   };
 
-  const handleAddPlayer = () => {
+  const handleAddPlayer = async () => {
     try {
-      const updatedNames = gameRoom.addPlayer(newPlayerName);
+      const response = await fetch(`/rooms/${roomId}/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newPlayerName }),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error ?? "Unable to join room.");
+      }
+      const { players: updatedNames } = await response.json();
       setPlayerNames(updatedNames);
+      setRoomState((prev) => ({
+        ...prev,
+        players: updatedNames,
+        canAddPlayer: updatedNames.length < skyjo.maxPlayers,
+        canStartGame: updatedNames.length >= skyjo.minPlayers,
+      }));
       setNewPlayerName("");
       setErrorMessage("");
     } catch (error) {
@@ -116,6 +204,42 @@ export function App() {
     setNewPlayerName(value);
   };
 
+  const handleRoomIdInputChange = (value) => {
+    setRoomIdInput(value.toUpperCase());
+  };
+
+  const handleApplyRoomId = () => {
+    const normalized = roomIdInput.trim().toUpperCase();
+    setRoomIdInput(normalized);
+    if (!normalized) {
+      setErrorMessage("Room ID must not be empty.");
+      return;
+    }
+
+    if (normalized === roomId) {
+      setErrorMessage("");
+      return;
+    }
+
+    setErrorMessage("");
+    if (gameRoom) {
+      gameRoom.resetRoom();
+      GameRoomService.remove(roomId);
+    }
+    setRoomId(normalized);
+  };
+
+  const handleCreateRoom = () => {
+    const newId = generateRoomId();
+    setErrorMessage("");
+    if (gameRoom) {
+      gameRoom.resetRoom();
+      GameRoomService.remove(roomId);
+    }
+    setRoomId(newId);
+    setRoomIdInput(newId);
+  };
+
   if (gameStarted) {
     return React.createElement(GamePlayView, {
       activePlayers,
@@ -125,14 +249,20 @@ export function App() {
   }
 
   return React.createElement(GameSetupView, {
+    isLoading,
+    roomId,
+    roomIdInput,
+    onRoomIdInputChange: handleRoomIdInputChange,
+    onApplyRoomId: handleApplyRoomId,
+    onCreateRoom: handleCreateRoom,
     playerNames,
     playerColors,
     newPlayerName,
     onNewPlayerNameChange: handleNewPlayerNameChange,
     onAddPlayer: handleAddPlayer,
     onStartGame: handleStartGame,
-    canStartGame: gameRoom.canStartGame(),
-    canAddPlayer: gameRoom.canAddPlayer(),
+    canStartGame: roomState.canStartGame,
+    canAddPlayer: roomState.canAddPlayer,
     errorMessage,
   });
 }

@@ -6,6 +6,7 @@
   },
   "scripts": {
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "server": "node ./server/index.js",
     "prepare": "husky"
   }
 }
