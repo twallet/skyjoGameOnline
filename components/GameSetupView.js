@@ -17,25 +17,31 @@ export function GameSetupView({
     React.createElement(
       "section",
       { className: "hero" },
-      React.createElement("img", {
-        src: "./images/skyjo_box.webp",
-        alt: "Skyjo game box",
-        className: "hero-image",
-      }),
+      React.createElement("h2", { className: "hero-title" }, "Game"),
       React.createElement(
-        "button",
-        {
-          type: "button",
-          onClick: onStartGame,
-          disabled: !canStartGame,
-        },
-        "Start"
-      ),
-      React.createElement("img", {
-        src: "./images/deck.jpg",
-        alt: "Deck of Skyjo cards",
-        className: "hero-image",
-      })
+        "div",
+        { className: "hero-gallery" },
+        React.createElement("img", {
+          src: "./images/skyjo_box.webp",
+          alt: "Skyjo game box",
+          className: "hero-image",
+        }),
+        React.createElement(
+          "button",
+          {
+            type: "button",
+            className: "deal-button",
+            onClick: onStartGame,
+            disabled: !canStartGame,
+          },
+          "Deal"
+        ),
+        React.createElement("img", {
+          src: "./images/deck.jpg",
+          alt: "Deck of Skyjo cards",
+          className: "hero-image",
+        })
+      )
     ),
     React.createElement(
       "section",
@@ -76,7 +82,7 @@ export function GameSetupView({
             onClick: onAddPlayer,
             disabled: !canAddPlayer,
           },
-          "New player"
+          "Add"
         )
       )
     ),

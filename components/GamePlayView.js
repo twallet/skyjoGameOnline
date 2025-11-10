@@ -7,7 +7,7 @@ export function GamePlayView({ activePlayers, logEntries }) {
     React.createElement(
       "section",
       { className: "players" },
-      React.createElement("h2", null, "Players"),
+      React.createElement("h2", null, "Skyjo"),
       React.createElement(
         "ul",
         null,
@@ -29,11 +29,7 @@ export function GamePlayView({ activePlayers, logEntries }) {
             React.createElement(
               "div",
               { className: "player-entry__hand" },
-              React.createElement(
-                "span",
-                { className: "player-entry__hand-summary" },
-                `${player.hand.size} cards`
-              ),
+
               player.hand.cardsMatrix().map((row, rowIndex) =>
                 React.createElement(
                   "div",
@@ -59,7 +55,7 @@ export function GamePlayView({ activePlayers, logEntries }) {
     React.createElement(
       "section",
       { className: "log" },
-      React.createElement("h2", null, "Game"),
+      React.createElement("h2", null, "Deck"),
       React.createElement(
         "ul",
         null,
