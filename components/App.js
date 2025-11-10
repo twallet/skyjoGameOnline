@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from "https://esm.sh/react@18?dev";
 
-import { Dealer } from "../model/dealer.js";
 import { Game } from "../model/game.js";
-import { Player } from "../model/player.js";
+import { GameSession } from "../model/gameSession.js";
 import { GamePlayView } from "./GamePlayView.js";
 import { GameSetupView } from "./GameSetupView.js";
 
@@ -42,6 +41,7 @@ export function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [activePlayers, setActivePlayers] = useState([]);
   const [deckView, setDeckView] = useState(null);
+  const gameSession = useMemo(() => new GameSession(skyjo), []);
 
   const playerColors = useMemo(
     () =>
@@ -53,57 +53,31 @@ export function App() {
   );
 
   const handleStartGame = () => {
-    if (playerNames.length < skyjo.minPlayers) {
-      setLogEntries([]);
-      setErrorMessage(
-        `Add at least ${skyjo.minPlayers} players before starting the game.`
-      );
-      return;
-    }
-
-    setErrorMessage("");
-
     try {
-      const players = playerNames.map(
-        (name, index) =>
-          new Player(name, skyjo, playerColors[index % playerColors.length])
-      );
-      const dealer = new Dealer(skyjo, players);
-
-      dealer.shuffle();
-      dealer.deal();
-      dealer.deck.showFirstCard();
-
-      const deckCards = dealer.deck.cardsDeck;
-      const firstCard = deckCards.length > 0 ? deckCards[0] : null;
-
-      const entries = players.map(
-        (player) => `${player.name}: ${player.hand.show()}`
-      );
-
-      setLogEntries([
-        `Game: ${skyjo.name}`,
-        `Players: ${players.map((player) => player.name).join(", ")}`,
-        ...entries,
-        `${dealer.deck.size()} cards in deck.`,
-      ]);
+      const {
+        players,
+        logEntries: entries,
+        deck,
+      } = gameSession.start(playerNames, playerColors);
+      setErrorMessage("");
+      setLogEntries(entries);
       setActivePlayers(players);
       setDeckView({
         baseImage: "images/deck.png",
-        firstCard: firstCard
+        firstCard: deck.topCard
           ? {
-              image: firstCard.image,
-              visible: firstCard.value !== "X",
-              alt:
-                firstCard.value !== "X"
-                  ? `Top card ${firstCard.value}`
-                  : "Hidden top card",
+              image: deck.topCard.image,
+              visible: deck.topCard.visible,
+              alt: deck.topCard.visible
+                ? `Top card ${deck.topCard.value}`
+                : "Hidden top card",
             }
           : null,
       });
       setGameStarted(true);
     } catch (error) {
       console.error("Unable to start Skyjo game", error);
+      gameSession.reset();
       setLogEntries([]);
       setErrorMessage(error instanceof Error ? error.message : String(error));
       setActivePlayers([]);
@@ -113,33 +87,14 @@ export function App() {
   };
 
   const handleAddPlayer = () => {
-    const trimmedName = newPlayerName.trim();
-
-    if (playerNames.length >= skyjo.maxPlayers) {
-      setErrorMessage(
-        `You cannot add more than ${skyjo.maxPlayers} players to the game.`
-      );
-      return;
+    try {
+      const updatedNames = gameSession.addPlayer(playerNames, newPlayerName);
+      setPlayerNames(updatedNames);
+      setNewPlayerName("");
+      setErrorMessage("");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : String(error));
     }
-
-    if (!trimmedName) {
-      setErrorMessage("Player name must not be empty.");
-      return;
-    }
-
-    if (trimmedName.length > 15) {
-      setErrorMessage("Player name must not exceed 15 characters.");
-      return;
-    }
-
-    if (playerNames.includes(trimmedName)) {
-      setErrorMessage("Player name must be unique.");
-      return;
-    }
-
-    setPlayerNames([...playerNames, trimmedName]);
-    setNewPlayerName("");
-    setErrorMessage("");
   };
 
   const handleNewPlayerNameChange = (value) => {
@@ -161,8 +116,8 @@ export function App() {
     onNewPlayerNameChange: handleNewPlayerNameChange,
     onAddPlayer: handleAddPlayer,
     onStartGame: handleStartGame,
-    canStartGame: playerNames.length >= skyjo.minPlayers,
-    canAddPlayer: playerNames.length < skyjo.maxPlayers,
+    canStartGame: gameSession.canStartGame(playerNames.length),
+    canAddPlayer: gameSession.canAddPlayer(playerNames.length),
     errorMessage,
   });
 }
