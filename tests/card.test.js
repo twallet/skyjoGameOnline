@@ -48,7 +48,7 @@ describe("Card", () => {
 
     card.visible = true;
 
-    expect(card.image).toBe("images/test-theme-0.jpg");
+    expect(card.image).toBe("images/5.jpg");
   });
 
   test("supports legacy games exposing back image as a function", () => {
@@ -57,7 +57,7 @@ describe("Card", () => {
 
     expect(card.image).toBe("images/back.jpg");
     card.visible = true;
-    expect(card.image).toBe("images/test-theme-1.jpg");
+    expect(card.image).toBe("images/10.jpg");
   });
 
   test("rejects non-boolean visibility assignments", () => {

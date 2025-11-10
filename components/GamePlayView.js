@@ -58,7 +58,7 @@ export function GamePlayView({ activePlayers, logEntries }) {
       React.createElement("h2", null, "Deck"),
       React.createElement("img", {
         className: "deck__image",
-        src: "images/deck.jpg",
+        src: "images/deck.png",
         alt: "Deck of cards",
       })
     ),

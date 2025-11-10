@@ -22,7 +22,7 @@ export function GameSetupView({
         "div",
         { className: "hero-gallery" },
         React.createElement("img", {
-          src: "./images/skyjo_box.webp",
+          src: "./images/skyjoBox.jpg",
           alt: "Skyjo game box",
           className: "hero-image",
         }),
