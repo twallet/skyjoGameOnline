@@ -1,4 +1,4 @@
-import React, { useState } from "https://esm.sh/react@18?dev";
+import React, { useMemo, useState } from "https://esm.sh/react@18?dev";
 import { createRoot } from "https://esm.sh/react-dom@18/client?dev";
 
 import { Game } from "./model/game.js";
@@ -20,6 +20,15 @@ function App() {
   const [errorMessage, setErrorMessage] = useState("");
   const [playerNames, setPlayerNames] = useState([]);
   const [newPlayerName, setNewPlayerName] = useState("");
+  const [gameStarted, setGameStarted] = useState(false);
+  const playerColors = useMemo(
+    () =>
+      Array.from({ length: skyjo.maxPlayers }, (_, index) => {
+        const hue = Math.round((index * 360) / skyjo.maxPlayers);
+        return `hsl(${hue}, 70%, 85%)`;
+      }),
+    []
+  );
 
   const handleStartGame = () => {
     if (playerNames.length < skyjo.minPlayers) {
@@ -49,10 +58,12 @@ function App() {
         ...entries,
         `${dealer.deck.size()} cards in deck.`,
       ]);
+      setGameStarted(true);
     } catch (error) {
       console.error("Unable to start Skyjo game", error);
       setLogEntries([]);
       setErrorMessage(error instanceof Error ? error.message : String(error));
+      setGameStarted(false);
     }
   };
 
@@ -81,26 +92,74 @@ function App() {
     setErrorMessage("");
   };
 
+  if (gameStarted) {
+    return React.createElement(
+      "main",
+      { className: "app-container" },
+      React.createElement(
+        "section",
+        { className: "log" },
+        React.createElement("h2", null, "Game"),
+        React.createElement(
+          "ul",
+          null,
+          logEntries.map((entry, index) =>
+            React.createElement("li", { key: index }, entry)
+          )
+        )
+      )
+    );
+  }
+
   return React.createElement(
     "main",
     { className: "app-container" },
-    React.createElement("img", {
-      src: "./images/skyjo_box.webp",
-      alt: "Skyjo game box",
-      className: "skyjo-image",
-      style: { width: "10%", height: "auto" },
-    }),
+    React.createElement(
+      "section",
+      { className: "hero" },
+      React.createElement("img", {
+        src: "./images/skyjo_box.webp",
+        alt: "Skyjo game box",
+        className: "hero-image",
+      }),
+      React.createElement(
+        "button",
+        {
+          type: "button",
+          onClick: handleStartGame,
+          disabled: playerNames.length < skyjo.minPlayers,
+        },
+        "Start"
+      ),
+      React.createElement("img", {
+        src: "./images/deck.jpg",
+        alt: "Deck of Skyjo cards",
+        className: "hero-image",
+      })
+    ),
     React.createElement(
       "section",
       { className: "players" },
-      React.createElement("h2", null, `Players: ${playerNames.length}`),
-      React.createElement(
-        "p",
-        null,
-        playerNames.length > 0
-          ? `${playerNames.join(", ")}`
-          : "No players added yet."
-      ),
+      React.createElement("h2", null, `Players`),
+      playerNames.length > 0
+        ? React.createElement(
+            "ul",
+            null,
+            playerNames.map((name, index) =>
+              React.createElement(
+                "li",
+                {
+                  key: name,
+                  className: "player-entry",
+                  style: {
+                    backgroundColor: playerColors[index % playerColors.length],
+                  },
+                },
+                `${name}`
+              )
+            )
+          )
+        : React.createElement("p", null, "No players added yet."),
       React.createElement(
         "div",
         { className: "new-player-controls" },
@@ -121,34 +180,11 @@ function App() {
         )
       )
     ),
-    React.createElement(
-      "button",
-      {
-        type: "button",
-        onClick: handleStartGame,
-        disabled: playerNames.length < skyjo.minPlayers,
-      },
-      "Start"
-    ),
     errorMessage
       ? React.createElement(
           "p",
           { className: "error", role: "alert" },
           errorMessage
-        )
-      : null,
-    logEntries.length > 0
-      ? React.createElement(
-          "section",
-          { className: "log" },
-          React.createElement("h2", null, "Game"),
-          React.createElement(
-            "ul",
-            null,
-            logEntries.map((entry, index) =>
-              React.createElement("li", { key: index }, entry)
-            )
-          )
         )
       : null
   );
