@@ -6,9 +6,9 @@ import React, {
 } from "https://esm.sh/react@18?dev";
 
 import { Game } from "../model/game.js";
-import { GameRoomService } from "../services/GameRoomService.js";
 import { consoleLogger } from "../utils/logger.js";
 import { generateRoomId } from "../utils/id.js";
+import { RoomApi } from "../services/RoomApi.js";
 import { GamePlayView } from "./GamePlayView.js";
 import { GameSetupView } from "./GameSetupView.js";
 
@@ -55,7 +55,6 @@ export function App() {
     canAddPlayer: true,
     canStartGame: false,
   });
-  const [gameRoom, setGameRoom] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const [logEntries, setLogEntries] = useState([]);
@@ -76,12 +75,7 @@ export function App() {
     async function loadRoomState() {
       setIsLoading(true);
       try {
-        const response = await fetch(`/rooms/${roomId}`);
-        if (!response.ok) {
-          const payload = await response.json().catch(() => ({}));
-          throw new Error(payload.error ?? "Unable to load room state.");
-        }
-        const data = await response.json();
+        const data = await RoomApi.getRoom(roomId);
         if (!cancelled) {
           setRoomState(data);
           setPlayerNames(data.players ?? []);
@@ -90,13 +84,6 @@ export function App() {
           setDeckView(null);
           setGameStarted(false);
           setNewPlayerName("");
-          const resolvedRoom = GameRoomService.getOrCreate(
-            data.roomId ?? roomId,
-            skyjo,
-            playerColors,
-            consoleLogger
-          );
-          setGameRoom(resolvedRoom);
           setErrorMessage("");
         }
       } catch (error) {
@@ -111,7 +98,6 @@ export function App() {
             canStartGame: false,
           });
           setPlayerNames([]);
-          setGameRoom(null);
         }
       } finally {
         if (!cancelled) {
@@ -127,26 +113,13 @@ export function App() {
     };
   }, [roomId, playerColors]);
 
-  useEffect(() => {
-    return () => {
-      if (gameRoom) {
-        gameRoom.resetRoom();
-        GameRoomService.remove(roomId);
-      }
-    };
-  }, [gameRoom, roomId]);
-
   const handleStartGame = async () => {
     try {
-      const response = await fetch(`/rooms/${roomId}/start`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error ?? "Unable to start Skyjo game.");
-      }
-      const { players, logEntries: entries, deck } = await response.json();
+      const {
+        players,
+        logEntries: entries,
+        deck,
+      } = await RoomApi.startGame(roomId);
 
       setErrorMessage("");
       setLogEntries(entries);
@@ -176,16 +149,10 @@ export function App() {
 
   const handleAddPlayer = async () => {
     try {
-      const response = await fetch(`/rooms/${roomId}/join`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newPlayerName }),
-      });
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error ?? "Unable to join room.");
-      }
-      const { players: updatedNames } = await response.json();
+      const { players: updatedNames } = await RoomApi.joinRoom(
+        roomId,
+        newPlayerName
+      );
       setPlayerNames(updatedNames);
       setRoomState((prev) => ({
         ...prev,
@@ -222,22 +189,22 @@ export function App() {
     }
 
     setErrorMessage("");
-    if (gameRoom) {
-      gameRoom.resetRoom();
-      GameRoomService.remove(roomId);
-    }
     setRoomId(normalized);
   };
 
-  const handleCreateRoom = () => {
-    const newId = generateRoomId();
-    setErrorMessage("");
-    if (gameRoom) {
-      gameRoom.resetRoom();
-      GameRoomService.remove(roomId);
+  const handleCreateRoom = async () => {
+    setIsLoading(true);
+    try {
+      const { roomId: createdId = generateRoomId() } =
+        await RoomApi.createRoom();
+      setErrorMessage("");
+      setRoomId(createdId);
+      setRoomIdInput(createdId);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsLoading(false);
     }
-    setRoomId(newId);
-    setRoomIdInput(newId);
   };
 
   if (gameStarted) {

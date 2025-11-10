@@ -1,5 +1,5 @@
-import { Dealer } from "../model/dealer.js";
-import { Player } from "../model/player.js";
+import { Dealer } from "../../model/dealer.js";
+import { Player } from "../../model/player.js";
 import { SKYJO } from "../games/skyjo.js";
 
 /*

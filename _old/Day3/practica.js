@@ -1,6 +1,6 @@
-import { Game } from "../model/game.js";
-import { Player } from "../model/player.js";
-import { Dealer } from "../model/dealer.js";
+import { Game } from "../../model/game.js";
+import { Player } from "../../model/player.js";
+import { Dealer } from "../../model/dealer.js";
 
 const skyjo = new Game(
   "Skyjo",
