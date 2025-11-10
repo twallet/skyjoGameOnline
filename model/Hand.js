@@ -33,6 +33,22 @@ export class Hand {
     return `(${this.size} cards) ${matrix}`;
   }
 
+  // Provide card display data arranged according to the configured lines.
+  cardsMatrix() {
+    const rows = [];
+    for (let start = 0; start < this.#cards.length; start += this.#lines) {
+      const slice = this.#cards.slice(start, start + this.#lines);
+      rows.push(
+        slice.map((card) => ({
+          value: card.value,
+          image: card.image,
+        }))
+      );
+    }
+
+    return rows;
+  }
+
   // Getter exposing the current size of the hand.
   get size() {
     return this.#cards.length;

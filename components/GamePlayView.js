@@ -27,9 +27,30 @@ export function GamePlayView({ activePlayers, logEntries }) {
               player.name
             ),
             React.createElement(
-              "span",
+              "div",
               { className: "player-entry__hand" },
-              player.hand.show()
+              React.createElement(
+                "span",
+                { className: "player-entry__hand-summary" },
+                `${player.hand.size} cards`
+              ),
+              player.hand.cardsMatrix().map((row, rowIndex) =>
+                React.createElement(
+                  "div",
+                  {
+                    key: `row-${rowIndex}`,
+                    className: "player-entry__hand-row",
+                  },
+                  row.map((cardData, cardIndex) =>
+                    React.createElement("img", {
+                      key: `card-${rowIndex}-${cardIndex}`,
+                      className: "player-entry__card",
+                      src: cardData.image,
+                      alt: `${player.name} card ${cardData.value}`,
+                    })
+                  )
+                )
+              )
             )
           )
         )
