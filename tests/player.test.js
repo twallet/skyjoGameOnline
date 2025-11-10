@@ -4,9 +4,7 @@ import { Player } from "../model/player.js";
 
 const buildSampleGame = () => {
   const values = [-2, -1, 0, 1, 2, 3, 4, 5, 10];
-  const images = values.map(
-    (_, index) => `images/sample-theme-${index}.jpg`
-  );
+  const images = values.map((_, index) => `images/sample-theme-${index}.jpg`);
 
   return new Game(
     "Skyjo",

@@ -205,71 +205,59 @@ describe("Game", () => {
     ).toThrow("Card images paths must match the length of values");
   });
 
-  test.each([
-    null,
-    undefined,
-    "",
-    "   ",
-    "not-an-image.txt",
-    123,
-    {},
-    [],
-  ])("rejects invalid image entries %p", (invalidImage) => {
-    const expectedMessage =
-      typeof invalidImage !== "string"
-        ? "Card image path at index 0 must be a string"
-        : invalidImage.trim()
-        ? "Card image path at index 0 must point to a supported image file"
-        : "Card image path at index 0 must not be empty";
+  test.each([null, undefined, "", "   ", "not-an-image.txt", 123, {}, []])(
+    "rejects invalid image entries %p",
+    (invalidImage) => {
+      const expectedMessage =
+        typeof invalidImage !== "string"
+          ? "Card image path at index 0 must be a string"
+          : invalidImage.trim()
+            ? "Card image path at index 0 must point to a supported image file"
+            : "Card image path at index 0 must not be empty";
 
-    expect(
-      () =>
-        new Game(
-          "Skyjo",
-          [1],
-          [1],
-          [invalidImage],
-          sampleBackImage,
-          1,
-          1,
-          2,
-          4
-        )
-    ).toThrow(expectedMessage);
-  });
+      expect(
+        () =>
+          new Game(
+            "Skyjo",
+            [1],
+            [1],
+            [invalidImage],
+            sampleBackImage,
+            1,
+            1,
+            2,
+            4
+          )
+      ).toThrow(expectedMessage);
+    }
+  );
 
-  test.each([
-    null,
-    undefined,
-    "",
-    "   ",
-    "not-an-image.txt",
-    123,
-    {},
-    [],
-  ])("rejects invalid back image %p", (invalidBackImage) => {
-    const expectedMessage =
-      typeof invalidBackImage !== "string"
-        ? "Card back image path must be a string"
-        : invalidBackImage.trim()
-        ? "Card back image path must point to a supported image file"
-        : "Card back image path must not be empty";
+  test.each([null, undefined, "", "   ", "not-an-image.txt", 123, {}, []])(
+    "rejects invalid back image %p",
+    (invalidBackImage) => {
+      const expectedMessage =
+        typeof invalidBackImage !== "string"
+          ? "Card back image path must be a string"
+          : invalidBackImage.trim()
+            ? "Card back image path must point to a supported image file"
+            : "Card back image path must not be empty";
 
-    expect(
-      () =>
-        new Game(
-          "Skyjo",
-          [1],
-          [1],
-          ["images/theme-0.jpg"],
-          invalidBackImage,
-          1,
-          1,
-          2,
-          4
-        )
-    ).toThrow(expectedMessage);
-  });
+      expect(
+        () =>
+          new Game(
+            "Skyjo",
+            [1],
+            [1],
+            ["images/theme-0.jpg"],
+            invalidBackImage,
+            1,
+            1,
+            2,
+            4
+          )
+      ).toThrow(expectedMessage);
+    }
+  );
 
   test.each([0, -1, 1.5, "3", null, undefined])(
     "rejects invalid handsize %p",

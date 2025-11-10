@@ -3,9 +3,7 @@ import { Card } from "../model/card.js";
 
 const buildGame = () => {
   const values = [1, 2, 3, 4];
-  const images = values.map(
-    (_, index) => `images/test-theme-${index}.jpg`
-  );
+  const images = values.map((_, index) => `images/test-theme-${index}.jpg`);
 
   return {
     name: "Test Game",
