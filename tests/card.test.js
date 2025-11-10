@@ -1,7 +1,7 @@
 import { Card } from "../model/card.js";
 
 const buildGame = (values = [5, 10, -2]) => {
-  const images = values.map((_, index) => `images/test-theme-${index}.jpg`);
+  const images = ["images/5.jpg", "images/10.jpg", "images/minus2.jpg"];
   const back = "images/back.jpg";
 
   return {
