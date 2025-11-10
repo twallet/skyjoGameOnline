@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "https://esm.sh/react@18?dev";
 
 import { Game } from "../model/game.js";
-import { GameSession } from "../model/gameSession.js";
+import { GameRoomService } from "../services/GameRoomService.js";
 import { GamePlayView } from "./GamePlayView.js";
 import { GameSetupView } from "./GameSetupView.js";
 
@@ -34,15 +34,6 @@ const skyjo = new Game(
 );
 
 export function App() {
-  const [logEntries, setLogEntries] = useState([]);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [playerNames, setPlayerNames] = useState([]);
-  const [newPlayerName, setNewPlayerName] = useState("");
-  const [gameStarted, setGameStarted] = useState(false);
-  const [activePlayers, setActivePlayers] = useState([]);
-  const [deckView, setDeckView] = useState(null);
-  const gameSession = useMemo(() => new GameSession(skyjo), []);
-
   const playerColors = useMemo(
     () =>
       Array.from({ length: skyjo.maxPlayers }, (_, index) => {
@@ -51,14 +42,22 @@ export function App() {
       }),
     []
   );
+  const gameRoom = useMemo(
+    () => new GameRoomService(skyjo, playerColors),
+    [playerColors]
+  );
+
+  const [logEntries, setLogEntries] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [playerNames, setPlayerNames] = useState(gameRoom.playerNames);
+  const [newPlayerName, setNewPlayerName] = useState("");
+  const [gameStarted, setGameStarted] = useState(false);
+  const [activePlayers, setActivePlayers] = useState([]);
+  const [deckView, setDeckView] = useState(null);
 
   const handleStartGame = () => {
     try {
-      const {
-        players,
-        logEntries: entries,
-        deck,
-      } = gameSession.start(playerNames, playerColors);
+      const { players, logEntries: entries, deck } = gameRoom.startGame();
       setErrorMessage("");
       setLogEntries(entries);
       setActivePlayers(players);
@@ -77,7 +76,8 @@ export function App() {
       setGameStarted(true);
     } catch (error) {
       console.error("Unable to start Skyjo game", error);
-      gameSession.reset();
+      gameRoom.resetRoom();
+      setPlayerNames(gameRoom.playerNames);
       setLogEntries([]);
       setErrorMessage(error instanceof Error ? error.message : String(error));
       setActivePlayers([]);
@@ -88,7 +88,7 @@ export function App() {
 
   const handleAddPlayer = () => {
     try {
-      const updatedNames = gameSession.addPlayer(playerNames, newPlayerName);
+      const updatedNames = gameRoom.addPlayer(newPlayerName);
       setPlayerNames(updatedNames);
       setNewPlayerName("");
       setErrorMessage("");
@@ -116,8 +116,8 @@ export function App() {
     onNewPlayerNameChange: handleNewPlayerNameChange,
     onAddPlayer: handleAddPlayer,
     onStartGame: handleStartGame,
-    canStartGame: gameSession.canStartGame(playerNames.length),
-    canAddPlayer: gameSession.canAddPlayer(playerNames.length),
+    canStartGame: gameRoom.canStartGame(),
+    canAddPlayer: gameRoom.canAddPlayer(),
     errorMessage,
   });
 }
