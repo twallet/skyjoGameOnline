@@ -4,8 +4,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { act } from "react";
 
-import { App } from "../components/App.js";
-import { RoomApi } from "../services/RoomApi.js";
+import { App } from "../frontend/components/App.js";
+import { RoomApi } from "../frontend/services/RoomApi.js";
 
 const playerListResponse = (players = [], overrides = {}) => ({
   roomId: "TEST01",

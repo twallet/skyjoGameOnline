@@ -1,7 +1,7 @@
 import {
   buildDeckView,
   normalizePlayerSnapshots,
-} from "../components/appHelpers.js";
+} from "../frontend/components/appHelpers.js";
 
 describe("app helpers", () => {
   describe("buildDeckView", () => {
@@ -24,7 +24,7 @@ describe("app helpers", () => {
 
       expect(view).toEqual({
         size: 42,
-        baseImage: "images/deck.png",
+        baseImage: "./assets/images/deck.png",
         firstCard: {
           image: "top.png",
           visible: false,

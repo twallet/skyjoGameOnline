@@ -1,5 +1,5 @@
-import { Hand } from "../model/hand.js";
-import { Card } from "../model/card.js";
+import { Hand } from "../frontend/models/hand.js";
+import { Card } from "../frontend/models/card.js";
 
 const buildGame = () => {
   const values = [1, 2, 3, 4];

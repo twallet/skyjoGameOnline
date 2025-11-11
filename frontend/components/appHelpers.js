@@ -1,4 +1,4 @@
-const DECK_BASE_IMAGE = "images/deck.png";
+const DECK_BASE_IMAGE = "./assets/images/deck.png";
 
 export function buildDeckView(deckSnapshot) {
   if (!deckSnapshot) {

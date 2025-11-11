@@ -1,4 +1,4 @@
-import { GameSession } from "../model/gameSession.js";
+import { GameSession } from "../models/gameSession.js";
 import { consoleLogger, resolveLogger, noopLogger } from "../utils/logger.js";
 
 /**
@@ -169,7 +169,7 @@ export class GameRoomService {
 
   /**
    * Deal cards and return the session snapshot.
-   * @returns {{ players: import("../model/player.js").Player[], logEntries: string[], deck: { size: number, topCard: { value: string | number, image: string, visible: boolean } | null } }}
+   * @returns {{ players: import("../models/player.js").Player[], logEntries: string[], deck: { size: number, topCard: { value: string | number, image: string, visible: boolean } | null } }}
    */
   startGame() {
     if (this.#lastSnapshot) {

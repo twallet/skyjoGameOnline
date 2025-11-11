@@ -43,7 +43,7 @@ export function GameSetupView({
       "section",
       { className: "setup__panel" },
       React.createElement("img", {
-        src: "./images/box.png",
+        src: "./assets/images/box.png",
         alt: "Skyjo game box",
         className: "setup__hero",
       }),

@@ -2,10 +2,10 @@ import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { GameRoomService } from "../services/GameRoomService.js";
-import { Game } from "../model/game.js";
-import { consoleLogger, resolveLogger } from "../utils/logger.js";
-import { generateRoomId } from "../utils/id.js";
+import { GameRoomService } from "../frontend/services/GameRoomService.js";
+import { Game } from "../frontend/models/game.js";
+import { consoleLogger, resolveLogger } from "../frontend/utils/logger.js";
+import { generateRoomId } from "../frontend/utils/id.js";
 
 export function createSkyjoServer({ logger = consoleLogger } = {}) {
   const resolvedLogger = resolveLogger(logger);
@@ -21,23 +21,23 @@ export function createSkyjoServer({ logger = consoleLogger } = {}) {
     [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     [5, 10, 15, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10],
     [
-      "../images/minus2.jpg",
-      "../images/minus1.jpg",
-      "../images/0.jpg",
-      "../images/1.jpg",
-      "../images/2.jpg",
-      "../images/3.jpg",
-      "../images/4.jpg",
-      "../images/5.jpg",
-      "../images/6.jpg",
-      "../images/7.jpg",
-      "../images/8.jpg",
-      "../images/9.jpg",
-      "../images/10.jpg",
-      "../images/11.jpg",
-      "../images/12.jpg",
+      "./assets/images/minus2.jpg",
+      "./assets/images/minus1.jpg",
+      "./assets/images/0.jpg",
+      "./assets/images/1.jpg",
+      "./assets/images/2.jpg",
+      "./assets/images/3.jpg",
+      "./assets/images/4.jpg",
+      "./assets/images/5.jpg",
+      "./assets/images/6.jpg",
+      "./assets/images/7.jpg",
+      "./assets/images/8.jpg",
+      "./assets/images/9.jpg",
+      "./assets/images/10.jpg",
+      "./assets/images/11.jpg",
+      "./assets/images/12.jpg",
     ],
-    "../images/back.jpg",
+    "./assets/images/back.jpg",
     12,
     4,
     2,
