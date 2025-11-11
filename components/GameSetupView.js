@@ -4,133 +4,146 @@ export function GameSetupView({
   isLoading,
   roomId,
   roomIdInput,
-  onRoomIdInputChange,
-  onApplyRoomId,
-  onCreateRoom,
+  gameStarted,
+  playerName,
   playerNames,
   playerColors,
-  newPlayerName,
-  onNewPlayerNameChange,
-  onAddPlayer,
+  onPlayerNameChange,
+  onRoomIdInputChange,
+  onJoinRoom,
+  onCreateRoom,
   onStartGame,
   canStartGame,
-  canAddPlayer,
   errorMessage,
+  isPlayerNameValid,
+  isJoiningRoom,
 }) {
+  const trimmedRoomId =
+    typeof roomIdInput === "string" ? roomIdInput.trim() : "";
+  const joinDisabled =
+    isLoading ||
+    !isPlayerNameValid ||
+    (isJoiningRoom && trimmedRoomId.length === 0);
+  const createDisabled = isLoading || !isPlayerNameValid;
+  const startDisabled = isLoading || !canStartGame || gameStarted;
+
   return React.createElement(
     "main",
-    { className: "app-container" },
+    { className: "app-container setup-container" },
     React.createElement(
       "section",
-      { className: "hero" },
-      React.createElement("h2", { className: "hero-title" }, "Game"),
-      React.createElement(
-        "div",
-        { className: "hero-gallery" },
-        React.createElement("img", {
-          src: "./images/skyjoBox.jpg",
-          alt: "Skyjo game box",
-          className: "hero-image",
-        }),
-        React.createElement(
-          "button",
-          {
-            type: "button",
-            className: "deal-button",
-            onClick: onStartGame,
-            disabled: !canStartGame,
-          },
-          "Start"
-        ),
-        React.createElement("img", {
-          src: "./images/deck.png",
-          alt: "Deck of Skyjo cards",
-          className: "hero-image",
-        })
-      )
-    ),
-    React.createElement(
-      "section",
-      { className: "room" },
-      React.createElement("h2", null, "Room"),
-      React.createElement(
-        "p",
-        { className: "room__current" },
-        "Current room: ",
-        React.createElement("strong", null, roomId)
-      ),
-      React.createElement(
-        "div",
-        { className: "room__controls" },
-        React.createElement("input", {
-          type: "text",
-          placeholder: "Enter room id",
-          value: roomIdInput,
-          onChange: (event) => onRoomIdInputChange(event.target.value),
-        }),
-        React.createElement(
-          "button",
-          {
-            type: "button",
-            onClick: onApplyRoomId,
+      { className: "setup__panel" },
+      React.createElement("img", {
+        src: "./images/box.png",
+        alt: "Skyjo game box",
+        className: "setup__hero",
+      }),
+      !isJoiningRoom
+        ? React.createElement("input", {
+            id: "player-name-input",
+            className: "setup__player-input",
+            type: "text",
+            placeholder: "Your Name",
+            maxLength: 20,
+            value: playerName,
+            onChange: (event) => onPlayerNameChange(event.target.value),
+            onKeyDown: (event) => {
+              const isCharacterKey =
+                event.key.length === 1 &&
+                !event.ctrlKey &&
+                !event.metaKey &&
+                !event.altKey;
+              const noSelection =
+                event.currentTarget.selectionStart ===
+                event.currentTarget.selectionEnd;
+              if (isCharacterKey && noSelection && playerName.length >= 20) {
+                event.preventDefault();
+              }
+            },
             disabled: isLoading,
-          },
-          "Join"
-        ),
-        React.createElement(
-          "button",
-          {
-            type: "button",
-            onClick: onCreateRoom,
-            disabled: isLoading,
-          },
-          "New Room"
-        )
-      )
-    ),
-    React.createElement(
-      "section",
-      { className: "players" },
-      React.createElement("h2", null, "Players"),
+          })
+        : null,
+      isPlayerNameValid
+        ? isJoiningRoom
+          ? React.createElement(
+              "div",
+              { className: "setup__actions setup__actions--joining" },
+              React.createElement("input", {
+                id: "room-id-input",
+                className: "setup__room-input",
+                type: "text",
+                placeholder: "Enter room code",
+                value: roomIdInput,
+                onChange: (event) => onRoomIdInputChange(event.target.value),
+                disabled: isLoading,
+              }),
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+                  className: "setup__button-join-room",
+                  onClick: onJoinRoom,
+                  disabled: joinDisabled,
+                },
+                "Join Existing Room"
+              )
+            )
+          : React.createElement(
+              "div",
+              { className: "setup__actions" },
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+                  className: "setup__button-new-room",
+                  onClick: onCreateRoom,
+                  disabled: createDisabled,
+                },
+                "Create New Room"
+              ),
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+                  className: "setup__button-join-room",
+                  onClick: onJoinRoom,
+                  disabled: joinDisabled,
+                },
+                "Join Existing Room"
+              )
+            )
+        : null,
       playerNames.length > 0
         ? React.createElement(
             "ul",
-            null,
+            { className: "setup__players" },
             playerNames.map((name, index) =>
               React.createElement(
                 "li",
                 {
                   key: name,
-                  className: "player-entry",
+                  className: "setup__player",
                   style: {
                     backgroundColor: playerColors[index % playerColors.length],
                   },
                 },
-                React.createElement("span", null, name)
+                name
               )
             )
           )
-        : React.createElement("p", null, "No players added yet."),
-      React.createElement(
-        "div",
-        { className: "new-player-controls" },
-        React.createElement("input", {
-          type: "text",
-          placeholder: "My name",
-          value: newPlayerName,
-          onChange: (event) => onNewPlayerNameChange(event.target.value),
-          disabled: isLoading,
-        }),
-        React.createElement(
-          "button",
-          {
-            type: "button",
-            onClick: onAddPlayer,
-            disabled: !canAddPlayer || isLoading,
-          },
-          "Play"
-        )
-      )
+        : null,
+      isPlayerNameValid && canStartGame
+        ? React.createElement(
+            "button",
+            {
+              type: "button",
+              className: "setup__start-button",
+              onClick: onStartGame,
+              disabled: startDisabled,
+            },
+            "Start"
+          )
+        : null
     ),
     errorMessage
       ? React.createElement(

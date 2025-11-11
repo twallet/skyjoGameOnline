@@ -102,6 +102,7 @@ export function App() {
   const [activePlayers, setActivePlayers] = useState([]);
   const [deckView, setDeckView] = useState(null);
   const [initialRoomBootstrapped, setInitialRoomBootstrapped] = useState(false);
+  const [isJoiningExistingRoom, setIsJoiningExistingRoom] = useState(false);
 
   const activeRoomIdRef = useRef(roomId);
   const isFetchingRoomRef = useRef(false);
@@ -275,12 +276,56 @@ export function App() {
     }
   };
 
-  const handleAddPlayer = async () => {
+  const trimmedPlayerName = newPlayerName.trim();
+  const playerNameLength = trimmedPlayerName.length;
+  const isPlayerNameValid = playerNameLength > 0 && playerNameLength <= 20;
+
+  const ensureValidPlayerName = () => {
+    if (playerNameLength === 0) {
+      setErrorMessage("Player name must not be empty.");
+      return false;
+    }
+    if (playerNameLength > 20) {
+      setErrorMessage("Player name must be 20 characters or fewer.");
+      return false;
+    }
+    setErrorMessage("");
+    return true;
+  };
+
+  useEffect(() => {
+    if (!isPlayerNameValid && isJoiningExistingRoom) {
+      setIsJoiningExistingRoom(false);
+      setRoomIdInput((roomId ?? "").toUpperCase());
+    }
+  }, [isPlayerNameValid, isJoiningExistingRoom, roomId]);
+
+  const handleJoinRoom = async () => {
+    if (!ensureValidPlayerName()) {
+      return;
+    }
+
+    if (!isJoiningExistingRoom) {
+      setIsJoiningExistingRoom(true);
+      setErrorMessage("");
+      setRoomIdInput("");
+      return;
+    }
+
+    const normalizedRoomId = roomIdInput.trim().toUpperCase();
+    if (!normalizedRoomId) {
+      setErrorMessage("Room ID must not be empty to join.");
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      const { players: updatedNames } = await RoomApi.joinRoom(
-        roomId,
-        newPlayerName
-      );
+      const {
+        players: updatedNames = [],
+        roomId: joinedRoomId = normalizedRoomId,
+      } = await RoomApi.joinRoom(normalizedRoomId, trimmedPlayerName);
+      setRoomId(joinedRoomId);
+      setRoomIdInput(joinedRoomId);
       setPlayerNames(updatedNames);
       setRoomState((prev) => ({
         ...prev,
@@ -289,47 +334,57 @@ export function App() {
         canStartGame: updatedNames.length >= skyjo.minPlayers,
         gameStarted: false,
       }));
-      setNewPlayerName("");
       setErrorMessage("");
-      await loadRoomState(roomId, { silent: true });
+      setNewPlayerName("");
+      setIsJoiningExistingRoom(false);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleNewPlayerNameChange = (value) => {
-    setNewPlayerName(value);
+    if (typeof value !== "string") {
+      setNewPlayerName("");
+      return;
+    }
+    const capped = value.slice(0, 20);
+    setNewPlayerName(capped);
   };
 
   const handleRoomIdInputChange = (value) => {
     setRoomIdInput(value.toUpperCase());
   };
 
-  const handleApplyRoomId = () => {
-    const normalized = roomIdInput.trim().toUpperCase();
-    setRoomIdInput(normalized);
-    if (!normalized) {
-      setErrorMessage("Room ID must not be empty.");
-      return;
-    }
-
-    if (normalized === roomId) {
-      setErrorMessage("");
-      return;
-    }
-
-    setErrorMessage("");
-    setRoomId(normalized);
-  };
-
   const handleCreateRoom = async () => {
+    if (!ensureValidPlayerName()) {
+      return;
+    }
+    setIsJoiningExistingRoom(false);
     setIsLoading(true);
     try {
       const { roomId: createdId = generateRoomId() } =
         await RoomApi.createRoom();
+      const normalizedId = createdId.trim().toUpperCase();
+      const { players: updatedNames = [], roomId: finalRoomId = normalizedId } =
+        await RoomApi.joinRoom(normalizedId, trimmedPlayerName);
       setErrorMessage("");
-      setRoomId(createdId);
-      setRoomIdInput(createdId);
+      setRoomId(finalRoomId);
+      setRoomIdInput(finalRoomId);
+      setPlayerNames(updatedNames);
+      setRoomState((prev) => ({
+        ...prev,
+        players: updatedNames,
+        canAddPlayer: updatedNames.length < skyjo.maxPlayers,
+        canStartGame: updatedNames.length >= skyjo.minPlayers,
+        gameStarted: false,
+      }));
+      setLogEntries([]);
+      setActivePlayers([]);
+      setDeckView(null);
+      setGameStarted(false);
+      setNewPlayerName("");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : String(error));
     } finally {
@@ -349,17 +404,18 @@ export function App() {
     isLoading,
     roomId,
     roomIdInput,
+    gameStarted: roomState.gameStarted,
+    isJoiningRoom: isJoiningExistingRoom,
+    isPlayerNameValid,
+    playerName: newPlayerName,
     onRoomIdInputChange: handleRoomIdInputChange,
-    onApplyRoomId: handleApplyRoomId,
     onCreateRoom: handleCreateRoom,
+    onJoinRoom: handleJoinRoom,
     playerNames,
     playerColors,
-    newPlayerName,
-    onNewPlayerNameChange: handleNewPlayerNameChange,
-    onAddPlayer: handleAddPlayer,
+    onPlayerNameChange: handleNewPlayerNameChange,
     onStartGame: handleStartGame,
     canStartGame: roomState.canStartGame,
-    canAddPlayer: roomState.canAddPlayer,
     errorMessage,
   });
 }

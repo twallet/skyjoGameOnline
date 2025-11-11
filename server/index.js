@@ -82,6 +82,11 @@ app.post("/rooms/:roomId/join", (req, res) => {
 
   try {
     const room = resolveRoom(roomId);
+    if (room.getSnapshot()) {
+      return res.status(409).json({
+        error: "Game already started. New players cannot join this room.",
+      });
+    }
     const players = room.addPlayer(name);
     return res.status(200).json({ players, roomId: room.roomId ?? roomId });
   } catch (error) {
