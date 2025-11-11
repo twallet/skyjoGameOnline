@@ -115,4 +115,51 @@ describe("GameRoomService", () => {
       "Game has already started for this room."
     );
   });
+
+  it("rejects empty or non-string room identifiers", () => {
+    expect(() => GameRoomService.getOrCreate("", skyjo)).toThrow(TypeError);
+    expect(() => GameRoomService.getOrCreate("   ", skyjo)).toThrow(TypeError);
+    expect(() => GameRoomService.getOrCreate(null, skyjo)).toThrow(TypeError);
+  });
+
+  it("reuses existing rooms and logs reuse events", () => {
+    const logger = createTestLogger();
+    const colors = ["#ffaaaa", "#aaffaa"];
+    const first = GameRoomService.getOrCreate("room-5", skyjo, colors, logger);
+    const second = GameRoomService.getOrCreate("room-5", skyjo, colors, logger);
+
+    expect(second).toBe(first);
+    expect(logger.info).toHaveBeenCalledWith(
+      "GameRoomService: created room 'room-5' with game Skyjo"
+    );
+  });
+
+  it("peek returns existing rooms and list/log reflects registry state", () => {
+    const logger = createTestLogger();
+    expect(GameRoomService.peek("missing")).toBeNull();
+    expect(GameRoomService.listRoomIds()).toEqual([]);
+    expect(GameRoomService.logRooms(logger)).toEqual([]);
+    expect(logger.info).toHaveBeenCalledWith(
+      "GameRoomService: no active rooms."
+    );
+
+    GameRoomService.getOrCreate("room-6", skyjo, [], logger);
+    GameRoomService.getOrCreate("room-7", skyjo, [], logger);
+
+    const ids = GameRoomService.listRoomIds();
+    expect(ids).toEqual(["room-6", "room-7"]);
+    expect(GameRoomService.peek("room-6")).not.toBeNull();
+    expect(GameRoomService.logRooms(logger)).toEqual(ids);
+  });
+
+  it("stops allowing additional players when max players reached", () => {
+    const logger = createTestLogger();
+    const service = GameRoomService.getOrCreate("room-8", skyjo, [], logger);
+    for (let i = 0; i < skyjo.maxPlayers; i++) {
+      service.addPlayer(`Player ${i + 1}`);
+    }
+
+    expect(service.canAddPlayer()).toBe(false);
+    expect(() => service.addPlayer("Extra")).toThrow();
+  });
 });

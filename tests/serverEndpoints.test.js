@@ -1,3 +1,7 @@
+/**
+ * @jest-environment node
+ */
+
 import { jest } from "@jest/globals";
 import request from "supertest";
 
