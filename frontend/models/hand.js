@@ -59,6 +59,45 @@ export class Hand {
     return this.#lines;
   }
 
+  get matrix() {
+    return this.cardsMatrix();
+  }
+
+  revealCard(position) {
+    const card = this.#getCardAt(position);
+
+    if (card.value !== "X") {
+      throw new Error("Card is already visible");
+    }
+
+    card.visible = true;
+    return {
+      value: card.value,
+      image: card.image,
+    };
+  }
+
+  isCardVisible(position) {
+    const card = this.#getCardAt(position);
+    return card.value !== "X";
+  }
+
+  allCardsVisible() {
+    return this.#cards.every((card) => card.value !== "X");
+  }
+
+  #getCardAt(position) {
+    if (!Number.isInteger(position)) {
+      throw new TypeError("Hand card position must be an integer");
+    }
+
+    if (position < 0 || position >= this.#cards.length) {
+      throw new RangeError("Hand card position out of bounds");
+    }
+
+    return this.#cards[position];
+  }
+
   // Ensure the provided value is a Card instance.
   #validateCard(card) {
     if (!(card instanceof Card)) {

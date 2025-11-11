@@ -1,6 +1,6 @@
 import { Game } from "../game.js";
 import { GameSession } from "../gameSession.js";
-import { Player } from "../player.js";
+import { SkyjoPhases } from "../skyjoEngine.js";
 
 const skyjo = new Game(
   "Skyjo",
@@ -82,9 +82,17 @@ describe("GameSession", () => {
 
       expect(result.players).toHaveLength(playerNames.length);
       result.players.forEach((player, index) => {
-        expect(player).toBeInstanceOf(Player);
-        expect(player.name).toBe(playerNames[index]);
-        expect(player.hand).toBeDefined();
+        expect(player).toEqual(
+          expect.objectContaining({
+            name: playerNames[index],
+            color: playerColors[index],
+            hand: expect.objectContaining({
+              size: skyjo.handsize,
+              lines: skyjo.lines,
+              matrix: expect.any(Array),
+            }),
+          })
+        );
       });
 
       expect(Array.isArray(result.logEntries)).toBe(true);
@@ -93,6 +101,11 @@ describe("GameSession", () => {
       );
 
       expect(result.deck.size).toBeGreaterThan(0);
+      expect(result.deck).toEqual(
+        expect.objectContaining({
+          discardSize: expect.any(Number),
+        })
+      );
       if (result.deck.topCard) {
         expect(result.deck.topCard).toEqual(
           expect.objectContaining({
@@ -101,6 +114,17 @@ describe("GameSession", () => {
           })
         );
       }
+
+      expect(result.state).toEqual(
+        expect.objectContaining({
+          phase: SkyjoPhases.INITIAL_FLIP,
+          activePlayerIndex: null,
+          initialFlip: expect.objectContaining({
+            requiredReveals: 2,
+            resolved: false,
+          }),
+        })
+      );
     });
 
     it("rejects when player count is below minimum", () => {
@@ -120,6 +144,7 @@ describe("GameSession", () => {
       expect(session.logEntries).toEqual([]);
       expect(session.deckSnapshot).toEqual({ size: 0, topCard: null });
       expect(session.dealer).toBeNull();
+      expect(session.getSnapshot()).toBeNull();
     });
   });
 

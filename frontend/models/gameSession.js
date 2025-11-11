@@ -1,6 +1,7 @@
 import { resolveLogger, noopLogger } from "../utils/logger.js";
 import { Dealer } from "./dealer.js";
 import { Player } from "./player.js";
+import { SkyjoEngine } from "./skyjoEngine.js";
 
 /**
  * Wraps the core game flow so the UI can interact through a stable API.
@@ -11,6 +12,8 @@ export class GameSession {
   #players = [];
   #logEntries = [];
   #deckSnapshot = null;
+  #engine = null;
+  #lastSnapshot = null;
   static #MAX_PLAYER_NAME_LENGTH = 15;
   #logger;
 
@@ -23,7 +26,20 @@ export class GameSession {
    * Start a new session with the provided player names and optional colors.
    * @param {string[]} playerNames
    * @param {string[]} playerColors
-   * @returns {{ players: import("./player.js").Player[], logEntries: string[], deck: { size: number, topCard: { value: string | number, image: string, visible: boolean } | null } }}
+   * @returns {{
+   *   players: Array<{
+   *     name: string,
+   *     color: string | null,
+   *     hand: {
+   *       size: number,
+   *       lines: number,
+   *       matrix: Array<Array<{ value: string | number, image: string }>>
+   *     }
+   *   }>,
+   *   logEntries: string[],
+   *   deck: { size: number, topCard: { value: string | number, image: string, visible: boolean } | null, discardSize: number },
+   *   state: ReturnType<import("./skyjoEngine.js").SkyjoEngine["buildStateSnapshot"]> | null
+   * }}
    */
   start(playerNames, playerColors = []) {
     const names = GameSession.#validatePlayerNames(
@@ -49,7 +65,12 @@ export class GameSession {
     this.#dealer = new Dealer(this.#game, this.#players);
     this.#dealer.shuffle();
     this.#dealer.deal();
-    this.#dealer.deck.showFirstCard();
+    this.#engine = new SkyjoEngine(
+      this.#game,
+      this.#dealer,
+      this.#players,
+      this.#logger
+    );
 
     this.#logger.info(
       `GameSession: dealer prepared deck with ${this.#dealer.deck.size()} cards`
@@ -60,13 +81,11 @@ export class GameSession {
       this.#dealer,
       this.#players
     );
-    this.#deckSnapshot = GameSession.#buildDeckSnapshot(this.#dealer.deck);
+    const snapshot = this.#buildSessionSnapshot();
+    this.#deckSnapshot = snapshot.deck;
+    this.#lastSnapshot = GameSession.#cloneSnapshot(snapshot);
 
-    return {
-      players: this.players,
-      logEntries: this.logEntries,
-      deck: this.deckSnapshot,
-    };
+    return GameSession.#cloneSnapshot(snapshot);
   }
 
   get dealer() {
@@ -90,7 +109,16 @@ export class GameSession {
       topCard: this.#deckSnapshot.topCard
         ? { ...this.#deckSnapshot.topCard }
         : null,
+      discardSize: this.#deckSnapshot.discardSize ?? 0,
     };
+  }
+
+  getSnapshot() {
+    if (!this.#lastSnapshot) {
+      return null;
+    }
+
+    return GameSession.#cloneSnapshot(this.#lastSnapshot);
   }
 
   reset() {
@@ -98,6 +126,8 @@ export class GameSession {
     this.#players = [];
     this.#logEntries = [];
     this.#deckSnapshot = null;
+    this.#engine = null;
+    this.#lastSnapshot = null;
     this.#logger.info("GameSession: reset complete");
   }
 
@@ -224,8 +254,12 @@ export class GameSession {
   }
 
   static #buildDeckSnapshot(deck) {
+    if (!deck) {
+      return { size: 0, topCard: null, discardSize: 0 };
+    }
+
     const cards = deck.cardsDeck;
-    const topCard = cards.length > 0 ? cards[0] : null;
+    const topCard = cards.length > 0 ? cards[cards.length - 1] : null;
 
     return {
       size: deck.size(),
@@ -236,6 +270,88 @@ export class GameSession {
             visible: topCard.value !== "X",
           }
         : null,
+      discardSize: 0,
+    };
+  }
+
+  #buildSessionSnapshot() {
+    const players = this.#players.map((player) => ({
+      name: player.name,
+      color: player.color,
+      hand: {
+        size: player.hand.size,
+        lines: player.hand.lines,
+        matrix: player.hand
+          .cardsMatrix()
+          .map((row) => row.map((card) => ({ ...card }))),
+      },
+    }));
+
+    const deck = this.#engine
+      ? this.#engine.buildDeckSnapshot()
+      : GameSession.#buildDeckSnapshot(this.#dealer?.deck ?? null);
+
+    const state = this.#engine ? this.#engine.buildStateSnapshot() : null;
+
+    return {
+      players,
+      logEntries: [...this.#logEntries],
+      deck,
+      state: state ? GameSession.#cloneStateSnapshot(state) : null,
+    };
+  }
+
+  static #cloneSnapshot(snapshot) {
+    return {
+      players: snapshot.players.map((player) => ({
+        name: player.name,
+        color: player.color,
+        hand: {
+          size: player.hand.size,
+          lines: player.hand.lines,
+          matrix: player.hand.matrix.map((row) =>
+            row.map((card) => ({ ...card }))
+          ),
+        },
+      })),
+      logEntries: [...snapshot.logEntries],
+      deck: {
+        size: snapshot.deck.size,
+        topCard: snapshot.deck.topCard ? { ...snapshot.deck.topCard } : null,
+        discardSize: snapshot.deck.discardSize ?? 0,
+      },
+      state: snapshot.state
+        ? GameSession.#cloneStateSnapshot(snapshot.state)
+        : null,
+    };
+  }
+
+  static #cloneStateSnapshot(state) {
+    return {
+      phase: state.phase,
+      activePlayerIndex: state.activePlayerIndex,
+      activePlayer: state.activePlayer ? { ...state.activePlayer } : null,
+      initialFlip: {
+        requiredReveals: state.initialFlip.requiredReveals,
+        resolved: state.initialFlip.resolved,
+        players: state.initialFlip.players.map((player) => ({
+          name: player.name,
+          color: player.color,
+          flippedPositions: [...player.flippedPositions],
+          total: player.total,
+          completed: player.completed,
+        })),
+      },
+      discard: {
+        size: state.discard.size,
+        topCard: state.discard.topCard ? { ...state.discard.topCard } : null,
+      },
+      drawnCard: state.drawnCard ? { ...state.drawnCard } : null,
+      finalRound: {
+        inProgress: state.finalRound.inProgress,
+        triggeredBy: state.finalRound.triggeredBy,
+        pendingTurns: [...state.finalRound.pendingTurns],
+      },
     };
   }
 }
