@@ -5,8 +5,8 @@
 import { jest } from "@jest/globals";
 import request from "supertest";
 
-import { createSkyjoServer } from "../server/index.js";
-import { GameRoomService } from "../frontend/services/GameRoomService.js";
+import { createSkyjoServer } from "../server.js";
+import { GameRoomService } from "../../frontend/services/GameRoomService.js";
 
 const createTestLogger = () => ({
   info: jest.fn(),
