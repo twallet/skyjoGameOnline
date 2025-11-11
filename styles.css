@@ -98,6 +98,83 @@ body {
   min-width: 200px;
 }
 
+.setup__current-room {
+  margin-top: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #1b3f73;
+}
+
+.setup__players-row {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.setup__players-label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.setup__players {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.setup__start-button--inline {
+  padding-inline: 1.5rem;
+}
+
+.setup__players-title {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #1b3f73;
+  font-weight: 700;
+}
+
+.setup__players {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.setup__room-banner {
+  margin-top: 1rem;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.setup__current-room-value {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 1rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.setup__copy-button {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  min-width: auto;
+}
+
 .setup__player-input {
   align-self: center;
   width: min(320px, 100%);
@@ -138,6 +215,16 @@ body {
   align-items: center;
   justify-content: center;
   white-space: nowrap;
+}
+
+.setup__player--start {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.setup__start-button--inline {
+  padding-inline: 1.5rem;
 }
 
 .setup__empty {

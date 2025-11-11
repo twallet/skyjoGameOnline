@@ -103,6 +103,8 @@ export function App() {
   const [deckView, setDeckView] = useState(null);
   const [initialRoomBootstrapped, setInitialRoomBootstrapped] = useState(false);
   const [isJoiningExistingRoom, setIsJoiningExistingRoom] = useState(false);
+  const [hasCreatedRoom, setHasCreatedRoom] = useState(false);
+  const [isRoomSelectionLocked, setIsRoomSelectionLocked] = useState(false);
 
   const activeRoomIdRef = useRef(roomId);
   const isFetchingRoomRef = useRef(false);
@@ -112,7 +114,10 @@ export function App() {
   }, [roomId]);
 
   const loadRoomState = useCallback(
-    async (targetRoomId = roomId, { silent = false } = {}) => {
+    async (
+      targetRoomId = roomId,
+      { silent = false, preservePlayerName = false } = {}
+    ) => {
       const normalizedRoomId =
         typeof targetRoomId === "string" && targetRoomId.trim().length > 0
           ? targetRoomId.trim().toUpperCase()
@@ -161,7 +166,7 @@ export function App() {
           setDeckView(null);
         }
 
-        if (!silent) {
+        if (!silent && !preservePlayerName) {
           setNewPlayerName("");
         }
       } catch (error) {
@@ -229,8 +234,19 @@ export function App() {
       return;
     }
 
-    loadRoomState(roomId, { silent: false });
-  }, [roomId, loadRoomState, initialRoomBootstrapped]);
+    loadRoomState(roomId, {
+      silent: false,
+      preservePlayerName:
+        hasCreatedRoom || isJoiningExistingRoom || isRoomSelectionLocked,
+    });
+  }, [
+    roomId,
+    loadRoomState,
+    initialRoomBootstrapped,
+    hasCreatedRoom,
+    isJoiningExistingRoom,
+    isRoomSelectionLocked,
+  ]);
 
   useEffect(() => {
     if (!roomId) {
@@ -298,7 +314,19 @@ export function App() {
       setIsJoiningExistingRoom(false);
       setRoomIdInput((roomId ?? "").toUpperCase());
     }
-  }, [isPlayerNameValid, isJoiningExistingRoom, roomId]);
+    if (!isPlayerNameValid && hasCreatedRoom) {
+      setHasCreatedRoom(false);
+    }
+    if (!isPlayerNameValid && isRoomSelectionLocked) {
+      setIsRoomSelectionLocked(false);
+    }
+  }, [
+    isPlayerNameValid,
+    isJoiningExistingRoom,
+    roomId,
+    hasCreatedRoom,
+    isRoomSelectionLocked,
+  ]);
 
   const handleJoinRoom = async () => {
     if (!ensureValidPlayerName()) {
@@ -307,8 +335,10 @@ export function App() {
 
     if (!isJoiningExistingRoom) {
       setIsJoiningExistingRoom(true);
+      setIsRoomSelectionLocked(true);
       setErrorMessage("");
       setRoomIdInput("");
+      setHasCreatedRoom(false);
       return;
     }
 
@@ -347,8 +377,9 @@ export function App() {
         gameStarted: false,
       }));
       setErrorMessage("");
-      setNewPlayerName("");
+      setNewPlayerName(trimmedPlayerName);
       setIsJoiningExistingRoom(false);
+      setHasCreatedRoom(false);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : String(error));
     } finally {
@@ -374,6 +405,7 @@ export function App() {
       return;
     }
     setIsJoiningExistingRoom(false);
+    setIsRoomSelectionLocked(true);
     setIsLoading(true);
     try {
       const { roomId: createdId = generateRoomId() } =
@@ -396,11 +428,33 @@ export function App() {
       setActivePlayers([]);
       setDeckView(null);
       setGameStarted(false);
-      setNewPlayerName("");
+      setNewPlayerName(trimmedPlayerName);
+      setHasCreatedRoom(true);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : String(error));
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCopyRoomId = async () => {
+    if (!roomId) {
+      return;
+    }
+    try {
+      if (
+        typeof navigator !== "undefined" &&
+        navigator.clipboard &&
+        typeof navigator.clipboard.writeText === "function"
+      ) {
+        await navigator.clipboard.writeText(roomId);
+      } else {
+        throw new Error("Clipboard not supported.");
+      }
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Unable to copy room ID."
+      );
     }
   };
 
@@ -418,11 +472,14 @@ export function App() {
     roomIdInput,
     gameStarted: roomState.gameStarted,
     isJoiningRoom: isJoiningExistingRoom,
+    hasCreatedRoom,
+    isRoomSelectionLocked,
     isPlayerNameValid,
     playerName: newPlayerName,
     onRoomIdInputChange: handleRoomIdInputChange,
     onCreateRoom: handleCreateRoom,
     onJoinRoom: handleJoinRoom,
+    onCopyRoomId: handleCopyRoomId,
     playerNames,
     playerColors,
     onPlayerNameChange: handleNewPlayerNameChange,

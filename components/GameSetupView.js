@@ -17,6 +17,9 @@ export function GameSetupView({
   errorMessage,
   isPlayerNameValid,
   isJoiningRoom,
+  hasCreatedRoom,
+  isRoomSelectionLocked,
+  onCopyRoomId,
 }) {
   const trimmedRoomId =
     typeof roomIdInput === "string" ? roomIdInput.trim() : "";
@@ -26,6 +29,12 @@ export function GameSetupView({
     (isJoiningRoom && trimmedRoomId.length === 0);
   const createDisabled = isLoading || !isPlayerNameValid;
   const startDisabled = isLoading || !canStartGame || gameStarted;
+  const showJoinButton =
+    !hasCreatedRoom && !isRoomSelectionLocked && !isJoiningRoom;
+  const shouldShowRoomInfo =
+    !isJoiningRoom && isRoomSelectionLocked && Boolean(roomId);
+  const showInlineStart = canStartGame && !isJoiningRoom;
+  const showRoomBannerCopy = !isJoiningRoom;
 
   return React.createElement(
     "main",
@@ -38,31 +47,33 @@ export function GameSetupView({
         alt: "Skyjo game box",
         className: "setup__hero",
       }),
-      !isJoiningRoom
-        ? React.createElement("input", {
-            id: "player-name-input",
-            className: "setup__player-input",
-            type: "text",
-            placeholder: "Your Name",
-            maxLength: 20,
-            value: playerName,
-            onChange: (event) => onPlayerNameChange(event.target.value),
-            onKeyDown: (event) => {
-              const isCharacterKey =
-                event.key.length === 1 &&
-                !event.ctrlKey &&
-                !event.metaKey &&
-                !event.altKey;
-              const noSelection =
-                event.currentTarget.selectionStart ===
-                event.currentTarget.selectionEnd;
-              if (isCharacterKey && noSelection && playerName.length >= 20) {
-                event.preventDefault();
-              }
-            },
-            disabled: isLoading,
-          })
-        : null,
+      hasCreatedRoom || !showJoinButton
+        ? null
+        : !isRoomSelectionLocked && !isJoiningRoom
+          ? React.createElement("input", {
+              id: "player-name-input",
+              className: "setup__player-input",
+              type: "text",
+              placeholder: "Your Name",
+              maxLength: 20,
+              value: playerName,
+              onChange: (event) => onPlayerNameChange(event.target.value),
+              onKeyDown: (event) => {
+                const isCharacterKey =
+                  event.key.length === 1 &&
+                  !event.ctrlKey &&
+                  !event.metaKey &&
+                  !event.altKey;
+                const noSelection =
+                  event.currentTarget.selectionStart ===
+                  event.currentTarget.selectionEnd;
+                if (isCharacterKey && noSelection && playerName.length >= 20) {
+                  event.preventDefault();
+                }
+              },
+              disabled: isLoading,
+            })
+          : null,
       isPlayerNameValid
         ? isJoiningRoom
           ? React.createElement(
@@ -85,64 +96,119 @@ export function GameSetupView({
                   onClick: onJoinRoom,
                   disabled: joinDisabled,
                 },
-                "Join Existing Room"
+                "Joining room"
               )
             )
-          : React.createElement(
+          : !isRoomSelectionLocked
+            ? React.createElement(
+                "div",
+                { className: "setup__actions" },
+                React.createElement(
+                  "button",
+                  {
+                    type: "button",
+                    className: "setup__button-new-room",
+                    onClick: onCreateRoom,
+                    disabled: createDisabled,
+                  },
+                  "Create new room"
+                ),
+                showJoinButton
+                  ? React.createElement(
+                      "button",
+                      {
+                        type: "button",
+                        className: "setup__button-join-room",
+                        onClick: onJoinRoom,
+                        disabled: joinDisabled,
+                      },
+                      "Join existing room"
+                    )
+                  : null
+              )
+            : null
+        : null,
+      shouldShowRoomInfo
+        ? React.createElement(
+            "div",
+            { className: "setup__room-banner" },
+            React.createElement(
               "div",
-              { className: "setup__actions" },
+              { className: "setup__current-room" },
               React.createElement(
-                "button",
-                {
-                  type: "button",
-                  className: "setup__button-new-room",
-                  onClick: onCreateRoom,
-                  disabled: createDisabled,
-                },
-                "Create New Room"
+                "span",
+                { className: "setup__current-room-label" },
+                "Room ID"
               ),
               React.createElement(
-                "button",
-                {
-                  type: "button",
-                  className: "setup__button-join-room",
-                  onClick: onJoinRoom,
-                  disabled: joinDisabled,
-                },
-                "Join Existing Room"
-              )
+                "span",
+                { className: "setup__current-room-value" },
+                roomId
+              ),
+              showRoomBannerCopy
+                ? React.createElement(
+                    "button",
+                    {
+                      type: "button",
+                      className: "setup__copy-button",
+                      onClick: onCopyRoomId,
+                      disabled: isLoading || !roomId,
+                      title: "Copy room ID",
+                    },
+                    "📋"
+                  )
+                : null
             )
+          )
         : null,
       playerNames.length > 0
         ? React.createElement(
-            "ul",
-            { className: "setup__players" },
-            playerNames.map((name, index) =>
-              React.createElement(
-                "li",
-                {
-                  key: name,
-                  className: "setup__player",
-                  style: {
-                    backgroundColor: playerColors[index % playerColors.length],
+            "div",
+            { className: "setup__players-row" },
+            React.createElement(
+              "span",
+              { className: "setup__current-room-label" },
+              "Players"
+            ),
+            React.createElement(
+              "ul",
+              { className: "setup__players" },
+              playerNames.map((name, index) =>
+                React.createElement(
+                  "li",
+                  {
+                    key: name,
+                    className: "setup__player",
+                    style: {
+                      backgroundColor:
+                        playerColors[index % playerColors.length],
+                    },
                   },
-                },
-                name
-              )
+                  name
+                )
+              ),
+              showInlineStart
+                ? React.createElement(
+                    "li",
+                    { className: "setup__player setup__player--start" },
+                    React.createElement(
+                      "button",
+                      {
+                        type: "button",
+                        className:
+                          "setup__start-button setup__start-button--inline",
+                        onClick: onStartGame,
+                        disabled: startDisabled,
+                      },
+                      "Start game"
+                    )
+                  )
+                : null
             )
           )
         : null,
-      isPlayerNameValid && canStartGame
-        ? React.createElement(
-            "button",
-            {
-              type: "button",
-              className: "setup__start-button",
-              onClick: onStartGame,
-              disabled: startDisabled,
-            },
-            "Start"
-          )
+      isPlayerNameValid && canStartGame && !shouldShowRoomInfo && !isJoiningRoom
+        ? null
         : null
     ),
     errorMessage
