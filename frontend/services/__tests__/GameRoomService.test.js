@@ -1,6 +1,7 @@
 import { jest } from "@jest/globals";
 import { Game } from "../../models/game.js";
 import { GameRoomService } from "../GameRoomService.js";
+import { createLoggerMock } from "../../../tests/testUtils.js";
 
 const skyjo = new Game(
   "Skyjo",
@@ -30,12 +31,6 @@ const skyjo = new Game(
   8
 );
 
-const createTestLogger = () => ({
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-});
-
 describe("GameRoomService", () => {
   beforeEach(() => {
     GameRoomService.clearRegistry();
@@ -43,7 +38,7 @@ describe("GameRoomService", () => {
 
   it("adds players and exposes current names", () => {
     const colors = ["#ffaaaa", "#aaffaa"];
-    const logger = createTestLogger();
+    const logger = createLoggerMock();
     const service = GameRoomService.getOrCreate(
       "room-1",
       skyjo,
@@ -67,7 +62,7 @@ describe("GameRoomService", () => {
   });
 
   it("refuses to start when not enough players", () => {
-    const logger = createTestLogger();
+    const logger = createLoggerMock();
     const service = GameRoomService.getOrCreate("room-2", skyjo, [], logger);
     service.addPlayer("Alice");
 
@@ -77,7 +72,7 @@ describe("GameRoomService", () => {
   });
 
   it("starts a game and resets correctly", () => {
-    const logger = createTestLogger();
+    const logger = createLoggerMock();
     const service = GameRoomService.getOrCreate("room-3", skyjo, [], logger);
     service.addPlayer("Alice");
     service.addPlayer("Bob");
@@ -101,7 +96,7 @@ describe("GameRoomService", () => {
   });
 
   it("prevents adding players once the game has started", () => {
-    const logger = createTestLogger();
+    const logger = createLoggerMock();
     const service = GameRoomService.getOrCreate("room-4", skyjo, [], logger);
     service.addPlayer("Alice");
     service.addPlayer("Bob");
@@ -123,7 +118,7 @@ describe("GameRoomService", () => {
   });
 
   it("reuses existing rooms and logs reuse events", () => {
-    const logger = createTestLogger();
+    const logger = createLoggerMock();
     const colors = ["#ffaaaa", "#aaffaa"];
     const first = GameRoomService.getOrCreate("room-5", skyjo, colors, logger);
     const second = GameRoomService.getOrCreate("room-5", skyjo, colors, logger);
@@ -135,7 +130,7 @@ describe("GameRoomService", () => {
   });
 
   it("peek returns existing rooms and list/log reflects registry state", () => {
-    const logger = createTestLogger();
+    const logger = createLoggerMock();
     expect(GameRoomService.peek("missing")).toBeNull();
     expect(GameRoomService.listRoomIds()).toEqual([]);
     expect(GameRoomService.logRooms(logger)).toEqual([]);
@@ -153,7 +148,7 @@ describe("GameRoomService", () => {
   });
 
   it("stops allowing additional players when max players reached", () => {
-    const logger = createTestLogger();
+    const logger = createLoggerMock();
     const service = GameRoomService.getOrCreate("room-8", skyjo, [], logger);
     for (let i = 0; i < skyjo.maxPlayers; i++) {
       service.addPlayer(`Player ${i + 1}`);

@@ -7,12 +7,7 @@ import request from "supertest";
 
 import { createSkyjoServer } from "../../server.js";
 import { clearRooms } from "../../services/roomRegistryService.js";
-
-const createTestLogger = () => ({
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-});
+import { createLoggerMock } from "../../../tests/testUtils.js";
 
 describe("Skyjo server endpoints", () => {
   let app;
@@ -20,7 +15,7 @@ describe("Skyjo server endpoints", () => {
 
   beforeEach(() => {
     clearRooms();
-    logger = createTestLogger();
+    logger = createLoggerMock();
     app = createSkyjoServer({ logger });
   });
 

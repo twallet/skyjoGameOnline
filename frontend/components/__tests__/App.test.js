@@ -6,6 +6,7 @@ import { act } from "react";
 
 import { App } from "../App.js";
 import { RoomApi } from "../../services/RoomApi.js";
+import { flushPromises } from "../../../tests/testUtils.js";
 
 const playerListResponse = (players = [], overrides = {}) => ({
   roomId: "TEST01",
@@ -184,9 +185,3 @@ describe("App component room selection flow", () => {
     );
   });
 });
-
-async function flushPromises() {
-  await act(async () => {
-    await Promise.resolve();
-  });
-}
