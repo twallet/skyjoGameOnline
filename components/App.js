@@ -320,6 +320,18 @@ export function App() {
 
     setIsLoading(true);
     try {
+      try {
+        await RoomApi.getRoom(normalizedRoomId);
+      } catch (lookupError) {
+        setErrorMessage(
+          lookupError instanceof Error
+            ? lookupError.message
+            : String(lookupError)
+        );
+        setIsLoading(false);
+        return;
+      }
+
       const {
         players: updatedNames = [],
         roomId: joinedRoomId = normalizedRoomId,

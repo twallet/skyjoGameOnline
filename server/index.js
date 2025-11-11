@@ -81,7 +81,10 @@ app.post("/rooms/:roomId/join", (req, res) => {
   }
 
   try {
-    const room = resolveRoom(roomId);
+    const room = findRoom(roomId);
+    if (!room) {
+      return res.status(404).json({ error: "Room not found." });
+    }
     if (room.getSnapshot()) {
       return res.status(409).json({
         error: "Game already started. New players cannot join this room.",
