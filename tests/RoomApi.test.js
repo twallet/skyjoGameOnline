@@ -78,6 +78,27 @@ describe("RoomApi", () => {
     );
   });
 
+it("starts a game via POST /rooms/:roomId/start", async () => {
+  const response = createJsonResponse(200, {
+    roomId: "ROOM42",
+    players: [],
+    deck: { size: 0, topCard: null },
+    logEntries: [],
+  });
+  global.fetch.mockResolvedValueOnce(response);
+
+  const payload = await RoomApi.startGame("room42");
+
+  expect(global.fetch).toHaveBeenCalledWith(
+    "http://localhost:4000/rooms/ROOM42/start",
+    {
+      method: "POST",
+      headers: {},
+    }
+  );
+  expect(payload.roomId).toBe("ROOM42");
+});
+
   it("throws errors from failed requests with API message", async () => {
     const response = createJsonResponse(404, {
       error: "Room not found.",
@@ -87,4 +108,29 @@ describe("RoomApi", () => {
 
     await expect(RoomApi.getRoom("missing")).rejects.toThrow("Room not found.");
   });
+
+it("wraps network failures with descriptive errors", async () => {
+  global.fetch.mockRejectedValueOnce(new Error("Network down"));
+
+  await expect(RoomApi.getRoom("fail")).rejects.toThrow(
+    /Unable to reach Skyjo rooms API/
+  );
+});
+
+it("reports invalid JSON responses clearly", async () => {
+  const badResponse = {
+    ok: true,
+    status: 200,
+    text: () => Promise.resolve("not json"),
+  };
+  global.fetch.mockResolvedValueOnce(badResponse);
+
+  await expect(RoomApi.getRoom("badjson")).rejects.toThrow(
+    /invalid JSON/i
+  );
+});
+
+it("requires configure baseUrl to be a string", () => {
+  expect(() => RoomApi.configure({ baseUrl: null })).toThrow(TypeError);
+});
 });

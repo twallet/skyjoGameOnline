@@ -196,6 +196,8 @@ const port = process.env.PORT ?? 4000;
 if (process.env.NODE_ENV !== "test") {
   const app = createSkyjoServer({ logger: consoleLogger });
   app.listen(port, () => {
-    consoleLogger.info(`Server listening on http://localhost:${port}`);
+    consoleLogger.info(
+      `Server listening on http://localhost:${port} (pid ${process.pid})`
+    );
   });
 }
