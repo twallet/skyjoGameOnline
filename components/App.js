@@ -83,9 +83,8 @@ export function App() {
       return `hsl(${hue}, 70%, 85%)`;
     });
   }, []);
-  const initialRoomIdRef = useRef(generateRoomId());
-  const [roomId, setRoomId] = useState(initialRoomIdRef.current);
-  const [roomIdInput, setRoomIdInput] = useState(initialRoomIdRef.current);
+  const [roomId, setRoomId] = useState("");
+  const [roomIdInput, setRoomIdInput] = useState("");
   const [roomState, setRoomState] = useState({
     players: [],
     canAddPlayer: true,
@@ -101,7 +100,6 @@ export function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [activePlayers, setActivePlayers] = useState([]);
   const [deckView, setDeckView] = useState(null);
-  const [initialRoomBootstrapped, setInitialRoomBootstrapped] = useState(false);
   const [isJoiningExistingRoom, setIsJoiningExistingRoom] = useState(false);
   const [hasCreatedRoom, setHasCreatedRoom] = useState(false);
   const [isRoomSelectionLocked, setIsRoomSelectionLocked] = useState(false);
@@ -228,39 +226,7 @@ export function App() {
   );
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function bootstrapInitialRoom() {
-      try {
-        await RoomApi.createRoom(initialRoomIdRef.current);
-        consoleLogger.info(
-          `Client event: bootstrapped initial room '${initialRoomIdRef.current}'`
-        );
-      } catch (error) {
-        consoleLogger.error("Unable to bootstrap initial room", error);
-      } finally {
-        if (!cancelled) {
-          setInitialRoomBootstrapped(true);
-        }
-      }
-    }
-
-    bootstrapInitialRoom();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
     if (!roomId) {
-      return;
-    }
-
-    if (
-      roomId === initialRoomIdRef.current &&
-      initialRoomBootstrapped === false
-    ) {
       return;
     }
 
@@ -272,7 +238,6 @@ export function App() {
   }, [
     roomId,
     loadRoomState,
-    initialRoomBootstrapped,
     hasCreatedRoom,
     isJoiningExistingRoom,
     isRoomSelectionLocked,
