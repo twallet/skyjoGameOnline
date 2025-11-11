@@ -121,6 +121,54 @@ export class GameSession {
     return GameSession.#cloneSnapshot(this.#lastSnapshot);
   }
 
+  revealInitialCard(playerName, position) {
+    if (!this.#engine) {
+      throw new Error("Game has not started yet.");
+    }
+
+    if (typeof playerName !== "string" || playerName.trim() === "") {
+      throw new TypeError("Player name must be a non-empty string");
+    }
+
+    if (!Number.isInteger(position)) {
+      throw new TypeError("Card position must be an integer");
+    }
+
+    const trimmedName = playerName.trim();
+    const playerIndex = this.#players.findIndex(
+      (player) => player.name === trimmedName
+    );
+
+    if (playerIndex === -1) {
+      throw new Error(`Unknown player: ${trimmedName}`);
+    }
+
+    const result = this.#engine.revealInitialCard(playerIndex, position);
+
+    this.#logEntries = [
+      ...this.#logEntries,
+      `Initial flip: ${trimmedName} revealed ${result.card.value}`,
+    ];
+
+    const snapshot = this.#buildSessionSnapshot();
+    this.#deckSnapshot = snapshot.deck;
+    this.#lastSnapshot = GameSession.#cloneSnapshot(snapshot);
+
+    return {
+      event: {
+        ...result,
+        playerName: trimmedName,
+      },
+      snapshot: GameSession.#cloneSnapshot(snapshot),
+      logEntries: [...this.#logEntries],
+      deck: {
+        size: snapshot.deck.size,
+        topCard: snapshot.deck.topCard ? { ...snapshot.deck.topCard } : null,
+        discardSize: snapshot.deck.discardSize ?? 0,
+      },
+    };
+  }
+
   reset() {
     this.#dealer = null;
     this.#players = [];

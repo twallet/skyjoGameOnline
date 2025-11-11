@@ -1,6 +1,7 @@
 import { jest } from "@jest/globals";
 import { Game } from "../../models/game.js";
 import { GameRoomService } from "../GameRoomService.js";
+import { SkyjoPhases } from "../../models/skyjoEngine.js";
 import { createLoggerMock } from "../../../tests/testUtils.js";
 
 const skyjo = new Game(
@@ -83,7 +84,7 @@ describe("GameRoomService", () => {
     expect(snapshot.logEntries.length).toBeGreaterThanOrEqual(4);
     expect(service.canAddPlayer()).toBe(false);
     expect(service.canStartGame()).toBe(false);
-    expect(service.getSnapshot()).toBe(snapshot);
+    expect(service.getSnapshot()).toEqual(snapshot);
 
     service.resetRoom();
     expect(service.playerNames).toEqual([]);
@@ -156,5 +157,27 @@ describe("GameRoomService", () => {
 
     expect(service.canAddPlayer()).toBe(false);
     expect(() => service.addPlayer("Extra")).toThrow();
+  });
+
+  it("reveals cards during the initial flip phase", () => {
+    const logger = createLoggerMock();
+    const service = GameRoomService.getOrCreate("room-9", skyjo, [], logger);
+    service.addPlayer("Alice");
+    service.addPlayer("Bob");
+
+    service.startGame();
+
+    const result = service.revealInitialCard("Alice", 0);
+
+    expect(result.event).toEqual(
+      expect.objectContaining({
+        playerName: "Alice",
+        position: 0,
+      })
+    );
+    expect(result.snapshot.state.phase).toBe(SkyjoPhases.INITIAL_FLIP);
+    expect(
+      result.snapshot.state.initialFlip.players[0].flippedPositions
+    ).toEqual([0]);
   });
 });

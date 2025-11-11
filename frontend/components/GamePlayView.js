@@ -1,11 +1,32 @@
 import React from "https://esm.sh/react@18?dev";
 
-export function GamePlayView({ activePlayers, deck, roomId }) {
+export function GamePlayView({
+  activePlayers,
+  deck,
+  roomId,
+  snapshot = null,
+  gameState = null,
+  sessionState = null,
+  localPlayerName = "",
+  onFlipCard = null,
+  isSubmittingAction = false,
+}) {
   const players = Array.isArray(activePlayers) ? activePlayers : [];
   const displayedRoomId =
     typeof roomId === "string" && roomId.trim().length > 0
       ? roomId.trim()
       : null;
+
+  const state =
+    sessionState ?? gameState ?? (snapshot ? snapshot.state : null) ?? null;
+  const phase = state?.phase ?? null;
+  const initialFlipState = state?.initialFlip ?? null;
+  const initialFlipPlayers = Array.isArray(initialFlipState?.players)
+    ? initialFlipState.players
+    : [];
+  const requiredInitialReveals = initialFlipState?.requiredReveals ?? 0;
+  const instruction =
+    phase === "initial-flip" ? "Flip two of your cards" : null;
 
   const layouts = {
     0: {
@@ -124,10 +145,24 @@ export function GamePlayView({ activePlayers, deck, roomId }) {
 
   players.forEach((player, index) => {
     const seat = layout.seats[index] ?? layout.seats[layout.seats.length - 1];
+    const initialFlipInfo = initialFlipPlayers.find(
+      (entry) => entry?.name === player.name
+    );
+    const flippedPositions = new Set(
+      Array.isArray(initialFlipInfo?.flippedPositions)
+        ? initialFlipInfo.flippedPositions
+        : []
+    );
+    const isLocalPlayer =
+      typeof localPlayerName === "string" &&
+      localPlayerName.length > 0 &&
+      player.name === localPlayerName;
     gridItems.push({
       type: "player",
       key: `player-${player.name}`,
       player,
+      isLocalPlayer,
+      flippedPositions,
       rowStart: seat.row,
       rowEnd: seat.row + 1,
       colStart: seat.col,
@@ -196,6 +231,11 @@ export function GamePlayView({ activePlayers, deck, roomId }) {
     const handMatrix = Array.isArray(item.player.handMatrix)
       ? item.player.handMatrix
       : [];
+    const rowOffsets = [];
+    handMatrix.reduce((offset, row, rowIndex) => {
+      rowOffsets[rowIndex] = offset;
+      return offset + row.length;
+    }, 0);
 
     return React.createElement(
       "li",
@@ -225,14 +265,41 @@ export function GamePlayView({ activePlayers, deck, roomId }) {
                 gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))`,
               },
             },
-            row.map((cardData, cardIndex) =>
-              React.createElement("img", {
+            row.map((cardData, cardIndex) => {
+              const position = rowOffsets[rowIndex] + cardIndex;
+              const cardValue = cardData.value;
+              const isHidden = cardValue === "X";
+              const alreadyFlipped = item.flippedPositions.has(position);
+              const canFlip =
+                phase === "initial-flip" &&
+                item.isLocalPlayer &&
+                typeof onFlipCard === "function" &&
+                requiredInitialReveals > item.flippedPositions.size &&
+                isHidden &&
+                !alreadyFlipped &&
+                !isSubmittingAction;
+
+              return React.createElement("img", {
                 key: `card-${rowIndex}-${cardIndex}`,
-                className: "player-entry__card",
+                className: `player-entry__card${
+                  canFlip ? " player-entry__card--interactive" : ""
+                }`,
                 src: cardData.image,
-                alt: `${item.player.name} card ${cardData.value}`,
-              })
-            )
+                alt: `${item.player.name} card ${cardValue}`,
+                onClick: canFlip
+                  ? () => {
+                      onFlipCard(item.player.name, position);
+                    }
+                  : undefined,
+                style: canFlip
+                  ? {
+                      cursor: "pointer",
+                      transform: "scale(1.02)",
+                      transition: "transform 0.2s ease",
+                    }
+                  : undefined,
+              });
+            })
           )
         )
       )
@@ -254,6 +321,13 @@ export function GamePlayView({ activePlayers, deck, roomId }) {
       { className: "players" },
       React.createElement("h2", null, "Skyjo"),
       React.createElement("ul", { style: gridListStyle }, playerEntries)
-    )
+    ),
+    instruction
+      ? React.createElement(
+          "p",
+          { className: "gameplay__instruction" },
+          instruction
+        )
+      : null
   );
 }

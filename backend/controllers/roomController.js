@@ -75,9 +75,37 @@ export function createRoomController({ game, playerColors, logger }) {
       try {
         const room = ensureRoom(roomId);
         const snapshot = room.startGame();
+        const serialized = serializeSnapshot(snapshot);
         res.status(200).json({
           roomId: room.roomId ?? normalizeRoomIdValue(roomId),
-          ...serializeSnapshot(snapshot),
+          players: serialized.players,
+          logEntries: serialized.logEntries,
+          deck: serialized.deck,
+          state: serialized.state,
+        });
+      } catch (error) {
+        res.status(400).json({
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    },
+
+    revealInitialCard(req, res) {
+      const { roomId } = req.params;
+      const { playerName, position } = req.body ?? {};
+
+      try {
+        const room = ensureRoom(roomId);
+        const result = room.revealInitialCard(playerName, position);
+        const serialized = serializeSnapshot(result.snapshot);
+
+        res.status(200).json({
+          roomId: room.roomId ?? normalizeRoomIdValue(roomId),
+          players: serialized.players,
+          logEntries: serialized.logEntries,
+          deck: serialized.deck,
+          state: serialized.state,
+          event: result.event,
         });
       } catch (error) {
         res.status(400).json({

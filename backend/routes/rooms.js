@@ -8,8 +8,8 @@ export function createRoomsRouter(controller) {
   router.get("/:roomId", controller.getRoom);
   router.post("/:roomId/join", controller.joinRoom);
   router.post("/:roomId/start", controller.startGame);
+  router.post("/:roomId/initial-flip", controller.revealInitialCard);
   router.post("/:roomId/reset", controller.resetRoom);
 
   return router;
 }
-

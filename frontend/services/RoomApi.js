@@ -111,6 +111,22 @@ export const RoomApi = {
     });
   },
 
+  async revealInitialCard(roomId, playerName, position) {
+    const normalized = normalizeRequiredRoomId(roomId);
+    const safeName = typeof playerName === "string" ? playerName.trim() : "";
+    if (!safeName) {
+      throw new Error("Player name must not be empty.");
+    }
+    if (!Number.isInteger(position)) {
+      throw new Error("Card position must be an integer.");
+    }
+
+    return request(`/rooms/${normalized}/initial-flip`, {
+      method: "POST",
+      body: { playerName: safeName, position },
+    });
+  },
+
   async resetRoom(roomId) {
     const normalized = normalizeRequiredRoomId(roomId);
     await request(`/rooms/${normalized}/reset`, {

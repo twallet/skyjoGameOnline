@@ -66,6 +66,10 @@ export function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [activePlayers, setActivePlayers] = useState([]);
   const [deckView, setDeckView] = useState(null);
+  const [currentSnapshot, setCurrentSnapshot] = useState(null);
+  const [sessionState, setSessionState] = useState(null);
+  const [isSubmittingAction, setIsSubmittingAction] = useState(false);
+  const [localPlayerName, setLocalPlayerName] = useState("");
   const [isJoiningExistingRoom, setIsJoiningExistingRoom] = useState(false);
   const [hasCreatedRoom, setHasCreatedRoom] = useState(false);
   const [isRoomSelectionLocked, setIsRoomSelectionLocked] = useState(false);
@@ -135,6 +139,8 @@ export function App() {
 
         const snapshot = data.snapshot ?? null;
         if (snapshot) {
+          setCurrentSnapshot(snapshot);
+          setSessionState(snapshot.state ?? null);
           setGameStarted(true);
           setLogEntries(
             Array.isArray(snapshot.logEntries) ? snapshot.logEntries : []
@@ -142,6 +148,8 @@ export function App() {
           setActivePlayers(normalizePlayerSnapshots(snapshot.players));
           setDeckView(buildDeckView(snapshot.deck));
         } else {
+          setCurrentSnapshot(null);
+          setSessionState(null);
           setGameStarted(false);
           setLogEntries([]);
           setActivePlayers([]);
@@ -180,6 +188,8 @@ export function App() {
           setActivePlayers([]);
           setDeckView(null);
           setGameStarted(false);
+          setCurrentSnapshot(null);
+          setSessionState(null);
         }
       } finally {
         if (activeRoomIdRef.current === normalizedRoomId && !silent) {
@@ -229,12 +239,21 @@ export function App() {
         players,
         logEntries: entries,
         deck,
+        state,
       } = await RoomApi.startGame(roomId);
 
       setErrorMessage("");
       setLogEntries(entries);
       setActivePlayers(normalizePlayerSnapshots(players));
       setDeckView(buildDeckView(deck));
+      const snapshot = {
+        players,
+        logEntries: entries,
+        deck,
+        state: state ?? null,
+      };
+      setCurrentSnapshot(snapshot);
+      setSessionState(state ?? null);
       setGameStarted(true);
       setRoomState((prev) => ({
         ...prev,
@@ -255,6 +274,42 @@ export function App() {
       setActivePlayers([]);
       setDeckView(null);
       setGameStarted(false);
+      setCurrentSnapshot(null);
+      setSessionState(null);
+    }
+  };
+
+  const handleRevealInitialCard = async (playerName, position) => {
+    if (!roomId) {
+      return;
+    }
+
+    setIsSubmittingAction(true);
+    try {
+      const {
+        players = [],
+        logEntries: entries = [],
+        deck = null,
+        state = null,
+      } = await RoomApi.revealInitialCard(roomId, playerName, position);
+
+      const snapshot = {
+        players,
+        logEntries: entries,
+        deck,
+        state: state ?? null,
+      };
+
+      setCurrentSnapshot(snapshot);
+      setSessionState(state ?? null);
+      setActivePlayers(normalizePlayerSnapshots(players));
+      setDeckView(buildDeckView(deck));
+      setLogEntries(Array.isArray(entries) ? entries : []);
+      setErrorMessage("");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsSubmittingAction(false);
     }
   };
 
@@ -337,6 +392,7 @@ export function App() {
       } = await RoomApi.joinRoom(normalizedRoomId, trimmedPlayerName);
       setRoomId(joinedRoomId);
       setRoomIdInput(joinedRoomId);
+      setLocalPlayerName(trimmedPlayerName);
       setPlayerNames(updatedNames);
       setRoomState((prev) => ({
         ...prev,
@@ -349,6 +405,8 @@ export function App() {
       setNewPlayerName(trimmedPlayerName);
       setIsJoiningExistingRoom(false);
       setHasCreatedRoom(false);
+      setCurrentSnapshot(null);
+      setSessionState(null);
       consoleLogger.info(
         `Client event: joined room '${joinedRoomId}' as '${trimmedPlayerName}'. Total players: ${updatedNames.length}`
       );
@@ -391,6 +449,7 @@ export function App() {
       setErrorMessage("");
       setRoomId(finalRoomId);
       setRoomIdInput(finalRoomId);
+      setLocalPlayerName(trimmedPlayerName);
       setPlayerNames(updatedNames);
       setRoomState((prev) => ({
         ...prev,
@@ -441,6 +500,10 @@ export function App() {
       activePlayers,
       deck: deckView,
       roomId,
+      sessionState,
+      onFlipCard: handleRevealInitialCard,
+      localPlayerName,
+      isSubmittingAction,
     });
   }
 

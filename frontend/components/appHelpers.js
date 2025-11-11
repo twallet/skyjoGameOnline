@@ -30,6 +30,10 @@ export function normalizePlayerSnapshots(players) {
     name: player?.name,
     color: player?.color ?? null,
     handMatrix: Array.isArray(player?.hand?.matrix) ? player.hand.matrix : [],
+    handLines:
+      Number.isInteger(player?.hand?.lines) && player.hand.lines > 0
+        ? player.hand.lines
+        : null,
   }));
 }
 

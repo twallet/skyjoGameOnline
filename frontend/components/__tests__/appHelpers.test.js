@@ -57,7 +57,7 @@ describe("app helpers", () => {
         {
           name: "Alice",
           color: "#fff",
-          hand: { matrix: [[1, 2]] },
+          hand: { matrix: [[1, 2]], lines: 4 },
         },
         {
           name: "Bob",
@@ -65,8 +65,13 @@ describe("app helpers", () => {
       ];
 
       expect(normalizePlayerSnapshots(players)).toEqual([
-        { name: "Alice", color: "#fff", handMatrix: [[1, 2]] },
-        { name: "Bob", color: null, handMatrix: [] },
+        {
+          name: "Alice",
+          color: "#fff",
+          handMatrix: [[1, 2]],
+          handLines: 4,
+        },
+        { name: "Bob", color: null, handMatrix: [], handLines: null },
       ]);
     });
   });

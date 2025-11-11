@@ -100,6 +100,29 @@ describe("Skyjo server endpoints", () => {
         topCard: expect.anything(),
       })
     );
+    expect(startResponse.body.state).toEqual(
+      expect.objectContaining({
+        phase: "initial-flip",
+      })
+    );
+
+    const flipResponse = await request(app)
+      .post("/rooms/ROOM3/initial-flip")
+      .send({ playerName: "Alice", position: 0 });
+
+    expect(flipResponse.status).toBe(200);
+    expect(flipResponse.body.state.phase).toBe("initial-flip");
+    expect(flipResponse.body.event).toEqual(
+      expect.objectContaining({
+        playerName: "Alice",
+        position: 0,
+      })
+    );
+    expect(
+      flipResponse.body.state.initialFlip.players.find(
+        (player) => player.name === "Alice"
+      ).flippedPositions
+    ).toEqual([0]);
 
     const joinAfterStart = await request(app)
       .post("/rooms/ROOM3/join")

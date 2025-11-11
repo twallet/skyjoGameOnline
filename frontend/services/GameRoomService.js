@@ -185,7 +185,25 @@ export class GameRoomService {
   }
 
   getSnapshot() {
-    return this.#lastSnapshot;
+    if (!this.#lastSnapshot) {
+      return null;
+    }
+    return this.#session.getSnapshot();
+  }
+
+  revealInitialCard(playerName, position) {
+    if (!this.#lastSnapshot) {
+      throw new Error("Game has not started in this room.");
+    }
+
+    const numericPosition = Number(position);
+    if (!Number.isInteger(numericPosition)) {
+      throw new TypeError("Card position must be an integer");
+    }
+
+    const result = this.#session.revealInitialCard(playerName, numericPosition);
+    this.#lastSnapshot = result.snapshot;
+    return result;
   }
 
   resetRoom() {

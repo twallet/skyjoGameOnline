@@ -83,6 +83,7 @@ describe("RoomApi", () => {
       roomId: "ROOM42",
       players: [],
       deck: { size: 0, topCard: null },
+      state: { phase: "initial-flip" },
       logEntries: [],
     });
     global.fetch.mockResolvedValueOnce(response);
@@ -130,5 +131,29 @@ describe("RoomApi", () => {
 
   it("requires configure baseUrl to be a string", () => {
     expect(() => RoomApi.configure({ baseUrl: null })).toThrow(TypeError);
+  });
+
+  it("reveals a card during the initial flip", async () => {
+    const response = createJsonResponse(200, {
+      roomId: "ROOM10",
+      players: [],
+      deck: { size: 0, topCard: null },
+      logEntries: [],
+      state: { phase: "initial-flip" },
+      event: { playerName: "Alice", position: 0 },
+    });
+    global.fetch.mockResolvedValueOnce(response);
+
+    const payload = await RoomApi.revealInitialCard("room10", "Alice", 0);
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "http://localhost:4000/rooms/ROOM10/initial-flip",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerName: "Alice", position: 0 }),
+      }
+    );
+    expect(payload.event).toEqual({ playerName: "Alice", position: 0 });
   });
 });
