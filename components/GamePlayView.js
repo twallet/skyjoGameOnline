@@ -164,7 +164,15 @@ export function GamePlayView({ activePlayers, deck, roomId }) {
         {
           key: item.key,
           className: "player-entry player-entry--active deck-entry",
-          style: { ...baseStyle, backgroundColor: "transparent" },
+          style: {
+            ...baseStyle,
+            justifySelf: "center",
+            alignSelf: "center",
+            backgroundColor: "transparent",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          },
         },
         React.createElement(
           "div",
