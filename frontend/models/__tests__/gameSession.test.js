@@ -131,6 +131,23 @@ describe("GameSession", () => {
       const session = new GameSession(skyjo);
       expect(() => session.start(["Alice"])).toThrow(/at least 2 players/i);
     });
+
+    it("announces the main phase starter once initial flip completes", () => {
+      const session = new GameSession(skyjo);
+      session.start(["Alice", "Bob"]);
+
+      session.revealInitialCard("Alice", 0);
+      session.revealInitialCard("Bob", 0);
+      session.revealInitialCard("Alice", 1);
+      const result = session.revealInitialCard("Bob", 1);
+
+      expect(result.snapshot.state.phase).toBe(SkyjoPhases.MAIN_PLAY);
+      const lastLog = session.logEntries[session.logEntries.length - 1];
+      expect(lastLog).toMatch(/Main phase: .* starts the round\./);
+      expect(result.snapshot.state.activePlayer).toEqual(
+        expect.objectContaining({ name: expect.any(String) })
+      );
+    });
   });
 
   describe("reset", () => {

@@ -1,7 +1,7 @@
 import { resolveLogger, noopLogger } from "../utils/logger.js";
 import { Dealer } from "./dealer.js";
 import { Player } from "./player.js";
-import { SkyjoEngine } from "./skyjoEngine.js";
+import { SkyjoEngine, SkyjoPhases } from "./skyjoEngine.js";
 
 /**
  * Wraps the core game flow so the UI can interact through a stable API.
@@ -13,6 +13,7 @@ export class GameSession {
   #logEntries = [];
   #deckSnapshot = null;
   #engine = null;
+  #mainPhaseAnnounced = false;
   #lastSnapshot = null;
   static #MAX_PLAYER_NAME_LENGTH = 15;
   #logger;
@@ -56,6 +57,7 @@ export class GameSession {
       return new Player(name, this.#game, color ?? undefined);
     });
 
+    this.#mainPhaseAnnounced = false;
     this.#logger.info(
       `GameSession: starting ${this.#game.name} for players ${this.#players
         .map((player) => player.name)
@@ -150,6 +152,20 @@ export class GameSession {
       `Initial flip: ${trimmedName} revealed ${result.card.value}`,
     ];
 
+    if (
+      result.phase === SkyjoPhases.MAIN_PLAY &&
+      !this.#mainPhaseAnnounced &&
+      result.activePlayerIndex !== null
+    ) {
+      const starter =
+        this.#players[result.activePlayerIndex]?.name ?? "Unknown";
+      this.#logEntries = [
+        ...this.#logEntries,
+        `Main phase: ${starter} starts the round.`,
+      ];
+      this.#mainPhaseAnnounced = true;
+    }
+
     const snapshot = this.#buildSessionSnapshot();
     this.#deckSnapshot = snapshot.deck;
     this.#lastSnapshot = GameSession.#cloneSnapshot(snapshot);
@@ -176,6 +192,7 @@ export class GameSession {
     this.#deckSnapshot = null;
     this.#engine = null;
     this.#lastSnapshot = null;
+    this.#mainPhaseAnnounced = false;
     this.#logger.info("GameSession: reset complete");
   }
 

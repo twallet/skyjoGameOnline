@@ -25,8 +25,20 @@ export function GamePlayView({
     ? initialFlipState.players
     : [];
   const requiredInitialReveals = initialFlipState?.requiredReveals ?? 0;
-  const instruction =
-    phase === "initial-flip" ? "Flip two of your cards" : null;
+  let instruction = null;
+  if (phase === "initial-flip") {
+    instruction = "Flip two of your cards";
+  } else if (phase === "main-play") {
+    const activeName = state?.activePlayer?.name ?? null;
+    instruction = activeName
+      ? `It's ${activeName}'s turn`
+      : "Main phase in progress";
+  } else if (phase === "final-round") {
+    const activeName = state?.activePlayer?.name ?? null;
+    instruction = activeName
+      ? `Final round: ${activeName}'s turn`
+      : "Final round in progress";
+  }
 
   const layouts = {
     0: {
