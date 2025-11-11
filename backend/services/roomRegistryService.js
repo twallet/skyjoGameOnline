@@ -23,4 +23,3 @@ export function removeRoom(roomId) {
 export function clearRooms() {
   GameRoomService.clearRegistry();
 }
-

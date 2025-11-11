@@ -7,4 +7,3 @@ export const backendRoot = path.resolve(currentDir, "..");
 export const projectRoot = path.resolve(backendRoot, "..");
 export const frontendRoot = path.join(projectRoot, "frontend");
 export const staticRoot = frontendRoot;
-

@@ -31,7 +31,9 @@ export function createRoomController({ game, playerColors, logger }) {
       const finalId = requestedId || generateRoomId();
       const room = ensureRoom(finalId);
       room.resetRoom();
-      res.status(201).json({ roomId: room.roomId ?? normalizeRoomIdValue(finalId) });
+      res
+        .status(201)
+        .json({ roomId: room.roomId ?? normalizeRoomIdValue(finalId) });
     },
 
     joinRoom(req, res) {
@@ -120,4 +122,3 @@ function normalizeRoomIdValue(roomId) {
   }
   return roomId.trim().toUpperCase();
 }
-

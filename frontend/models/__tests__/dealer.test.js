@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
-import { Dealer } from "../frontend/models/dealer.js";
-import { Game } from "../frontend/models/game.js";
-import { Player } from "../frontend/models/player.js";
+import { Dealer } from "../dealer.js";
+import { Game } from "../game.js";
+import { Player } from "../player.js";
 
 const buildSampleGame = () => {
   const values = [-2, -1, 0, 1, 2, 3, 4, 5, 10];

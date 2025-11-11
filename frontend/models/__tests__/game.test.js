@@ -1,4 +1,4 @@
-import { Game } from "../frontend/models/game.js";
+import { Game } from "../game.js";
 
 const buildImagesFor = (values) =>
   values.map((_, index) => `images/theme-${index}.jpg`);

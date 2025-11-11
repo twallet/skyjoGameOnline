@@ -1,6 +1,6 @@
-import { Game } from "../frontend/models/game.js";
-import { Hand } from "../frontend/models/hand.js";
-import { Player } from "../frontend/models/player.js";
+import { Game } from "../game.js";
+import { Hand } from "../hand.js";
+import { Player } from "../player.js";
 
 const buildSampleGame = () => {
   const values = [-2, -1, 0, 1, 2, 3, 4, 5, 10];

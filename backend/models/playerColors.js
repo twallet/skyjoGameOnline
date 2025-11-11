@@ -4,4 +4,3 @@ export function buildPlayerColors(maxPlayers) {
     return `hsl(${hue}, 70%, 85%)`;
   });
 }
-

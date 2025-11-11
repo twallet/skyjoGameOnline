@@ -36,4 +36,3 @@ function serializeDeck(deckSnapshot) {
       : null,
   };
 }
-

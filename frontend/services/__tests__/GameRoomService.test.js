@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
-import { Game } from "../frontend/models/game.js";
-import { GameRoomService } from "../frontend/services/GameRoomService.js";
+import { Game } from "../../models/game.js";
+import { GameRoomService } from "../GameRoomService.js";
 
 const skyjo = new Game(
   "Skyjo",

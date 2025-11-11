@@ -5,8 +5,8 @@
 import { jest } from "@jest/globals";
 import request from "supertest";
 
-import { createSkyjoServer } from "../server.js";
-import { GameRoomService } from "../../frontend/services/GameRoomService.js";
+import { createSkyjoServer } from "../../server.js";
+import { clearRooms } from "../../services/roomRegistryService.js";
 
 const createTestLogger = () => ({
   info: jest.fn(),
@@ -19,13 +19,13 @@ describe("Skyjo server endpoints", () => {
   let logger;
 
   beforeEach(() => {
-    GameRoomService.clearRegistry();
+    clearRooms();
     logger = createTestLogger();
     app = createSkyjoServer({ logger });
   });
 
   afterEach(() => {
-    GameRoomService.clearRegistry();
+    clearRooms();
   });
 
   it("exposes a health check endpoint", async () => {

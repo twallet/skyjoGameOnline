@@ -5,4 +5,3 @@ import {
 
 export const consoleLogger = frontendConsoleLogger;
 export const resolveLogger = frontendResolveLogger;
-

@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { RoomApi } from "../frontend/services/RoomApi.js";
+import { RoomApi } from "../RoomApi.js";
 
 const originalFetch = global.fetch;
 

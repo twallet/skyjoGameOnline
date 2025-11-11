@@ -1,7 +1,4 @@
-import {
-  buildDeckView,
-  normalizePlayerSnapshots,
-} from "../frontend/components/appHelpers.js";
+import { buildDeckView, normalizePlayerSnapshots } from "../appHelpers.js";
 
 describe("app helpers", () => {
   describe("buildDeckView", () => {

@@ -1,5 +1,5 @@
-import { Deck } from "../frontend/models/deck.js";
-import { Game } from "../frontend/models/game.js";
+import { Deck } from "../deck.js";
+import { Game } from "../game.js";
 
 const buildSampleGame = () => {
   const values = [-2, -1, 0, 1, 2, 3, 4, 5, 10];

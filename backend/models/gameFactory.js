@@ -42,4 +42,3 @@ export function createSkyjoGame() {
     SKYJO_CONFIGURATION.maxPlayers
   );
 }
-

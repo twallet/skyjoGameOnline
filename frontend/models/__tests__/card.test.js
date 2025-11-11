@@ -1,4 +1,4 @@
-import { Card } from "../frontend/models/card.js";
+import { Card } from "../card.js";
 
 const buildGame = (values = [5, 10, -2]) => {
   const images = ["images/5.jpg", "images/10.jpg", "images/minus2.jpg"];

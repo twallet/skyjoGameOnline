@@ -1,6 +1,6 @@
-import { Game } from "../frontend/models/game.js";
-import { GameSession } from "../frontend/models/gameSession.js";
-import { Player } from "../frontend/models/player.js";
+import { Game } from "../game.js";
+import { GameSession } from "../gameSession.js";
+import { Player } from "../player.js";
 
 const skyjo = new Game(
   "Skyjo",
