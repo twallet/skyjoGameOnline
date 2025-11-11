@@ -1,8 +1,10 @@
 {
   "type": "module",
   "devDependencies": {
+    "husky": "^9.1.7",
     "jest": "^30.2.0",
-    "prettier": "3.6.2"
+    "prettier": "3.6.2",
+    "supertest": "^7.0.0"
   },
   "scripts": {
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
