@@ -106,12 +106,29 @@ export function App() {
   const [hasCreatedRoom, setHasCreatedRoom] = useState(false);
   const [isRoomSelectionLocked, setIsRoomSelectionLocked] = useState(false);
 
+  const loggedEventCountRef = useRef(0);
   const activeRoomIdRef = useRef(roomId);
   const isFetchingRoomRef = useRef(false);
 
   useEffect(() => {
     activeRoomIdRef.current = roomId;
   }, [roomId]);
+
+  useEffect(() => {
+    if (!Array.isArray(logEntries) || logEntries.length === 0) {
+      loggedEventCountRef.current = 0;
+      return;
+    }
+
+    const startIndex = Math.max(0, loggedEventCountRef.current);
+    const newEntries = logEntries.slice(startIndex);
+
+    newEntries.forEach((entry) => {
+      consoleLogger.info(`Client event: ${entry}`);
+    });
+
+    loggedEventCountRef.current = logEntries.length;
+  }, [logEntries]);
 
   const loadRoomState = useCallback(
     async (
@@ -134,6 +151,7 @@ export function App() {
       isFetchingRoomRef.current = true;
       if (!silent) {
         setIsLoading(true);
+        consoleLogger.info(`Client action: loading room '${normalizedRoomId}'`);
       }
 
       try {
@@ -168,6 +186,15 @@ export function App() {
 
         if (!silent && !preservePlayerName) {
           setNewPlayerName("");
+        }
+
+        if (!silent) {
+          const playerCount = Array.isArray(data.players)
+            ? data.players.length
+            : 0;
+          consoleLogger.info(
+            `Client event: loaded room '${normalizedRoomId}' with ${playerCount} players`
+          );
         }
       } catch (error) {
         if (activeRoomIdRef.current !== normalizedRoomId) {
@@ -206,6 +233,9 @@ export function App() {
     async function bootstrapInitialRoom() {
       try {
         await RoomApi.createRoom(initialRoomIdRef.current);
+        consoleLogger.info(
+          `Client event: bootstrapped initial room '${initialRoomIdRef.current}'`
+        );
       } catch (error) {
         consoleLogger.error("Unable to bootstrap initial room", error);
       } finally {
@@ -282,6 +312,11 @@ export function App() {
         gameStarted: true,
       }));
       loadRoomState(roomId, { silent: true });
+      consoleLogger.info(
+        `Client event: started game in room '${roomId}' with ${
+          Array.isArray(players) ? players.length : 0
+        } players`
+      );
     } catch (error) {
       consoleLogger.error("Unable to start Skyjo game", error);
       setLogEntries([]);
@@ -350,6 +385,9 @@ export function App() {
 
     setIsLoading(true);
     try {
+      consoleLogger.info(
+        `Client action: attempting to join room '${normalizedRoomId}' as '${trimmedPlayerName}'`
+      );
       try {
         await RoomApi.getRoom(normalizedRoomId);
       } catch (lookupError) {
@@ -380,6 +418,9 @@ export function App() {
       setNewPlayerName(trimmedPlayerName);
       setIsJoiningExistingRoom(false);
       setHasCreatedRoom(false);
+      consoleLogger.info(
+        `Client event: joined room '${joinedRoomId}' as '${trimmedPlayerName}'. Total players: ${updatedNames.length}`
+      );
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : String(error));
     } finally {
@@ -408,6 +449,9 @@ export function App() {
     setIsRoomSelectionLocked(true);
     setIsLoading(true);
     try {
+      consoleLogger.info(
+        `Client action: creating new room as '${trimmedPlayerName}'`
+      );
       const { roomId: createdId = generateRoomId() } =
         await RoomApi.createRoom();
       const normalizedId = createdId.trim().toUpperCase();
@@ -430,6 +474,9 @@ export function App() {
       setGameStarted(false);
       setNewPlayerName(trimmedPlayerName);
       setHasCreatedRoom(true);
+      consoleLogger.info(
+        `Client event: created room '${finalRoomId}' and joined as '${trimmedPlayerName}'. Total players: ${updatedNames.length}`
+      );
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : String(error));
     } finally {

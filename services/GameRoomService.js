@@ -54,6 +54,34 @@ export class GameRoomService {
   }
 
   /**
+   * Return the identifiers of all currently registered rooms.
+   * @returns {string[]}
+   */
+  static listRoomIds() {
+    return Array.from(GameRoomService.#registry.keys());
+  }
+
+  /**
+   * Log the list of registered rooms using the provided logger.
+   * @param {Partial<Record<"info" | "warn" | "error", (...args: unknown[]) => void>>} logger
+   * @returns {string[]}
+   */
+  static logRooms(logger = consoleLogger) {
+    const resolvedLogger = resolveLogger(logger);
+    const roomIds = GameRoomService.listRoomIds();
+    if (roomIds.length === 0) {
+      resolvedLogger.info("GameRoomService: no active rooms.");
+    } else {
+      resolvedLogger.info(
+        `GameRoomService: active rooms (${roomIds.length}): ${roomIds.join(
+          ", "
+        )}`
+      );
+    }
+    return roomIds;
+  }
+
+  /**
    * Remove an existing room from the registry.
    * @param {string} roomId
    * @returns {boolean}

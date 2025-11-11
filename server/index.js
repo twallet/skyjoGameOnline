@@ -65,6 +65,12 @@ function findRoom(roomId) {
   return GameRoomService.peek(roomId);
 }
 
+app.get("/rooms", (req, res) => {
+  const rooms = GameRoomService.listRoomIds();
+  GameRoomService.logRooms(consoleLogger);
+  return res.status(200).json({ rooms });
+});
+
 app.post("/rooms", (req, res) => {
   const roomId = (req.body?.roomId ?? "").trim().toUpperCase();
   const finalId = roomId || generateRoomId();
