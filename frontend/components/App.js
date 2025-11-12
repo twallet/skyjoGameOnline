@@ -499,7 +499,6 @@ export function App() {
     return React.createElement(GamePlayView, {
       activePlayers,
       deck: deckView,
-      roomId,
       sessionState,
       onFlipCard: handleRevealInitialCard,
       localPlayerName,

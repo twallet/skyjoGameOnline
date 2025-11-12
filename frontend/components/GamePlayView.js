@@ -3,7 +3,6 @@ import React from "https://esm.sh/react@18?dev";
 export function GamePlayView({
   activePlayers,
   deck,
-  roomId,
   snapshot = null,
   gameState = null,
   sessionState = null,
@@ -12,10 +11,6 @@ export function GamePlayView({
   isSubmittingAction = false,
 }) {
   const players = Array.isArray(activePlayers) ? activePlayers : [];
-  const displayedRoomId =
-    typeof roomId === "string" && roomId.trim().length > 0
-      ? roomId.trim()
-      : null;
 
   const state =
     sessionState ?? gameState ?? (snapshot ? snapshot.state : null) ?? null;
@@ -321,13 +316,6 @@ export function GamePlayView({
   return React.createElement(
     "main",
     { className: "app-container" },
-    displayedRoomId
-      ? React.createElement(
-          "span",
-          { className: "room-badge", title: "Room identifier" },
-          `Room ${displayedRoomId}`
-        )
-      : null,
     React.createElement(
       "section",
       { className: "players" },
