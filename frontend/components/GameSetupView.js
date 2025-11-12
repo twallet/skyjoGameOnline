@@ -22,6 +22,10 @@ export function GameSetupView({
   onCopyRoomId,
   isRoomIdReadOnly,
 }) {
+  const displayedRoomId =
+    typeof roomIdInput === "string" && roomIdInput.trim().length > 0
+      ? roomIdInput.trim()
+      : roomId;
   const trimmedRoomId =
     typeof roomIdInput === "string" ? roomIdInput.trim() : "";
   const joinDisabled =
@@ -80,16 +84,38 @@ export function GameSetupView({
           ? React.createElement(
               "div",
               { className: "setup__actions setup__actions--joining" },
-              React.createElement("input", {
-                id: "room-id-input",
-                className: "setup__room-input",
-                type: "text",
-                placeholder: "Enter room code",
-                value: roomIdInput,
-                onChange: (event) => onRoomIdInputChange(event.target.value),
-                disabled: isLoading,
-                readOnly: Boolean(isRoomIdReadOnly),
-              }),
+              Boolean(isRoomIdReadOnly)
+                ? React.createElement(
+                    "div",
+                    {
+                      className:
+                        "setup__room-banner setup__room-banner--inline",
+                    },
+                    React.createElement(
+                      "div",
+                      { className: "setup__current-room" },
+                      React.createElement(
+                        "span",
+                        { className: "setup__current-room-label" },
+                        "Room ID"
+                      ),
+                      React.createElement(
+                        "span",
+                        { className: "setup__current-room-value" },
+                        displayedRoomId
+                      )
+                    )
+                  )
+                : React.createElement("input", {
+                    id: "room-id-input",
+                    className: "setup__room-input",
+                    type: "text",
+                    placeholder: "Enter room code",
+                    value: roomIdInput,
+                    onChange: (event) =>
+                      onRoomIdInputChange(event.target.value),
+                    disabled: isLoading,
+                  }),
               React.createElement(
                 "button",
                 {

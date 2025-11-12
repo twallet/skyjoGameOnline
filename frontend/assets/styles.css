@@ -159,6 +159,13 @@ body {
   gap: 0.75rem;
 }
 
+.setup__room-banner--inline {
+  margin-top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .setup__current-room-value {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   font-size: 1rem;
@@ -166,6 +173,10 @@ body {
   border-radius: 999px;
   background: rgba(59, 130, 246, 0.12);
   border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.setup__room-banner--inline .setup__current-room {
+  margin-top: 0;
 }
 
 .setup__copy-button {
@@ -641,4 +652,3 @@ button:disabled {
     padding: 1.25rem;
   }
 }
-

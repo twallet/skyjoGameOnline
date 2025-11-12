@@ -240,8 +240,12 @@ describe("App component room selection flow", () => {
 
     await user.type(screen.getByPlaceholderText(/your name/i), "Bob");
     await flushPromises();
-    const roomInput = await screen.findByPlaceholderText(/enter room code/i);
-    expect(roomInput).toHaveValue("ROOM42");
-    expect(roomInput).toHaveAttribute("readonly");
+    await screen.findByText("ROOM42");
+    expect(
+      screen.getByText(/room id/i, { selector: "span" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByPlaceholderText(/enter room code/i)
+    ).not.toBeInTheDocument();
   });
 });
