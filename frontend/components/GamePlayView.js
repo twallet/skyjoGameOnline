@@ -218,6 +218,24 @@ export function GamePlayView({
       onDrawCard?.(normalizedLocalName, "discard");
     };
 
+    const handleDiscardDragOver = (event) => {
+      if (!drawnBelongsToLocal) {
+        return;
+      }
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+    };
+
+    const handleDiscardDrop = (event) => {
+      if (!drawnBelongsToLocal) {
+        return;
+      }
+      event.preventDefault();
+      setMainActionMode("reveal");
+      setPendingDiscardReveal(true);
+      setIsDraggingDrawnCard(false);
+    };
+
     const deckTitle = canDrawFromDeck
       ? "Draw a card from the deck"
       : "Deck of cards";
