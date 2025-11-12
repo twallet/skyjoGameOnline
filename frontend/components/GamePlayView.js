@@ -17,31 +17,79 @@ export function GamePlayView({
   const gridRef = React.useRef(null);
   const [cardSizeStyle, setCardSizeStyle] = useState({});
 
+  const maxHandColumns = React.useMemo(() => {
+    if (!players.length) {
+      return 4;
+    }
+
+    return players.reduce((maxCols, player) => {
+      const handMatrix = Array.isArray(player.handMatrix)
+        ? player.handMatrix
+        : [];
+      const longestRow = handMatrix.reduce(
+        (longest, row) => Math.max(longest, row.length || 0),
+        0
+      );
+      return Math.max(maxCols, Math.max(1, longestRow));
+    }, 4);
+  }, [players]);
+
   useEffect(() => {
+    const CARD_GAP_PX = 12;
+    const PLAYER_HORIZONTAL_PADDING = 32;
+    const MAX_CARD_WIDTH = 110;
+    const MIN_CARD_WIDTH = 40;
+
     const updateCardSize = () => {
       if (!gridRef.current) {
         return;
       }
 
       const bounding = gridRef.current.getBoundingClientRect();
-      const playerCount = players.length;
+      const computedGridStyle = window.getComputedStyle(gridRef.current);
+      const columnGap = parseFloat(computedGridStyle.columnGap || "16");
+      const rowGap = parseFloat(computedGridStyle.rowGap || "16");
 
-      const columnsNeeded = playerCount <= 4 ? 2 : 3;
-      const rowsNeeded = Math.ceil(playerCount / columnsNeeded);
+      const playerCount = Math.max(players.length, 1);
+      const gridColumns =
+        layout.columns || Math.min(Math.max(playerCount, 1), 3);
+      const gridRows = Math.ceil(playerCount / gridColumns);
 
+      const availableWidthPerPlayer =
+        (bounding.width - columnGap * Math.max(gridColumns - 1, 0)) /
+        gridColumns;
+      const availableHeightPerPlayer =
+        (bounding.height - rowGap * Math.max(gridRows - 1, 0)) / gridRows;
+
+      const innerWidth = Math.max(
+        availableWidthPerPlayer - PLAYER_HORIZONTAL_PADDING,
+        MIN_CARD_WIDTH * maxHandColumns
+      );
       const cardWidthByColumns =
-        bounding.width / Math.max(columnsNeeded * 4, 4) - 12;
+        (innerWidth - CARD_GAP_PX * Math.max(maxHandColumns - 1, 0)) /
+        Math.max(maxHandColumns, 1);
       const cardHeightByRows =
-        bounding.height / Math.max(rowsNeeded * 5, 5) - 12;
+        (availableHeightPerPlayer - PLAYER_HORIZONTAL_PADDING) / 3;
+
       const computedWidth = Math.max(
-        48,
-        Math.min(cardWidthByColumns, (cardHeightByRows * 7) / 10, 90)
+        MIN_CARD_WIDTH,
+        Math.min(
+          cardWidthByColumns,
+          (cardHeightByRows * 7) / 10,
+          MAX_CARD_WIDTH
+        )
       );
       const computedHeight = (computedWidth * 10) / 7;
+      const handWidth =
+        maxHandColumns * computedWidth +
+        Math.max(maxHandColumns - 1, 0) * CARD_GAP_PX;
 
       setCardSizeStyle({
         "--card-width": `${computedWidth}px`,
         "--card-height": `${computedHeight}px`,
+        "--hand-columns": maxHandColumns,
+        "--hand-width": `${handWidth}px`,
+        "--card-gap": `${CARD_GAP_PX}px`,
       });
     };
 
@@ -58,7 +106,7 @@ export function GamePlayView({
         resizeObserver.unobserve(gridRef.current);
       }
     };
-  }, [players.length]);
+  }, [players, layout.columns, maxHandColumns]);
 
   const state =
     sessionState ?? gameState ?? (snapshot ? snapshot.state : null) ?? null;

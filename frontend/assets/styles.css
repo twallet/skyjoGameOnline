@@ -441,14 +441,14 @@ body {
 
 .player-entry__drawn-card {
   margin-top: 0.65rem;
-  padding: 0.45rem;
+  padding: calc(var(--card-gap) / 2);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 10px 20px rgba(15, 23, 42, 0.18);
   border: 1px solid rgba(148, 163, 184, 0.3);
   display: flex;
   justify-content: center;
-  width: calc(var(--card-width) + 0.9rem);
+  width: calc(var(--card-width) + var(--card-gap));
 }
 
 .player-entry__drawn-card--dragging {
@@ -512,7 +512,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
+  gap: calc(var(--card-gap) / 2);
 }
 
 .deck-entry__image {
@@ -763,32 +763,39 @@ button:disabled {
 }
 
 :root {
-  --card-min-width: 48px;
-  --card-max-width: 86px;
-  --card-width: clamp(var(--card-min-width), 6.5vw, var(--card-max-width));
+  --card-width: 72px;
   --card-height: calc(var(--card-width) * 10 / 7);
-  --card-gap: 0.35rem;
+  --card-gap: 12px;
   --hand-columns: 4;
   --hand-width: calc(var(--hand-columns) * var(--card-width) + (var(--hand-columns) - 1) * var(--card-gap));
 }
 
-.deck-entry-wrapper {
+.players-grid {
   display: grid;
+  gap: 16px;
+  justify-content: center;
+  align-content: start;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.player-entry__hand-row {
+  display: grid;
+  gap: var(--card-gap);
+  grid-template-columns: repeat(var(--hand-columns), minmax(0, var(--card-width)));
   justify-items: center;
-  align-items: center;
-  gap: 0.5rem;
 }
 
-.deck-entry__instruction {
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: rgba(31, 41, 55, 0.8);
-  text-align: center;
-}
-
-.gameplay__instruction-banner {
-  display: none;
+.player-entry__card {
+  width: var(--card-width);
+  height: var(--card-height);
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 6px 12px rgba(15, 23, 42, 0.25);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background-color: #ffffff;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  position: relative;
+  transform-origin: center;
 }
 
 .drawn-card__image,
@@ -802,4 +809,13 @@ button:disabled {
 
 .player-entry__drawn-card {
   width: var(--card-width);
+}
+
+.deck-entry-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--card-gap) / 2);
+  width: min(100%, var(--hand-width));
+  margin: 0 auto;
 }
