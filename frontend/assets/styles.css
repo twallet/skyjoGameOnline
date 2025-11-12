@@ -419,13 +419,23 @@ body {
 }
 
 .player-entry__card:hover {
-  transform: scale(1.2);
-  box-shadow: 0 14px 22px rgba(15, 23, 42, 0.3);
-  z-index: 1;
+  transform: scale(1.02);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.25);
+}
+
+.player-entry__card--inactive:hover {
+  transform: scale(1.02);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.25);
 }
 
 .player-entry__card--interactive {
   cursor: pointer;
+}
+
+.player-entry__card--interactive:hover {
+  transform: scale(1.2);
+  box-shadow: 0 14px 22px rgba(15, 23, 42, 0.3);
+  z-index: 1;
 }
 
 .player-entry__card--interactive:focus {

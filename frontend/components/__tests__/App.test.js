@@ -64,7 +64,7 @@ describe("App component room selection flow", () => {
     render(React.createElement(App));
 
     expect(
-      screen.queryByRole("button", { name: /create new room/i })
+      screen.queryByRole("button", { name: /new room/i })
     ).not.toBeInTheDocument();
 
     const nameInput = screen.getByPlaceholderText(/your name/i);
@@ -72,7 +72,7 @@ describe("App component room selection flow", () => {
     await flushPromises();
 
     const createButton = await screen.findByRole("button", {
-      name: /create new room/i,
+      name: /new room/i,
     });
     expect(createButton).toBeEnabled();
   });
@@ -92,15 +92,13 @@ describe("App component room selection flow", () => {
 
     await user.type(screen.getByPlaceholderText(/your name/i), "Alice");
     await flushPromises();
-    await user.click(
-      screen.getByRole("button", { name: /join existing room/i })
-    );
+    await user.click(screen.getByRole("button", { name: /existing room/i }));
     await flushPromises();
 
     const roomInput = await screen.findByPlaceholderText(/enter room code/i);
     await user.type(roomInput, "test01");
     await flushPromises();
-    await user.click(screen.getByRole("button", { name: /joining room/i }));
+    await user.click(screen.getByRole("button", { name: /^join$/i }));
     await flushPromises();
 
     await waitFor(() => {
@@ -131,7 +129,7 @@ describe("App component room selection flow", () => {
 
     await user.type(screen.getByPlaceholderText(/your name/i), "Alice");
     await flushPromises();
-    await user.click(screen.getByRole("button", { name: /create new room/i }));
+    await user.click(screen.getByRole("button", { name: /new room/i }));
     await flushPromises();
 
     await waitFor(() => {
@@ -163,16 +161,14 @@ describe("App component room selection flow", () => {
 
     await user.type(screen.getByPlaceholderText(/your name/i), "Alice");
     await flushPromises();
-    await user.click(
-      screen.getByRole("button", { name: /join existing room/i })
-    );
+    await user.click(screen.getByRole("button", { name: /existing room/i }));
     await flushPromises();
 
     const roomInput = await screen.findByPlaceholderText(/enter room code/i);
     expect(roomInput).not.toHaveAttribute("readonly");
     await user.type(roomInput, "TEST01");
     await flushPromises();
-    await user.click(screen.getByRole("button", { name: /joining room/i }));
+    await user.click(screen.getByRole("button", { name: /^join$/i }));
     await flushPromises();
 
     await screen.findByText("TEST01");
@@ -200,9 +196,7 @@ describe("App component room selection flow", () => {
 
     await user.type(screen.getByPlaceholderText(/your name/i), "Alice");
     await flushPromises();
-    await user.click(
-      screen.getByRole("button", { name: /join existing room/i })
-    );
+    await user.click(screen.getByRole("button", { name: /existing room/i }));
     await flushPromises();
 
     await user.type(
@@ -210,7 +204,7 @@ describe("App component room selection flow", () => {
       "TEST01"
     );
     await flushPromises();
-    await user.click(screen.getByRole("button", { name: /joining room/i }));
+    await user.click(screen.getByRole("button", { name: /^join$/i }));
     await flushPromises();
 
     await screen.findByText("TEST01");
@@ -239,7 +233,7 @@ describe("App component room selection flow", () => {
     ).not.toBeInTheDocument();
 
     const joinButton = await screen.findByRole("button", {
-      name: /joining room/i,
+      name: /^join$/i,
     });
     expect(joinButton).toBeDisabled();
 
@@ -248,7 +242,7 @@ describe("App component room selection flow", () => {
     await screen.findByText("ROOM42");
     expect(joinButton).not.toBeDisabled();
     expect(
-      screen.getByText(/room id/i, { selector: "span" })
+      screen.getByText(/^room$/i, { selector: "span" })
     ).toBeInTheDocument();
     expect(
       screen.queryByPlaceholderText(/enter room code/i)

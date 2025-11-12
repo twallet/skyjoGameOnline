@@ -286,23 +286,21 @@ export function GamePlayView({
                 !alreadyFlipped &&
                 !isSubmittingAction;
 
+              const cardClasses = ["player-entry__card"];
+              if (canFlip) {
+                cardClasses.push("player-entry__card--interactive");
+              } else {
+                cardClasses.push("player-entry__card--inactive");
+              }
+
               return React.createElement("img", {
                 key: `card-${rowIndex}-${cardIndex}`,
-                className: `player-entry__card${
-                  canFlip ? " player-entry__card--interactive" : ""
-                }`,
+                className: cardClasses.join(" "),
                 src: cardData.image,
                 alt: `${item.player.name} card ${cardValue}`,
                 onClick: canFlip
                   ? () => {
                       onFlipCard(item.player.name, position);
-                    }
-                  : undefined,
-                style: canFlip
-                  ? {
-                      cursor: "pointer",
-                      transform: "scale(1.02)",
-                      transition: "transform 0.2s ease",
                     }
                   : undefined,
               });

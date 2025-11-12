@@ -101,7 +101,7 @@ export function GameSetupView({
                     React.createElement(
                       "span",
                       { className: "setup__current-room-label" },
-                      "Room ID"
+                      "Room"
                     ),
                     React.createElement(
                       "span",
@@ -127,7 +127,7 @@ export function GameSetupView({
                 onClick: onJoinRoom,
                 disabled: joinDisabled,
               },
-              "Join room"
+              "Join"
             )
           )
         : showCreateActions
@@ -168,7 +168,7 @@ export function GameSetupView({
               React.createElement(
                 "span",
                 { className: "setup__current-room-label" },
-                "Room ID"
+                "Room"
               ),
               React.createElement(
                 "span",
