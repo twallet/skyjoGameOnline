@@ -205,7 +205,7 @@ export function GamePlayView({
         "li",
         {
           key: item.key,
-          className: "player-entry player-entry--active deck-entry",
+          className: "player-entry deck-entry",
           style: {
             ...baseStyle,
             justifySelf: "center",
