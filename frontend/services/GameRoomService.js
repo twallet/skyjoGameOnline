@@ -196,12 +196,46 @@ export class GameRoomService {
       throw new Error("Game has not started in this room.");
     }
 
-    const numericPosition = Number(position);
-    if (!Number.isInteger(numericPosition)) {
-      throw new TypeError("Card position must be an integer");
+    const result = this.#session.revealInitialCard(
+      playerName,
+      Number(position)
+    );
+    this.#lastSnapshot = result.snapshot;
+    return result;
+  }
+
+  drawCard(playerName, source) {
+    if (!this.#lastSnapshot) {
+      throw new Error("Game has not started in this room.");
     }
 
-    const result = this.#session.revealInitialCard(playerName, numericPosition);
+    const result = this.#session.drawCard(playerName, source);
+    this.#lastSnapshot = result.snapshot;
+    return result;
+  }
+
+  replaceWithDrawnCard(playerName, position) {
+    if (!this.#lastSnapshot) {
+      throw new Error("Game has not started in this room.");
+    }
+
+    const result = this.#session.replaceWithDrawnCard(
+      playerName,
+      Number(position)
+    );
+    this.#lastSnapshot = result.snapshot;
+    return result;
+  }
+
+  discardDrawnCardAndReveal(playerName, position) {
+    if (!this.#lastSnapshot) {
+      throw new Error("Game has not started in this room.");
+    }
+
+    const result = this.#session.discardDrawnCardAndReveal(
+      playerName,
+      Number(position)
+    );
     this.#lastSnapshot = result.snapshot;
     return result;
   }

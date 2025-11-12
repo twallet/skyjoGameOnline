@@ -63,6 +63,15 @@ function buildPlayer(name, cardValues, game) {
 describe("SkyjoEngine", () => {
   const game = buildGame();
 
+  function advanceToMainPhase(engine, playerCount) {
+    for (let index = 0; index < playerCount; index++) {
+      engine.revealInitialCard(index, 0);
+    }
+    for (let index = 0; index < playerCount; index++) {
+      engine.revealInitialCard(index, 1);
+    }
+  }
+
   test("initializes discard pile with a visible card", () => {
     const players = [
       buildPlayer("Alice", [2, 8, 3, 5], game),
@@ -113,6 +122,67 @@ describe("SkyjoEngine", () => {
     expect(state.initialFlip.resolved).toBe(true);
     expect(state.activePlayer).toEqual(
       expect.objectContaining({ name: "Alice" })
+    );
+  });
+
+  test("active player can draw from deck and replace a card", () => {
+    const players = [
+      buildPlayer("Alice", [9, 6, 3, 4], game),
+      buildPlayer("Bob", [4, 5, 8, 2], game),
+    ];
+    const deck = new StubDeck([new Card(7, game), new Card(5, game)]);
+    const dealer = { deck, players };
+
+    const engine = new SkyjoEngine(game, dealer, players);
+    advanceToMainPhase(engine, players.length);
+
+    const drawResult = engine.drawFromDeck(0);
+    expect(drawResult.card.value).toBe(7);
+
+    const actionResult = engine.replaceWithDrawnCard(0, 2);
+    expect(actionResult.discarded.value).toBe(3);
+    expect(players[0].hand.cards()[2]).toBe(7);
+    expect(engine.discardTopCard().value).toBe(3);
+    expect(engine.activePlayerIndex).toBe(1);
+    expect(engine.buildStateSnapshot().drawnCard).toBeNull();
+  });
+
+  test("active player can draw from discard, discard it and reveal a hidden card", () => {
+    const players = [
+      buildPlayer("Alice", [9, 6, 3, 4], game),
+      buildPlayer("Bob", [4, 5, 8, 2], game),
+    ];
+    const deck = new StubDeck([new Card(8, game), new Card(5, game)]);
+    const dealer = { deck, players };
+
+    const engine = new SkyjoEngine(game, dealer, players);
+    advanceToMainPhase(engine, players.length);
+
+    const drawResult = engine.drawFromDiscard(0);
+    expect(drawResult.card.value).toBe(5);
+
+    const actionResult = engine.discardDrawnCardAndReveal(0, 2);
+    expect(actionResult.revealed.value).toBe(3);
+    expect(players[0].hand.isCardVisible(2)).toBe(true);
+    expect(engine.discardTopCard().value).toBe(5);
+    expect(engine.activePlayerIndex).toBe(1);
+  });
+
+  test("prevents drawing more than once per turn", () => {
+    const players = [
+      buildPlayer("Alice", [9, 6, 3, 4], game),
+      buildPlayer("Bob", [4, 5, 8, 2], game),
+    ];
+    const deck = new StubDeck([new Card(7, game), new Card(5, game)]);
+    const dealer = { deck, players };
+
+    const engine = new SkyjoEngine(game, dealer, players);
+    advanceToMainPhase(engine, players.length);
+
+    engine.drawFromDeck(0);
+
+    expect(() => engine.drawFromDeck(0)).toThrow(
+      "Player must resolve the previously drawn card first"
     );
   });
 });

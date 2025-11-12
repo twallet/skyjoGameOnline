@@ -18,6 +18,66 @@ export class GameSession {
   static #MAX_PLAYER_NAME_LENGTH = 15;
   #logger;
 
+  #ensureGameStarted() {
+    if (!this.#engine) {
+      throw new Error("Game has not started yet.");
+    }
+  }
+
+  #resolvePlayer(playerName) {
+    if (typeof playerName !== "string" || playerName.trim() === "") {
+      throw new TypeError("Player name must be a non-empty string");
+    }
+
+    const trimmedName = playerName.trim();
+    const playerIndex = this.#players.findIndex(
+      (player) => player.name === trimmedName
+    );
+
+    if (playerIndex === -1) {
+      throw new Error(`Unknown player: ${trimmedName}`);
+    }
+
+    return { name: trimmedName, index: playerIndex };
+  }
+
+  #normalizePosition(position) {
+    if (!Number.isInteger(position)) {
+      throw new TypeError("Card position must be an integer");
+    }
+    return position;
+  }
+
+  #appendLog(entry) {
+    if (!entry) {
+      return;
+    }
+    this.#logEntries = [...this.#logEntries, entry];
+  }
+
+  #updateSnapshots() {
+    const snapshot = this.#buildSessionSnapshot();
+    this.#deckSnapshot = snapshot.deck;
+    this.#lastSnapshot = GameSession.#cloneSnapshot(snapshot);
+    return this.#lastSnapshot;
+  }
+
+  #buildActionResponse(event) {
+    const latestSnapshot = this.#updateSnapshots();
+    return {
+      event,
+      snapshot: GameSession.#cloneSnapshot(latestSnapshot),
+      logEntries: [...this.#logEntries],
+      deck: {
+        size: latestSnapshot.deck.size,
+        topCard: latestSnapshot.deck.topCard
+          ? { ...latestSnapshot.deck.topCard }
+          : null,
+        discardSize: latestSnapshot.deck.discardSize ?? 0,
+      },
+    };
+  }
+
   constructor(game, logger = noopLogger) {
     this.#game = GameSession.#validateGame(game);
     this.#logger = resolveLogger(logger);
@@ -124,65 +184,92 @@ export class GameSession {
   }
 
   revealInitialCard(playerName, position) {
-    if (!this.#engine) {
-      throw new Error("Game has not started yet.");
-    }
+    this.#ensureGameStarted();
+    const { name, index } = this.#resolvePlayer(playerName);
+    const normalizedPosition = this.#normalizePosition(position);
 
-    if (typeof playerName !== "string" || playerName.trim() === "") {
-      throw new TypeError("Player name must be a non-empty string");
-    }
+    const result = this.#engine.revealInitialCard(index, normalizedPosition);
 
-    if (!Number.isInteger(position)) {
-      throw new TypeError("Card position must be an integer");
-    }
-
-    const trimmedName = playerName.trim();
-    const playerIndex = this.#players.findIndex(
-      (player) => player.name === trimmedName
-    );
-
-    if (playerIndex === -1) {
-      throw new Error(`Unknown player: ${trimmedName}`);
-    }
-
-    const result = this.#engine.revealInitialCard(playerIndex, position);
-
-    this.#logEntries = [
-      ...this.#logEntries,
-      `Initial flip: ${trimmedName} revealed ${result.card.value}`,
-    ];
+    this.#appendLog(`Initial flip: ${name} revealed ${result.card.value}`);
 
     if (
       result.phase === SkyjoPhases.MAIN_PLAY &&
       !this.#mainPhaseAnnounced &&
       result.activePlayerIndex !== null
     ) {
-      const starter =
+      const starterName =
         this.#players[result.activePlayerIndex]?.name ?? "Unknown";
-      this.#logEntries = [
-        ...this.#logEntries,
-        `Main phase: ${starter} starts the round.`,
-      ];
+      this.#appendLog(`Main phase: ${starterName} starts the round.`);
       this.#mainPhaseAnnounced = true;
     }
 
-    const snapshot = this.#buildSessionSnapshot();
-    this.#deckSnapshot = snapshot.deck;
-    this.#lastSnapshot = GameSession.#cloneSnapshot(snapshot);
+    return this.#buildActionResponse({
+      ...result,
+      playerName: name,
+      type: "initial-flip",
+    });
+  }
 
-    return {
-      event: {
-        ...result,
-        playerName: trimmedName,
-      },
-      snapshot: GameSession.#cloneSnapshot(snapshot),
-      logEntries: [...this.#logEntries],
-      deck: {
-        size: snapshot.deck.size,
-        topCard: snapshot.deck.topCard ? { ...snapshot.deck.topCard } : null,
-        discardSize: snapshot.deck.discardSize ?? 0,
-      },
-    };
+  drawCard(playerName, source) {
+    this.#ensureGameStarted();
+    const normalizedSource = source === "discard" ? "discard" : "deck";
+    const { name, index } = this.#resolvePlayer(playerName);
+
+    const result =
+      normalizedSource === "discard"
+        ? this.#engine.drawFromDiscard(index)
+        : this.#engine.drawFromDeck(index);
+
+    const logEntry =
+      normalizedSource === "discard"
+        ? `Main play: ${name} took discard card ${result.card.value}`
+        : `Main play: ${name} drew from deck (${result.card.value})`;
+    this.#appendLog(logEntry);
+
+    return this.#buildActionResponse({
+      ...result,
+      playerName: name,
+      type: "draw",
+    });
+  }
+
+  replaceWithDrawnCard(playerName, position) {
+    this.#ensureGameStarted();
+    const { name, index } = this.#resolvePlayer(playerName);
+    const normalizedPosition = this.#normalizePosition(position);
+
+    const result = this.#engine.replaceWithDrawnCard(index, normalizedPosition);
+
+    this.#appendLog(
+      `Main play: ${name} replaced position ${normalizedPosition} with ${result.newCard.value}, discarding ${result.discarded.value}`
+    );
+
+    return this.#buildActionResponse({
+      ...result,
+      playerName: name,
+      type: "replace",
+    });
+  }
+
+  discardDrawnCardAndReveal(playerName, position) {
+    this.#ensureGameStarted();
+    const { name, index } = this.#resolvePlayer(playerName);
+    const normalizedPosition = this.#normalizePosition(position);
+
+    const result = this.#engine.discardDrawnCardAndReveal(
+      index,
+      normalizedPosition
+    );
+
+    this.#appendLog(
+      `Main play: ${name} discarded drawn ${result.discarded.value} and revealed ${result.revealed.value} at position ${normalizedPosition}`
+    );
+
+    return this.#buildActionResponse({
+      ...result,
+      playerName: name,
+      type: "reveal",
+    });
   }
 
   reset() {

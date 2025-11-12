@@ -55,6 +55,138 @@ export class SkyjoEngine {
     return this.#discardPile.length;
   }
 
+  drawFromDiscard(playerIndex) {
+    this.#assertMainPlayPhase();
+    this.#assertActivePlayer(playerIndex);
+    this.#assertNoPendingDraw();
+    this.#resolvePlayerHand(playerIndex);
+
+    if (this.#discardPile.length === 0) {
+      throw new Error("Cannot draw from an empty discard pile");
+    }
+
+    const card = this.#discardPile.pop();
+    card.visible = true;
+
+    this.#drawnCard = {
+      playerIndex,
+      source: "discard",
+      card,
+    };
+
+    this.#logger.info(
+      `SkyjoEngine: player '${this.#players[playerIndex].name}' drew visible card ${card.value} from discard`
+    );
+
+    return {
+      playerIndex,
+      source: "discard",
+      card: {
+        value: card.value,
+        image: card.image,
+      },
+    };
+  }
+
+  drawFromDeck(playerIndex) {
+    this.#assertMainPlayPhase();
+    this.#assertActivePlayer(playerIndex);
+    this.#assertNoPendingDraw();
+    this.#resolvePlayerHand(playerIndex);
+
+    if (!this.#dealer?.deck || this.#dealer.deck.size() === 0) {
+      throw new Error("Cannot draw from an empty deck");
+    }
+
+    const card = this.#dealer.deck.dealNextCard();
+    card.visible = true;
+
+    this.#drawnCard = {
+      playerIndex,
+      source: "deck",
+      card,
+    };
+
+    this.#logger.info(
+      `SkyjoEngine: player '${this.#players[playerIndex].name}' drew card ${card.value} from deck`
+    );
+
+    return {
+      playerIndex,
+      source: "deck",
+      card: {
+        value: card.value,
+        image: card.image,
+      },
+    };
+  }
+
+  replaceWithDrawnCard(playerIndex, position) {
+    this.#assertMainPlayPhase();
+    this.#assertActivePlayer(playerIndex);
+    this.#assertValidPosition(position);
+
+    const drawn = this.#consumeDrawnCard(playerIndex);
+    const hand = this.#resolvePlayerHand(playerIndex);
+    drawn.card.visible = true;
+
+    const replacedCard = hand.replaceCard(position, drawn.card);
+    replacedCard.visible = true;
+    this.#discardPile.push(replacedCard);
+
+    this.#logger.info(
+      `SkyjoEngine: player '${this.#players[playerIndex].name}' replaced card at position ${position} with ${drawn.card.value}; discarded ${replacedCard.value}`
+    );
+
+    this.#advanceTurn();
+
+    return {
+      playerIndex,
+      position,
+      newCard: {
+        value: drawn.card.value,
+        image: drawn.card.image,
+      },
+      discarded: {
+        value: replacedCard.value,
+        image: replacedCard.image,
+      },
+      phase: this.#phase,
+      nextPlayerIndex: this.#activePlayerIndex,
+    };
+  }
+
+  discardDrawnCardAndReveal(playerIndex, position) {
+    this.#assertMainPlayPhase();
+    this.#assertActivePlayer(playerIndex);
+    this.#assertValidPosition(position);
+
+    const drawn = this.#consumeDrawnCard(playerIndex);
+    drawn.card.visible = true;
+    this.#discardPile.push(drawn.card);
+
+    const hand = this.#resolvePlayerHand(playerIndex);
+    const revealed = hand.revealCard(position);
+
+    this.#logger.info(
+      `SkyjoEngine: player '${this.#players[playerIndex].name}' discarded drawn card ${drawn.card.value} and revealed position ${position} (${revealed.value})`
+    );
+
+    this.#advanceTurn();
+
+    return {
+      playerIndex,
+      position,
+      revealed,
+      discarded: {
+        value: drawn.card.value,
+        image: drawn.card.image,
+      },
+      phase: this.#phase,
+      nextPlayerIndex: this.#activePlayerIndex,
+    };
+  }
+
   revealInitialCard(playerIndex, position) {
     this.#assertPhase(SkyjoPhases.INITIAL_FLIP);
     const hand = this.#resolvePlayerHand(playerIndex);
@@ -126,6 +258,9 @@ export class SkyjoEngine {
       drawnCard: this.#drawnCard
         ? {
             source: this.#drawnCard.source,
+            playerIndex: this.#drawnCard.playerIndex,
+            playerName:
+              this.#players[this.#drawnCard.playerIndex]?.name ?? null,
             value: this.#drawnCard.card.value,
             image: this.#drawnCard.card.image,
             visible: this.#drawnCard.card.value !== "X",
@@ -191,6 +326,59 @@ export class SkyjoEngine {
     this.#logger.info(
       `SkyjoEngine: initialized discard pile with card value ${card.value}`
     );
+  }
+
+  #assertMainPlayPhase() {
+    if (
+      this.#phase !== SkyjoPhases.MAIN_PLAY &&
+      this.#phase !== SkyjoPhases.FINAL_ROUND
+    ) {
+      throw new Error(
+        `Main play action attempted outside main phases (current: '${this.#phase}')`
+      );
+    }
+  }
+
+  #assertActivePlayer(playerIndex) {
+    if (this.#activePlayerIndex !== playerIndex) {
+      throw new Error("It is not this player's turn");
+    }
+  }
+
+  #assertNoPendingDraw() {
+    if (this.#drawnCard) {
+      throw new Error("Player must resolve the previously drawn card first");
+    }
+  }
+
+  #consumeDrawnCard(playerIndex) {
+    if (!this.#drawnCard) {
+      throw new Error("Player must draw a card before taking an action");
+    }
+
+    if (this.#drawnCard.playerIndex !== playerIndex) {
+      throw new Error("Drawn card belongs to a different player");
+    }
+
+    const drawn = this.#drawnCard;
+    this.#drawnCard = null;
+    return drawn;
+  }
+
+  #assertValidPosition(position) {
+    if (!Number.isInteger(position)) {
+      throw new TypeError("Hand position must be an integer");
+    }
+  }
+
+  #advanceTurn() {
+    if (this.#turnOrder.length === 0) {
+      this.#activePlayerIndex = null;
+      return;
+    }
+
+    this.#turnCursor = (this.#turnCursor + 1) % this.#turnOrder.length;
+    this.#activePlayerIndex = this.#turnOrder[this.#turnCursor];
   }
 
   #allPlayersCompletedInitialFlip() {

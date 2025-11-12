@@ -82,6 +82,13 @@ export class Hand {
     return card.value !== "X";
   }
 
+  replaceCard(position, replacement) {
+    const card = this.#getCardAt(position);
+    const nextCard = this.#validateCard(replacement);
+    this.#cards[position] = nextCard;
+    return card;
+  }
+
   allCardsVisible() {
     return this.#cards.every((card) => card.value !== "X");
   }

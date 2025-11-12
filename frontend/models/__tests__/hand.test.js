@@ -84,6 +84,21 @@ describe("Hand", () => {
     );
   });
 
+  test("replaceCard swaps the card at position and returns previous card", () => {
+    const hand = new Hand();
+    const first = buildCard(1, { visible: true });
+    const second = buildCard(2);
+    const replacement = buildCard(3, { visible: true });
+
+    hand.add(first);
+    hand.add(second);
+
+    const removed = hand.replaceCard(0, replacement);
+
+    expect(removed).toBe(first);
+    expect(hand.cards()).toEqual([3, "X"]);
+  });
+
   test.each([0, -1, 1.5, "2", null])(
     "rejects invalid line definitions %p",
     (badLines) => {
