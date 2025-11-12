@@ -406,6 +406,9 @@ export function GamePlayView({
 
   players.forEach((player, index) => {
     const seat = layout.seats[index] ?? layout.seats[layout.seats.length - 1];
+    const handMatrix = Array.isArray(player.handMatrix)
+      ? player.handMatrix
+      : [];
     const initialFlipInfo = initialFlipPlayers.find(
       (entry) => entry?.name === player.name
     );
@@ -428,21 +431,19 @@ export function GamePlayView({
       drawnCard.playerName.localeCompare(normalizedPlayerName, undefined, {
         sensitivity: "accent",
       }) === 0;
+    const hasInlineDrawnCard = isDrawnCardOwner && Boolean(drawnCard);
+    const isCurrentTurn =
+      normalizedActiveName.length > 0 &&
+      normalizedPlayerName.length > 0 &&
+      normalizedActiveName.localeCompare(normalizedPlayerName, undefined, {
+        sensitivity: "accent",
+      }) === 0;
 
-    const handMatrix = Array.isArray(player.handMatrix)
-      ? player.handMatrix
-      : [];
     const rowOffsets = [];
     handMatrix.reduce((offset, row, rowIndex) => {
       rowOffsets[rowIndex] = offset;
       return offset + row.length;
     }, 0);
-
-    const isCurrentTurn =
-      typeof activeName === "string" &&
-      activeName.localeCompare(normalizedPlayerName, undefined, {
-        sensitivity: "accent",
-      }) === 0;
 
     playerEntries.push(
       React.createElement(
@@ -463,20 +464,27 @@ export function GamePlayView({
             "div",
             {
               className: "player-entry__hand-row player-entry__hand-row--label",
+              style: {
+                gridTemplateColumns: hasInlineDrawnCard
+                  ? "auto 1fr var(--card-width)"
+                  : "auto 1fr",
+              },
             },
+            isCurrentTurn
+              ? React.createElement("img", {
+                  className: "player-entry__indicator",
+                  src: "./assets/images/here.gif",
+                  alt: "Current turn indicator",
+                })
+              : React.createElement("span", {
+                  className: "player-entry__indicator-placeholder",
+                }),
             React.createElement(
               "div",
               { className: "player-entry__hand-label" },
-              isCurrentTurn
-                ? React.createElement("img", {
-                    className: "player-entry__indicator",
-                    src: "./assets/images/here.gif",
-                    alt: "Current turn indicator",
-                  })
-                : null,
               player.name
             ),
-            isDrawnCardOwner && drawnCard
+            hasInlineDrawnCard
               ? React.createElement("img", {
                   className: "drawn-card__image drawn-card__image--inline",
                   src: drawnCard.image,
@@ -488,9 +496,7 @@ export function GamePlayView({
                   onDragEnd: drawnBelongsToLocal
                     ? handleDrawnCardDragEnd
                     : undefined,
-                  style: drawnBelongsToLocal
-                    ? undefined
-                    : { cursor: "default" },
+                  style: { cursor: drawnBelongsToLocal ? "grab" : "default" },
                 })
               : null
           ),

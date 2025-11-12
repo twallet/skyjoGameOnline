@@ -406,9 +406,14 @@ body {
 }
 
 .player-entry__hand-row--label {
-  grid-template-columns: repeat(var(--hand-columns), minmax(0, var(--card-width)));
+  display: grid;
   align-items: center;
-  justify-items: start;
+  gap: var(--card-gap);
+}
+
+.player-entry__indicator-placeholder {
+  width: 22px;
+  height: 22px;
 }
 
 .player-entry__hand-label {
@@ -416,11 +421,14 @@ body {
   align-items: center;
   justify-content: flex-start;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: clamp(0.7rem, calc(var(--card-width) * 0.18), 1rem);
   color: rgba(31, 41, 59, 0.9);
   min-height: var(--card-height);
   padding-left: calc(var(--card-gap) / 2);
-  grid-column: 1 / span calc(var(--hand-columns) - 1);
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .player-entry__card {
@@ -853,4 +861,9 @@ h2 {
   margin-right: 0.4rem;
   vertical-align: middle;
   animation: none;
+}
+
+.drawn-card__image--inline {
+  justify-self: end;
+  align-self: center;
 }
