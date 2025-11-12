@@ -34,6 +34,108 @@ export function GamePlayView({
     }, 4);
   }, [players]);
 
+  const layouts = {
+    0: {
+      columns: 3,
+      rows: 1,
+      deck: { rowStart: 1, rowEnd: 2, colStart: 2, colEnd: 3 },
+      seats: [],
+    },
+    1: {
+      columns: 3,
+      rows: 1,
+      deck: { rowStart: 1, rowEnd: 2, colStart: 2, colEnd: 3 },
+      seats: [{ row: 1, col: 1 }],
+    },
+    2: {
+      columns: 3,
+      rows: 1,
+      deck: { rowStart: 1, rowEnd: 2, colStart: 2, colEnd: 3 },
+      seats: [
+        { row: 1, col: 1 },
+        { row: 1, col: 3 },
+      ],
+    },
+    3: {
+      columns: 3,
+      rows: 2,
+      deck: { rowStart: 1, rowEnd: 2, colStart: 2, colEnd: 3 },
+      seats: [
+        { row: 1, col: 1 },
+        { row: 1, col: 3 },
+        { row: 2, col: 2 },
+      ],
+    },
+    4: {
+      columns: 3,
+      rows: 3,
+      deck: { rowStart: 2, rowEnd: 3, colStart: 2, colEnd: 3 },
+      seats: [
+        { row: 2, col: 1 },
+        { row: 1, col: 2 },
+        { row: 2, col: 3 },
+        { row: 3, col: 2 },
+      ],
+    },
+    5: {
+      columns: 4,
+      rows: 3,
+      deck: { rowStart: 2, rowEnd: 3, colStart: 2, colEnd: 4 },
+      seats: [
+        { row: 2, col: 1 },
+        { row: 1, col: 2 },
+        { row: 1, col: 3 },
+        { row: 2, col: 4 },
+        { row: 3, col: 2 },
+      ],
+    },
+    6: {
+      columns: 4,
+      rows: 3,
+      deck: { rowStart: 2, rowEnd: 3, colStart: 2, colEnd: 4 },
+      seats: [
+        { row: 2, col: 1 },
+        { row: 1, col: 2 },
+        { row: 1, col: 3 },
+        { row: 2, col: 4 },
+        { row: 3, col: 2 },
+        { row: 3, col: 3 },
+      ],
+    },
+    7: {
+      columns: 4,
+      rows: 4,
+      deck: { rowStart: 2, rowEnd: 4, colStart: 2, colEnd: 4 },
+      seats: [
+        { row: 2, col: 1 },
+        { row: 1, col: 2 },
+        { row: 1, col: 3 },
+        { row: 2, col: 4 },
+        { row: 4, col: 2 },
+        { row: 4, col: 3 },
+        { row: 3, col: 1 },
+      ],
+    },
+    8: {
+      columns: 4,
+      rows: 4,
+      deck: { rowStart: 2, rowEnd: 4, colStart: 2, colEnd: 4 },
+      seats: [
+        { row: 2, col: 1 },
+        { row: 1, col: 2 },
+        { row: 1, col: 3 },
+        { row: 2, col: 4 },
+        { row: 4, col: 2 },
+        { row: 4, col: 3 },
+        { row: 3, col: 1 },
+        { row: 3, col: 4 },
+      ],
+    },
+  };
+
+  const playerCount = players.length;
+  const layout = layouts[playerCount] ?? layouts[Math.min(playerCount, 8)];
+
   useEffect(() => {
     const CARD_GAP_PX = 12;
     const PLAYER_HORIZONTAL_PADDING = 32;
@@ -177,129 +279,6 @@ export function GamePlayView({
     }
   }, [drawnBelongsToLocal, drawnCard?.playerName, drawnCard?.value]);
 
-  let instruction = null;
-  if (phase === "initial-flip") {
-    instruction = "Flip two of your cards";
-  } else if (phase === "main-play") {
-    if (drawnBelongsToLocal) {
-      instruction = pendingDiscardReveal
-        ? "Drag completed. Choose one of your hidden cards to reveal."
-        : "Drag the drawn card onto a hand position to replace it, or onto the discard pile.";
-    } else if (drawnCard?.playerName) {
-      instruction = `${drawnCard.playerName} is resolving a drawn card`;
-    } else {
-      instruction = activeName
-        ? `It's ${activeName}'s turn`
-        : "Main phase in progress";
-    }
-  } else if (phase === "final-round") {
-    instruction = activeName
-      ? `Final round: ${activeName}'s turn`
-      : "Final round in progress";
-  }
-
-  const layouts = {
-    0: {
-      columns: 3,
-      rows: 1,
-      deck: { rowStart: 1, rowEnd: 2, colStart: 2, colEnd: 3 },
-      seats: [],
-    },
-    1: {
-      columns: 3,
-      rows: 1,
-      deck: { rowStart: 1, rowEnd: 2, colStart: 2, colEnd: 3 },
-      seats: [{ row: 1, col: 1 }],
-    },
-    2: {
-      columns: 3,
-      rows: 1,
-      deck: { rowStart: 1, rowEnd: 2, colStart: 2, colEnd: 3 },
-      seats: [
-        { row: 1, col: 1 },
-        { row: 1, col: 3 },
-      ],
-    },
-    3: {
-      columns: 3,
-      rows: 2,
-      deck: { rowStart: 1, rowEnd: 2, colStart: 2, colEnd: 3 },
-      seats: [
-        { row: 1, col: 1 },
-        { row: 1, col: 3 },
-        { row: 2, col: 2 },
-      ],
-    },
-    4: {
-      columns: 3,
-      rows: 3,
-      deck: { rowStart: 2, rowEnd: 3, colStart: 2, colEnd: 3 },
-      seats: [
-        { row: 2, col: 1 },
-        { row: 1, col: 2 },
-        { row: 2, col: 3 },
-        { row: 3, col: 2 },
-      ],
-    },
-    5: {
-      columns: 4,
-      rows: 3,
-      deck: { rowStart: 2, rowEnd: 3, colStart: 2, colEnd: 4 },
-      seats: [
-        { row: 2, col: 1 },
-        { row: 1, col: 2 },
-        { row: 1, col: 3 },
-        { row: 2, col: 4 },
-        { row: 3, col: 2 },
-      ],
-    },
-    6: {
-      columns: 4,
-      rows: 3,
-      deck: { rowStart: 2, rowEnd: 3, colStart: 2, colEnd: 4 },
-      seats: [
-        { row: 2, col: 1 },
-        { row: 1, col: 2 },
-        { row: 1, col: 3 },
-        { row: 2, col: 4 },
-        { row: 3, col: 2 },
-        { row: 3, col: 3 },
-      ],
-    },
-    7: {
-      columns: 4,
-      rows: 4,
-      deck: { rowStart: 2, rowEnd: 4, colStart: 2, colEnd: 4 },
-      seats: [
-        { row: 2, col: 1 },
-        { row: 1, col: 2 },
-        { row: 1, col: 3 },
-        { row: 2, col: 4 },
-        { row: 4, col: 2 },
-        { row: 4, col: 3 },
-        { row: 3, col: 1 },
-      ],
-    },
-    8: {
-      columns: 4,
-      rows: 4,
-      deck: { rowStart: 2, rowEnd: 4, colStart: 2, colEnd: 4 },
-      seats: [
-        { row: 2, col: 1 },
-        { row: 1, col: 2 },
-        { row: 1, col: 3 },
-        { row: 2, col: 4 },
-        { row: 4, col: 2 },
-        { row: 4, col: 3 },
-        { row: 3, col: 1 },
-        { row: 3, col: 4 },
-      ],
-    },
-  };
-
-  const playerCount = players.length;
-  const layout = layouts[playerCount] ?? layouts[Math.min(playerCount, 8)];
-
   const gridListStyle = {
     display: "grid",
     gridTemplateColumns: `repeat(${layout.columns}, minmax(0, 1fr))`,
@@ -419,13 +398,7 @@ export function GamePlayView({
                   })
                 : null
           ),
-          instruction
-            ? React.createElement(
-                "p",
-                { className: "deck-entry__instruction" },
-                instruction
-              )
-            : null
+          null
         )
       )
     );
@@ -636,62 +609,6 @@ export function GamePlayView({
     );
   });
 
-  const actionControls =
-    canResolveDrawnCard &&
-    (typeof onReplaceCard === "function" || typeof onRevealCard === "function")
-      ? React.createElement(
-          "div",
-          {
-            className: "gameplay__actions",
-            style: {
-              display: "flex",
-              gap: "0.5rem",
-              marginTop: "0.5rem",
-            },
-          },
-          [
-            typeof onReplaceCard === "function"
-              ? React.createElement(
-                  "button",
-                  {
-                    key: "replace",
-                    type: "button",
-                    onClick: () => {
-                      setMainActionMode("replace");
-                      setPendingDiscardReveal(false);
-                    },
-                    disabled: isSubmittingAction,
-                    style:
-                      mainActionMode === "replace"
-                        ? { fontWeight: "bold" }
-                        : undefined,
-                  },
-                  "Replace a card"
-                )
-              : null,
-            typeof onRevealCard === "function"
-              ? React.createElement(
-                  "button",
-                  {
-                    key: "reveal",
-                    type: "button",
-                    onClick: () => {
-                      setMainActionMode("reveal");
-                      setPendingDiscardReveal(true);
-                    },
-                    disabled: isSubmittingAction,
-                    style:
-                      mainActionMode === "reveal"
-                        ? { fontWeight: "bold" }
-                        : undefined,
-                  },
-                  "Discard drawn card"
-                )
-              : null,
-          ].filter(Boolean)
-        )
-      : null;
-
   return React.createElement(
     "main",
     { className: "app-container" },
@@ -708,7 +625,6 @@ export function GamePlayView({
         },
         playerEntries
       )
-    ),
-    actionControls
+    )
   );
 }
