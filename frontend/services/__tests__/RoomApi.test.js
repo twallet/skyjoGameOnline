@@ -156,4 +156,94 @@ describe("RoomApi", () => {
     );
     expect(payload.event).toEqual({ playerName: "Alice", position: 0 });
   });
+
+  it("draws a card during the main phase", async () => {
+    const response = createJsonResponse(200, {
+      roomId: "ROOM10",
+      players: [],
+      deck: { size: 10, topCard: null },
+      logEntries: [],
+      state: { phase: "main-play", drawnCard: { playerName: "Alice" } },
+      event: { type: "draw", playerName: "Alice", source: "deck" },
+    });
+    global.fetch.mockResolvedValueOnce(response);
+
+    const payload = await RoomApi.drawCard("room10", "Alice", "deck");
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "http://localhost:4000/rooms/ROOM10/main/draw",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerName: "Alice", source: "deck" }),
+      }
+    );
+    expect(payload.event).toEqual(
+      expect.objectContaining({ type: "draw", playerName: "Alice" })
+    );
+  });
+
+  it("replaces a drawn card with a hand position", async () => {
+    const response = createJsonResponse(200, {
+      roomId: "ROOM10",
+      players: [],
+      deck: { size: 10, topCard: null },
+      logEntries: [],
+      state: { phase: "main-play", drawnCard: null },
+      event: {
+        type: "replace",
+        playerName: "Alice",
+        position: 2,
+        newCard: { value: 5 },
+        discarded: { value: 3 },
+      },
+    });
+    global.fetch.mockResolvedValueOnce(response);
+
+    const payload = await RoomApi.replaceWithDrawnCard("room10", "Alice", 2);
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "http://localhost:4000/rooms/ROOM10/main/replace",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerName: "Alice", position: 2 }),
+      }
+    );
+    expect(payload.event).toEqual(
+      expect.objectContaining({ type: "replace", playerName: "Alice" })
+    );
+  });
+
+  it("reveals a hidden card after discarding the drawn card", async () => {
+    const response = createJsonResponse(200, {
+      roomId: "ROOM10",
+      players: [],
+      deck: { size: 10, topCard: null },
+      logEntries: [],
+      state: { phase: "main-play", drawnCard: null },
+      event: {
+        type: "reveal",
+        playerName: "Alice",
+        position: 3,
+        revealed: { value: 7 },
+        discarded: { value: 4 },
+      },
+    });
+    global.fetch.mockResolvedValueOnce(response);
+
+    const payload = await RoomApi.revealAfterDiscard("room10", "Alice", 3);
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "http://localhost:4000/rooms/ROOM10/main/reveal",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerName: "Alice", position: 3 }),
+      }
+    );
+    expect(payload.event).toEqual(
+      expect.objectContaining({ type: "reveal", playerName: "Alice" })
+    );
+  });
 });

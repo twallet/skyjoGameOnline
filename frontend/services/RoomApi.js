@@ -127,6 +127,52 @@ export const RoomApi = {
     });
   },
 
+  async drawCard(roomId, playerName, source) {
+    const normalized = normalizeRequiredRoomId(roomId);
+    const safeName = typeof playerName === "string" ? playerName.trim() : "";
+    if (!safeName) {
+      throw new Error("Player name must not be empty.");
+    }
+    const normalizedSource = source === "discard" ? "discard" : "deck";
+
+    return request(`/rooms/${normalized}/main/draw`, {
+      method: "POST",
+      body: { playerName: safeName, source: normalizedSource },
+    });
+  },
+
+  async replaceWithDrawnCard(roomId, playerName, position) {
+    const normalized = normalizeRequiredRoomId(roomId);
+    const safeName = typeof playerName === "string" ? playerName.trim() : "";
+    if (!safeName) {
+      throw new Error("Player name must not be empty.");
+    }
+    if (!Number.isInteger(position)) {
+      throw new Error("Card position must be an integer.");
+    }
+
+    return request(`/rooms/${normalized}/main/replace`, {
+      method: "POST",
+      body: { playerName: safeName, position },
+    });
+  },
+
+  async revealAfterDiscard(roomId, playerName, position) {
+    const normalized = normalizeRequiredRoomId(roomId);
+    const safeName = typeof playerName === "string" ? playerName.trim() : "";
+    if (!safeName) {
+      throw new Error("Player name must not be empty.");
+    }
+    if (!Number.isInteger(position)) {
+      throw new Error("Card position must be an integer.");
+    }
+
+    return request(`/rooms/${normalized}/main/reveal`, {
+      method: "POST",
+      body: { playerName: safeName, position },
+    });
+  },
+
   async resetRoom(roomId) {
     const normalized = normalizeRequiredRoomId(roomId);
     await request(`/rooms/${normalized}/reset`, {

@@ -286,6 +286,55 @@ export function App() {
     };
   }, [roomId, loadRoomState]);
 
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    const titleParts = ["Skyjo"];
+    const normalizedRoomId =
+      typeof roomId === "string" && roomId.trim().length > 0
+        ? roomId.trim().toUpperCase()
+        : "";
+    const normalizedPlayerName =
+      typeof localPlayerName === "string" && localPlayerName.trim().length > 0
+        ? localPlayerName.trim()
+        : "";
+
+    if (normalizedRoomId) {
+      titleParts.push(normalizedRoomId);
+    }
+    if (normalizedPlayerName) {
+      titleParts.push(normalizedPlayerName);
+    }
+
+    document.title = titleParts.join(" | ");
+  }, [roomId, localPlayerName]);
+
+  const applySessionPayload = useCallback((payload) => {
+    if (!payload) {
+      return;
+    }
+
+    const players = Array.isArray(payload.players) ? payload.players : [];
+    const entries = Array.isArray(payload.logEntries) ? payload.logEntries : [];
+    const deck = payload.deck ?? null;
+    const state = payload.state ?? null;
+
+    const snapshot = {
+      players,
+      logEntries: entries,
+      deck,
+      state: state ?? null,
+    };
+
+    setCurrentSnapshot(snapshot);
+    setSessionState(state ?? null);
+    setActivePlayers(normalizePlayerSnapshots(players));
+    setDeckView(buildDeckView(deck));
+    setLogEntries(entries);
+  }, []);
+
   const handleStartGame = async () => {
     try {
       const {
@@ -296,17 +345,12 @@ export function App() {
       } = await RoomApi.startGame(roomId);
 
       setErrorMessage("");
-      setLogEntries(entries);
-      setActivePlayers(normalizePlayerSnapshots(players));
-      setDeckView(buildDeckView(deck));
-      const snapshot = {
+      applySessionPayload({
         players,
         logEntries: entries,
         deck,
-        state: state ?? null,
-      };
-      setCurrentSnapshot(snapshot);
-      setSessionState(state ?? null);
+        state,
+      });
       setGameStarted(true);
       setRoomState((prev) => ({
         ...prev,
@@ -322,13 +366,13 @@ export function App() {
       );
     } catch (error) {
       consoleLogger.error("Unable to start Skyjo game", error);
-      setLogEntries([]);
       setErrorMessage(error instanceof Error ? error.message : String(error));
-      setActivePlayers([]);
-      setDeckView(null);
       setGameStarted(false);
       setCurrentSnapshot(null);
       setSessionState(null);
+      setActivePlayers([]);
+      setDeckView(null);
+      setLogEntries([]);
     }
   };
 
@@ -346,18 +390,71 @@ export function App() {
         state = null,
       } = await RoomApi.revealInitialCard(roomId, playerName, position);
 
-      const snapshot = {
+      applySessionPayload({
         players,
         logEntries: entries,
         deck,
-        state: state ?? null,
-      };
+        state,
+      });
+      setErrorMessage("");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsSubmittingAction(false);
+    }
+  };
 
-      setCurrentSnapshot(snapshot);
-      setSessionState(state ?? null);
-      setActivePlayers(normalizePlayerSnapshots(players));
-      setDeckView(buildDeckView(deck));
-      setLogEntries(Array.isArray(entries) ? entries : []);
+  const handleDrawCard = async (playerName, source) => {
+    if (!roomId) {
+      return;
+    }
+
+    setIsSubmittingAction(true);
+    try {
+      const payload = await RoomApi.drawCard(roomId, playerName, source);
+      applySessionPayload(payload);
+      setErrorMessage("");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsSubmittingAction(false);
+    }
+  };
+
+  const handleReplaceWithDrawnCard = async (playerName, position) => {
+    if (!roomId) {
+      return;
+    }
+
+    setIsSubmittingAction(true);
+    try {
+      const payload = await RoomApi.replaceWithDrawnCard(
+        roomId,
+        playerName,
+        position
+      );
+      applySessionPayload(payload);
+      setErrorMessage("");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsSubmittingAction(false);
+    }
+  };
+
+  const handleRevealAfterDiscard = async (playerName, position) => {
+    if (!roomId) {
+      return;
+    }
+
+    setIsSubmittingAction(true);
+    try {
+      const payload = await RoomApi.revealAfterDiscard(
+        roomId,
+        playerName,
+        position
+      );
+      applySessionPayload(payload);
       setErrorMessage("");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : String(error));
@@ -569,8 +666,12 @@ export function App() {
     return React.createElement(GamePlayView, {
       activePlayers,
       deck: deckView,
+      snapshot: currentSnapshot,
       sessionState,
       onFlipCard: handleRevealInitialCard,
+      onDrawCard: handleDrawCard,
+      onReplaceCard: handleReplaceWithDrawnCard,
+      onRevealCard: handleRevealAfterDiscard,
       localPlayerName,
       isSubmittingAction,
     });

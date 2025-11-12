@@ -15,6 +15,18 @@ export function createRoomController({ game, playerColors, logger }) {
     return getOrCreateRoom(roomId, game, playerColors, resolvedLogger);
   }
 
+  function serializeActionResult(room, roomId, result) {
+    const serialized = serializeSnapshot(result.snapshot);
+    return {
+      roomId: room.roomId ?? normalizeRoomIdValue(roomId),
+      players: serialized.players,
+      logEntries: serialized.logEntries,
+      deck: serialized.deck,
+      state: serialized.state,
+      event: result.event,
+    };
+  }
+
   return {
     health(_req, res) {
       res.json({ status: "ok", message: "Skyjo rooms API" });
@@ -107,6 +119,96 @@ export function createRoomController({ game, playerColors, logger }) {
           state: serialized.state,
           event: result.event,
         });
+      } catch (error) {
+        res.status(400).json({
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    },
+
+    drawCard(req, res) {
+      const { roomId } = req.params;
+      const { playerName, source } = req.body ?? {};
+
+      if (typeof playerName !== "string" || playerName.trim() === "") {
+        res
+          .status(400)
+          .json({ error: "Player name must be provided to draw a card." });
+        return;
+      }
+
+      if (source !== "deck" && source !== "discard") {
+        res
+          .status(400)
+          .json({ error: "Draw source must be either 'deck' or 'discard'." });
+        return;
+      }
+
+      try {
+        const room = ensureRoom(roomId);
+        const result = room.drawCard(playerName, source);
+        res.status(200).json(serializeActionResult(room, roomId, result));
+      } catch (error) {
+        res.status(400).json({
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    },
+
+    replaceWithDrawnCard(req, res) {
+      const { roomId } = req.params;
+      const { playerName, position } = req.body ?? {};
+
+      if (typeof playerName !== "string" || playerName.trim() === "") {
+        res.status(400).json({
+          error: "Player name must be provided to replace a card.",
+        });
+        return;
+      }
+
+      if (!Number.isInteger(Number(position))) {
+        res
+          .status(400)
+          .json({ error: "Card position must be an integer value." });
+        return;
+      }
+
+      try {
+        const room = ensureRoom(roomId);
+        const result = room.replaceWithDrawnCard(playerName, Number(position));
+        res.status(200).json(serializeActionResult(room, roomId, result));
+      } catch (error) {
+        res.status(400).json({
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    },
+
+    revealAfterDiscard(req, res) {
+      const { roomId } = req.params;
+      const { playerName, position } = req.body ?? {};
+
+      if (typeof playerName !== "string" || playerName.trim() === "") {
+        res.status(400).json({
+          error: "Player name must be provided to reveal a card.",
+        });
+        return;
+      }
+
+      if (!Number.isInteger(Number(position))) {
+        res
+          .status(400)
+          .json({ error: "Card position must be an integer value." });
+        return;
+      }
+
+      try {
+        const room = ensureRoom(roomId);
+        const result = room.discardDrawnCardAndReveal(
+          playerName,
+          Number(position)
+        );
+        res.status(200).json(serializeActionResult(room, roomId, result));
       } catch (error) {
         res.status(400).json({
           error: error instanceof Error ? error.message : String(error),

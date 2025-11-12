@@ -142,4 +142,71 @@ describe("Skyjo server endpoints", () => {
     const fetchResponse = await request(app).get("/rooms/ROOM4");
     expect(fetchResponse.status).toBe(404);
   });
+
+  it("handles main play actions after the initial flip", async () => {
+    await request(app).post("/rooms").send({ roomId: "room5" });
+    await request(app).post("/rooms/ROOM5/join").send({ name: "Alice" });
+    await request(app).post("/rooms/ROOM5/join").send({ name: "Bob" });
+
+    const startResponse = await request(app).post("/rooms/ROOM5/start").send();
+    expect(startResponse.status).toBe(200);
+
+    let finalFlipResponse;
+    for (const playerName of ["Alice", "Bob"]) {
+      for (const position of [0, 1]) {
+        finalFlipResponse = await request(app)
+          .post("/rooms/ROOM5/initial-flip")
+          .send({ playerName, position });
+      }
+    }
+
+    expect(finalFlipResponse.status).toBe(200);
+    expect(finalFlipResponse.body.state.phase).toBe("main-play");
+
+    const starterName = finalFlipResponse.body.state.activePlayer?.name;
+    expect(typeof starterName).toBe("string");
+
+    const drawResponse = await request(app)
+      .post("/rooms/ROOM5/main/draw")
+      .send({ playerName: starterName, source: "deck" });
+
+    expect(drawResponse.status).toBe(200);
+    expect(drawResponse.body.event).toEqual(
+      expect.objectContaining({ type: "draw", playerName: starterName })
+    );
+    expect(drawResponse.body.state.drawnCard).toEqual(
+      expect.objectContaining({ playerName: starterName })
+    );
+
+    const replaceResponse = await request(app)
+      .post("/rooms/ROOM5/main/replace")
+      .send({ playerName: starterName, position: 2 });
+
+    expect(replaceResponse.status).toBe(200);
+    expect(replaceResponse.body.event).toEqual(
+      expect.objectContaining({ type: "replace", playerName: starterName })
+    );
+    expect(replaceResponse.body.state.drawnCard).toBeNull();
+
+    const nextPlayerName = replaceResponse.body.state.activePlayer?.name;
+    expect(typeof nextPlayerName).toBe("string");
+    expect(nextPlayerName).not.toBe(starterName);
+
+    const drawFromDiscard = await request(app)
+      .post("/rooms/ROOM5/main/draw")
+      .send({ playerName: nextPlayerName, source: "discard" });
+
+    expect(drawFromDiscard.status).toBe(200);
+    expect(drawFromDiscard.body.event.source).toBe("discard");
+
+    const revealResponse = await request(app)
+      .post("/rooms/ROOM5/main/reveal")
+      .send({ playerName: nextPlayerName, position: 3 });
+
+    expect(revealResponse.status).toBe(200);
+    expect(revealResponse.body.event).toEqual(
+      expect.objectContaining({ type: "reveal", playerName: nextPlayerName })
+    );
+    expect(revealResponse.body.event.revealed.value).not.toBe("X");
+  });
 });

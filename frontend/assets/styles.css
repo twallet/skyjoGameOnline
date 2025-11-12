@@ -468,6 +468,17 @@ body {
   pointer-events: none;
 }
 
+.deck-entry__image--interactive {
+  pointer-events: auto;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.15);
+}
+
+.deck-entry__image--interactive:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(30, 41, 59, 0.22);
+}
+
 .deck-entry__image--top-card {
   transform: rotate(-3deg);
 }

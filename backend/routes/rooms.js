@@ -9,6 +9,9 @@ export function createRoomsRouter(controller) {
   router.post("/:roomId/join", controller.joinRoom);
   router.post("/:roomId/start", controller.startGame);
   router.post("/:roomId/initial-flip", controller.revealInitialCard);
+  router.post("/:roomId/main/draw", controller.drawCard);
+  router.post("/:roomId/main/replace", controller.replaceWithDrawnCard);
+  router.post("/:roomId/main/reveal", controller.revealAfterDiscard);
   router.post("/:roomId/reset", controller.resetRoom);
 
   return router;
