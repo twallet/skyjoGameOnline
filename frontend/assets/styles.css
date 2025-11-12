@@ -386,12 +386,11 @@ body {
 }
 
 .player-entry__hand {
-  font-size: 0.9rem;
-  color: rgba(31, 41, 51, 0.75);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  width: 100%;
+  gap: var(--card-gap);
+  width: min(100%, var(--hand-width));
+  margin: 0 auto;
 }
 
 .player-entry__hand-summary {
@@ -401,14 +400,14 @@ body {
 
 .player-entry__hand-row {
   display: grid;
-  gap: 0.4rem;
+  gap: var(--card-gap);
+  grid-template-columns: repeat(var(--hand-columns), minmax(0, var(--card-width)));
+  justify-items: center;
 }
 
 .player-entry__card {
-  width: 100%;
-  aspect-ratio: var(--card-aspect-ratio);
-  max-width: clamp(var(--card-width-min), 9vw, var(--card-width-max));
-  height: auto;
+  width: var(--card-width);
+  height: var(--card-height);
   border-radius: 8px;
   object-fit: cover;
   box-shadow: 0 6px 12px rgba(15, 23, 42, 0.25);
@@ -424,8 +423,8 @@ body {
 }
 
 .player-entry__card--interactive:hover {
-  transform: scale(1.08);
-  box-shadow: 0 12px 20px rgba(15, 23, 42, 0.28);
+  transform: scale(1.04);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.26);
   z-index: 1;
 }
 
@@ -441,15 +440,15 @@ body {
 }
 
 .player-entry__drawn-card {
-  margin-top: 0.75rem;
-  padding: 0.75rem;
+  margin-top: 0.65rem;
+  padding: 0.45rem;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 10px 20px rgba(15, 23, 42, 0.18);
   border: 1px solid rgba(148, 163, 184, 0.3);
   display: flex;
   justify-content: center;
-  width: clamp(var(--card-width-min), 10vw, var(--card-width-max) + 24px);
+  width: calc(var(--card-width) + 0.9rem);
 }
 
 .player-entry__drawn-card--dragging {
@@ -462,6 +461,7 @@ body {
   align-items: center;
   gap: 0.35rem;
   text-align: center;
+  width: 100%;
 }
 
 .drawn-card__label {
@@ -473,8 +473,7 @@ body {
 }
 
 .drawn-card__image {
-  width: clamp(var(--card-width-min), 9vw, var(--card-width-max));
-  aspect-ratio: var(--card-aspect-ratio);
+  width: var(--card-width);
   height: auto;
   border-radius: 8px;
   object-fit: cover;
@@ -513,20 +512,19 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
+  gap: 0.45rem;
 }
 
 .deck-entry__image {
-  width: clamp(var(--card-width-min), 9vw, var(--card-width-max));
-  aspect-ratio: var(--card-aspect-ratio);
-  height: auto;
+  width: var(--card-width);
+  height: var(--card-height);
+  aspect-ratio: 7 / 10;
   border-radius: 8px;
   object-fit: cover;
   box-shadow: none;
   border: 1px solid rgba(148, 163, 184, 0.5);
   background-color: transparent;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
-  position: relative;
   transform-origin: center;
   pointer-events: none;
 }
@@ -547,9 +545,8 @@ body {
 }
 
 .deck-entry__drop-zone {
-  width: clamp(var(--card-width-min), 9vw, var(--card-width-max));
-  aspect-ratio: var(--card-aspect-ratio);
-  height: auto;
+  width: var(--card-width);
+  height: var(--card-height);
   border-radius: 8px;
   border: 2px dashed rgba(59, 130, 246, 0.6);
   background: rgba(191, 219, 254, 0.4);
@@ -766,9 +763,13 @@ button:disabled {
 }
 
 :root {
-  --card-width-min: 40px;
-  --card-width-max: 72px;
-  --card-aspect-ratio: 7 / 10;
+  --card-min-width: 48px;
+  --card-max-width: 86px;
+  --card-width: clamp(var(--card-min-width), 6.5vw, var(--card-max-width));
+  --card-height: calc(var(--card-width) * 10 / 7);
+  --card-gap: 0.35rem;
+  --hand-columns: 4;
+  --hand-width: calc(var(--hand-columns) * var(--card-width) + (var(--hand-columns) - 1) * var(--card-gap));
 }
 
 .deck-entry-wrapper {
@@ -788,4 +789,17 @@ button:disabled {
 
 .gameplay__instruction-banner {
   display: none;
+}
+
+.drawn-card__image,
+.deck-entry__image,
+.deck-entry__drop-zone {
+  width: var(--card-width);
+  height: var(--card-height);
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.player-entry__drawn-card {
+  width: var(--card-width);
 }

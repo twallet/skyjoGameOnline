@@ -301,11 +301,11 @@ export function App() {
         ? localPlayerName.trim()
         : "";
 
-    if (normalizedRoomId) {
-      titleParts.push(`Room ${normalizedRoomId}`);
-    }
     if (normalizedPlayerName) {
       titleParts.push(`Player ${normalizedPlayerName}`);
+    }
+    if (normalizedRoomId) {
+      titleParts.push(`Room ${normalizedRoomId}`);
     }
 
     document.title = titleParts.join(" | ");

@@ -14,6 +14,51 @@ export function GamePlayView({
   isSubmittingAction = false,
 }) {
   const players = Array.isArray(activePlayers) ? activePlayers : [];
+  const gridRef = React.useRef(null);
+  const [cardSizeStyle, setCardSizeStyle] = useState({});
+
+  useEffect(() => {
+    const updateCardSize = () => {
+      if (!gridRef.current) {
+        return;
+      }
+
+      const bounding = gridRef.current.getBoundingClientRect();
+      const playerCount = players.length;
+
+      const columnsNeeded = playerCount <= 4 ? 2 : 3;
+      const rowsNeeded = Math.ceil(playerCount / columnsNeeded);
+
+      const cardWidthByColumns =
+        bounding.width / Math.max(columnsNeeded * 4, 4) - 12;
+      const cardHeightByRows =
+        bounding.height / Math.max(rowsNeeded * 5, 5) - 12;
+      const computedWidth = Math.max(
+        48,
+        Math.min(cardWidthByColumns, (cardHeightByRows * 7) / 10, 90)
+      );
+      const computedHeight = (computedWidth * 10) / 7;
+
+      setCardSizeStyle({
+        "--card-width": `${computedWidth}px`,
+        "--card-height": `${computedHeight}px`,
+      });
+    };
+
+    updateCardSize();
+    const resizeObserver = new ResizeObserver(updateCardSize);
+    if (gridRef.current) {
+      resizeObserver.observe(gridRef.current);
+    }
+    window.addEventListener("resize", updateCardSize);
+
+    return () => {
+      window.removeEventListener("resize", updateCardSize);
+      if (gridRef.current) {
+        resizeObserver.unobserve(gridRef.current);
+      }
+    };
+  }, [players.length]);
 
   const state =
     sessionState ?? gameState ?? (snapshot ? snapshot.state : null) ?? null;
@@ -59,6 +104,22 @@ export function GamePlayView({
   const canDropOnDiscard = drawnBelongsToLocal;
   const canResolveDrawnCard =
     drawnBelongsToLocal && !isSubmittingAction && Boolean(drawnCard);
+
+  const handleDrawnCardDragStart = (event) => {
+    if (!drawnBelongsToLocal) {
+      event.preventDefault();
+      return;
+    }
+    setIsDraggingDrawnCard(true);
+    setMainActionMode("replace");
+    setPendingDiscardReveal(false);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", "drawn-card");
+  };
+
+  const handleDrawnCardDragEnd = () => {
+    setIsDraggingDrawnCard(false);
+  };
 
   useEffect(() => {
     if (!drawnBelongsToLocal) {
@@ -592,7 +653,11 @@ export function GamePlayView({
       React.createElement("h2", null, "Skyjo"),
       React.createElement(
         "div",
-        { className: "players-grid", style: gridListStyle },
+        {
+          className: "players-grid",
+          style: { ...gridListStyle, ...cardSizeStyle },
+          ref: gridRef,
+        },
         playerEntries
       )
     ),

@@ -21,7 +21,7 @@ describe("app helpers", () => {
 
       expect(view).toEqual({
         size: 42,
-        baseImage: "./assets/images/deck.png",
+        baseImage: "./assets/images/back.jpg",
         firstCard: {
           image: "top.png",
           visible: false,
