@@ -74,6 +74,13 @@ export function App() {
   const [hasCreatedRoom, setHasCreatedRoom] = useState(false);
   const [isRoomSelectionLocked, setIsRoomSelectionLocked] = useState(false);
   const [isInviteLink, setIsInviteLink] = useState(false);
+  const [lanHost, setLanHost] = useState(() => {
+    if (typeof window !== "undefined" && window.localStorage) {
+      return window.localStorage.getItem("skyjo:lanHost") ?? "";
+    }
+    return "";
+  });
+  const [lanHostSkipped, setLanHostSkipped] = useState(false);
 
   const loggedEventCountRef = useRef(0);
   const activeRoomIdRef = useRef(roomId);
@@ -618,6 +625,28 @@ export function App() {
       setGameStarted(false);
       setNewPlayerName(trimmedPlayerName);
       setHasCreatedRoom(true);
+      if (
+        !lanHostSkipped &&
+        !lanHost &&
+        typeof window !== "undefined" &&
+        window.prompt
+      ) {
+        const promptResult = window.prompt(
+          "Optional: enter the local IP address so other devices on your Wi-Fi can join (or leave blank to skip)",
+          ""
+        );
+        if (promptResult && promptResult.trim().length > 0) {
+          const trimmed = promptResult.trim();
+          setLanHost(trimmed);
+          try {
+            window.localStorage?.setItem("skyjo:lanHost", trimmed);
+          } catch (storageError) {
+            consoleLogger.warn("Unable to persist LAN host", storageError);
+          }
+        } else {
+          setLanHostSkipped(true);
+        }
+      }
       consoleLogger.info(
         `Client event: created room '${finalRoomId}' and joined as '${trimmedPlayerName}'. Total players: ${updatedNames.length}`
       );
@@ -646,7 +675,43 @@ export function App() {
           try {
             const url = new URL(window.location.href);
             url.searchParams.set("roomId", roomId);
-            inviteLink = url.toString();
+            const hostname = window.location.hostname;
+            const isLocalHost =
+              hostname === "localhost" ||
+              hostname === "127.0.0.1" ||
+              hostname === "0.0.0.0";
+            if (isLocalHost) {
+              const port = window.location.port || "4000";
+              let resolvedHost = lanHost;
+              if (typeof window !== "undefined" && window.localStorage) {
+                if (!resolvedHost) {
+                  const storedHost =
+                    window.localStorage.getItem("skyjo:lanHost");
+                  if (storedHost && storedHost.length > 0) {
+                    resolvedHost = storedHost;
+                    setLanHost(storedHost);
+                  }
+                }
+                if (!resolvedHost && !lanHostSkipped && window.prompt) {
+                  const prompted = window.prompt(
+                    "Enter your local network IP so other devices can connect (leave blank to skip)",
+                    hostname
+                  );
+                  if (prompted && prompted.trim().length > 0) {
+                    resolvedHost = prompted.trim();
+                    setLanHost(resolvedHost);
+                    window.localStorage.setItem("skyjo:lanHost", resolvedHost);
+                  } else {
+                    setLanHostSkipped(true);
+                  }
+                }
+              }
+              inviteLink = resolvedHost
+                ? `http://${resolvedHost}:${port}/?roomId=${roomId}`
+                : url.toString();
+            } else {
+              inviteLink = url.toString();
+            }
           } catch (error) {
             consoleLogger.error("Failed to build invite link", error);
           }
