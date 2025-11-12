@@ -238,9 +238,15 @@ describe("App component room selection flow", () => {
       screen.queryByRole("button", { name: /create new room/i })
     ).not.toBeInTheDocument();
 
+    const joinButton = await screen.findByRole("button", {
+      name: /joining room/i,
+    });
+    expect(joinButton).toBeDisabled();
+
     await user.type(screen.getByPlaceholderText(/your name/i), "Bob");
     await flushPromises();
     await screen.findByText("ROOM42");
+    expect(joinButton).not.toBeDisabled();
     expect(
       screen.getByText(/room id/i, { selector: "span" })
     ).toBeInTheDocument();

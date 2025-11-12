@@ -40,6 +40,12 @@ export function GameSetupView({
     !isJoiningRoom && isRoomSelectionLocked && Boolean(roomId);
   const showInlineStart = canStartGame && !isJoiningRoom;
   const showRoomBannerCopy = !isJoiningRoom;
+  const showJoinActions = isJoiningRoom;
+  const showCreateActions =
+    !isJoiningRoom &&
+    !isRoomSelectionLocked &&
+    !hasCreatedRoom &&
+    isPlayerNameValid;
 
   return React.createElement(
     "main",
@@ -79,83 +85,79 @@ export function GameSetupView({
               disabled: isLoading,
             })
           : null,
-      isPlayerNameValid
-        ? isJoiningRoom
-          ? React.createElement(
-              "div",
-              { className: "setup__actions setup__actions--joining" },
-              Boolean(isRoomIdReadOnly)
-                ? React.createElement(
+      showJoinActions
+        ? React.createElement(
+            "div",
+            { className: "setup__actions setup__actions--joining" },
+            Boolean(isRoomIdReadOnly)
+              ? React.createElement(
+                  "div",
+                  {
+                    className: "setup__room-banner setup__room-banner--inline",
+                  },
+                  React.createElement(
                     "div",
-                    {
-                      className:
-                        "setup__room-banner setup__room-banner--inline",
-                    },
+                    { className: "setup__current-room" },
                     React.createElement(
-                      "div",
-                      { className: "setup__current-room" },
-                      React.createElement(
-                        "span",
-                        { className: "setup__current-room-label" },
-                        "Room ID"
-                      ),
-                      React.createElement(
-                        "span",
-                        { className: "setup__current-room-value" },
-                        displayedRoomId
-                      )
+                      "span",
+                      { className: "setup__current-room-label" },
+                      "Room ID"
+                    ),
+                    React.createElement(
+                      "span",
+                      { className: "setup__current-room-value" },
+                      displayedRoomId
                     )
                   )
-                : React.createElement("input", {
-                    id: "room-id-input",
-                    className: "setup__room-input",
-                    type: "text",
-                    placeholder: "Enter room code",
-                    value: roomIdInput,
-                    onChange: (event) =>
-                      onRoomIdInputChange(event.target.value),
-                    disabled: isLoading,
-                  }),
+                )
+              : React.createElement("input", {
+                  id: "room-id-input",
+                  className: "setup__room-input",
+                  type: "text",
+                  placeholder: "Enter room code",
+                  value: roomIdInput,
+                  onChange: (event) => onRoomIdInputChange(event.target.value),
+                  disabled: isLoading,
+                }),
+            React.createElement(
+              "button",
+              {
+                type: "button",
+                className: "setup__button-join-room",
+                onClick: onJoinRoom,
+                disabled: joinDisabled,
+              },
+              "Join room"
+            )
+          )
+        : showCreateActions
+          ? React.createElement(
+              "div",
+              { className: "setup__actions" },
               React.createElement(
                 "button",
                 {
                   type: "button",
-                  className: "setup__button-join-room",
-                  onClick: onJoinRoom,
-                  disabled: joinDisabled,
+                  className: "setup__button-new-room",
+                  onClick: onCreateRoom,
+                  disabled: createDisabled,
                 },
-                "Joining room"
-              )
+                "New room"
+              ),
+              showJoinButton
+                ? React.createElement(
+                    "button",
+                    {
+                      type: "button",
+                      className: "setup__button-join-room",
+                      onClick: onJoinRoom,
+                      disabled: joinDisabled,
+                    },
+                    "Existing room"
+                  )
+                : null
             )
-          : !isRoomSelectionLocked
-            ? React.createElement(
-                "div",
-                { className: "setup__actions" },
-                React.createElement(
-                  "button",
-                  {
-                    type: "button",
-                    className: "setup__button-new-room",
-                    onClick: onCreateRoom,
-                    disabled: createDisabled,
-                  },
-                  "Create new room"
-                ),
-                showJoinButton
-                  ? React.createElement(
-                      "button",
-                      {
-                        type: "button",
-                        className: "setup__button-join-room",
-                        onClick: onJoinRoom,
-                        disabled: joinDisabled,
-                      },
-                      "Join existing room"
-                    )
-                  : null
-              )
-            : null
-        : null,
+          : null,
       shouldShowRoomInfo
         ? React.createElement(
             "div",
@@ -228,7 +230,7 @@ export function GameSetupView({
                         onClick: onStartGame,
                         disabled: startDisabled,
                       },
-                      "Start game"
+                      "Play"
                     )
                   )
                 : null
