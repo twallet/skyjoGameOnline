@@ -168,10 +168,9 @@ describe("App component room selection flow", () => {
     );
     await flushPromises();
 
-    await user.type(
-      await screen.findByPlaceholderText(/enter room code/i),
-      "TEST01"
-    );
+    const roomInput = await screen.findByPlaceholderText(/enter room code/i);
+    expect(roomInput).not.toHaveAttribute("readonly");
+    await user.type(roomInput, "TEST01");
     await flushPromises();
     await user.click(screen.getByRole("button", { name: /joining room/i }));
     await flushPromises();
@@ -236,19 +235,13 @@ describe("App component room selection flow", () => {
     });
 
     expect(
-      screen.queryByPlaceholderText(/enter room code/i)
+      screen.queryByRole("button", { name: /create new room/i })
     ).not.toBeInTheDocument();
 
     await user.type(screen.getByPlaceholderText(/your name/i), "Bob");
     await flushPromises();
-
-    const joinButton = await screen.findByRole("button", {
-      name: /join existing room/i,
-    });
-    await user.click(joinButton);
-    await flushPromises();
-
     const roomInput = await screen.findByPlaceholderText(/enter room code/i);
     expect(roomInput).toHaveValue("ROOM42");
+    expect(roomInput).toHaveAttribute("readonly");
   });
 });

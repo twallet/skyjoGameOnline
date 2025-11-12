@@ -73,6 +73,7 @@ export function App() {
   const [isJoiningExistingRoom, setIsJoiningExistingRoom] = useState(false);
   const [hasCreatedRoom, setHasCreatedRoom] = useState(false);
   const [isRoomSelectionLocked, setIsRoomSelectionLocked] = useState(false);
+  const [isInviteLink, setIsInviteLink] = useState(false);
 
   const loggedEventCountRef = useRef(0);
   const activeRoomIdRef = useRef(roomId);
@@ -95,6 +96,10 @@ export function App() {
       if (urlRoomId) {
         const normalized = urlRoomId.trim().toUpperCase();
         setRoomIdInput((prev) => (prev ? prev : normalized));
+        setIsJoiningExistingRoom(true);
+        setIsRoomSelectionLocked(true);
+        setHasCreatedRoom(false);
+        setIsInviteLink(true);
       }
 
       if (urlName) {
@@ -380,14 +385,18 @@ export function App() {
 
   useEffect(() => {
     if (!isPlayerNameValid && isJoiningExistingRoom) {
-      setIsJoiningExistingRoom(false);
-      setRoomIdInput((roomId ?? "").toUpperCase());
+      if (!isInviteLink) {
+        setIsJoiningExistingRoom(false);
+        setRoomIdInput((roomId ?? "").toUpperCase());
+      }
     }
     if (!isPlayerNameValid && hasCreatedRoom) {
       setHasCreatedRoom(false);
     }
     if (!isPlayerNameValid && isRoomSelectionLocked) {
-      setIsRoomSelectionLocked(false);
+      if (!isInviteLink) {
+        setIsRoomSelectionLocked(false);
+      }
     }
   }, [
     isPlayerNameValid,
@@ -395,6 +404,7 @@ export function App() {
     roomId,
     hasCreatedRoom,
     isRoomSelectionLocked,
+    isInviteLink,
   ]);
 
   const handleJoinRoom = async () => {
@@ -586,5 +596,6 @@ export function App() {
     onStartGame: handleStartGame,
     canStartGame: roomState.canStartGame,
     errorMessage,
+    isRoomIdReadOnly: isInviteLink && isJoiningExistingRoom,
   });
 }

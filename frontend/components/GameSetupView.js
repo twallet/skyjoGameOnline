@@ -20,6 +20,7 @@ export function GameSetupView({
   hasCreatedRoom,
   isRoomSelectionLocked,
   onCopyRoomId,
+  isRoomIdReadOnly,
 }) {
   const trimmedRoomId =
     typeof roomIdInput === "string" ? roomIdInput.trim() : "";
@@ -47,9 +48,9 @@ export function GameSetupView({
         alt: "Skyjo game box",
         className: "setup__hero",
       }),
-      hasCreatedRoom || !showJoinButton
+      hasCreatedRoom
         ? null
-        : !isRoomSelectionLocked && !isJoiningRoom
+        : !isRoomSelectionLocked || !isPlayerNameValid || isJoiningRoom
           ? React.createElement("input", {
               id: "player-name-input",
               className: "setup__player-input",
@@ -87,6 +88,7 @@ export function GameSetupView({
                 value: roomIdInput,
                 onChange: (event) => onRoomIdInputChange(event.target.value),
                 disabled: isLoading,
+                readOnly: Boolean(isRoomIdReadOnly),
               }),
               React.createElement(
                 "button",
