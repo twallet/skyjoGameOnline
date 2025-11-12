@@ -418,16 +418,6 @@ body {
   transform-origin: center;
 }
 
-.player-entry__card:hover {
-  transform: scale(1.02);
-  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.25);
-}
-
-.player-entry__card--inactive:hover {
-  transform: scale(1.02);
-  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.25);
-}
-
 .player-entry__card--interactive {
   cursor: pointer;
 }
@@ -475,6 +465,7 @@ body {
   transition: transform 0.18s ease, box-shadow 0.18s ease;
   position: relative;
   transform-origin: center;
+  pointer-events: none;
 }
 
 .deck-entry__image--top-card {
@@ -485,12 +476,6 @@ body {
   width: 68px;
   height: 96px;
   border: none;
-}
-
-.deck-entry__image:hover {
-  transform: scale(1.2);
-  box-shadow: 0 14px 22px rgba(15, 23, 42, 0.3);
-  z-index: 1;
 }
 
 .room-badge {
