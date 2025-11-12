@@ -47,6 +47,7 @@ describe("App component room selection flow", () => {
 
   beforeEach(() => {
     navigator.clipboard.writeText = jest.fn().mockResolvedValue(undefined);
+    window.history.replaceState(null, "", "/");
   });
 
   afterEach(() => {
@@ -177,11 +178,77 @@ describe("App component room selection flow", () => {
 
     await screen.findByText("TEST01");
 
-    await user.click(screen.getByTitle(/copy room id/i));
+    await user.click(screen.getByTitle(/copy join link/i));
     await flushPromises();
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Clipboard not supported."
     );
+  });
+
+  it("copies a direct join link instead of the bare room id", async () => {
+    const user = userEvent.setup();
+    jest
+      .spyOn(RoomApi, "getRoom")
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce(playerListResponse(["Alice"]));
+    jest.spyOn(RoomApi, "joinRoom").mockResolvedValueOnce({
+      roomId: "TEST01",
+      players: ["Alice"],
+    });
+
+    render(React.createElement(App));
+
+    await user.type(screen.getByPlaceholderText(/your name/i), "Alice");
+    await flushPromises();
+    await user.click(
+      screen.getByRole("button", { name: /join existing room/i })
+    );
+    await flushPromises();
+
+    await user.type(
+      await screen.findByPlaceholderText(/enter room code/i),
+      "TEST01"
+    );
+    await flushPromises();
+    await user.click(screen.getByRole("button", { name: /joining room/i }));
+    await flushPromises();
+
+    await screen.findByText("TEST01");
+
+    await user.click(screen.getByTitle(/copy join link/i));
+    await flushPromises();
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
+    const copiedValue = navigator.clipboard.writeText.mock.calls[0][0];
+    expect(copiedValue).toContain("roomId=TEST01");
+    expect(copiedValue).toMatch(/^http/);
+  });
+
+  it("prefills the room id from the URL query string", async () => {
+    window.history.replaceState(null, "", "/?roomId=ROOM42");
+
+    const user = userEvent.setup();
+    render(React.createElement(App));
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/your name/i)).toBeInTheDocument();
+    });
+
+    expect(
+      screen.queryByPlaceholderText(/enter room code/i)
+    ).not.toBeInTheDocument();
+
+    await user.type(screen.getByPlaceholderText(/your name/i), "Bob");
+    await flushPromises();
+
+    const joinButton = await screen.findByRole("button", {
+      name: /join existing room/i,
+    });
+    await user.click(joinButton);
+    await flushPromises();
+
+    const roomInput = await screen.findByPlaceholderText(/enter room code/i);
+    expect(roomInput).toHaveValue("ROOM42");
   });
 });

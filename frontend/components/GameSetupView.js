@@ -153,7 +153,7 @@ export function GameSetupView({
                       className: "setup__copy-button",
                       onClick: onCopyRoomId,
                       disabled: isLoading || !roomId,
-                      title: "Copy room ID",
+                      title: "Copy join link",
                     },
                     "📋"
                   )

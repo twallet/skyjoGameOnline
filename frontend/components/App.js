@@ -83,6 +83,54 @@ export function App() {
   }, [roomId]);
 
   useEffect(() => {
+    if (typeof window === "undefined" || typeof window.location !== "object") {
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlRoomId = params.get("roomId") ?? params.get("room");
+      const urlName = params.get("name");
+
+      if (urlRoomId) {
+        const normalized = urlRoomId.trim().toUpperCase();
+        setRoomIdInput((prev) => (prev ? prev : normalized));
+      }
+
+      if (urlName) {
+        const cappedName = urlName.slice(0, 20);
+        setNewPlayerName((prev) => (prev ? prev : cappedName));
+      }
+    } catch (error) {
+      consoleLogger.error("Failed to parse join parameters from URL", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      typeof window.history?.replaceState !== "function"
+    ) {
+      return;
+    }
+
+    try {
+      const url = new URL(window.location.href);
+      if (roomId) {
+        url.searchParams.set("roomId", roomId);
+      } else {
+        url.searchParams.delete("roomId");
+      }
+      window.history.replaceState(
+        null,
+        "",
+        `${url.pathname}${url.search}${url.hash}`
+      );
+    } catch (error) {
+      consoleLogger.error("Failed to sync room id with URL", error);
+    }
+  }, [roomId]);
+  useEffect(() => {
     if (!Array.isArray(logEntries) || logEntries.length === 0) {
       loggedEventCountRef.current = 0;
       return;
@@ -358,7 +406,6 @@ export function App() {
       setIsJoiningExistingRoom(true);
       setIsRoomSelectionLocked(true);
       setErrorMessage("");
-      setRoomIdInput("");
       setHasCreatedRoom(false);
       return;
     }
@@ -484,13 +531,26 @@ export function App() {
         navigator.clipboard &&
         typeof navigator.clipboard.writeText === "function"
       ) {
-        await navigator.clipboard.writeText(roomId);
+        let inviteLink = roomId;
+        if (
+          typeof window !== "undefined" &&
+          typeof window.location === "object"
+        ) {
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.set("roomId", roomId);
+            inviteLink = url.toString();
+          } catch (error) {
+            consoleLogger.error("Failed to build invite link", error);
+          }
+        }
+        await navigator.clipboard.writeText(inviteLink);
       } else {
         throw new Error("Clipboard not supported.");
       }
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to copy room ID."
+        error instanceof Error ? error.message : "Unable to copy join link."
       );
     }
   };
