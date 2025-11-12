@@ -302,10 +302,10 @@ export function App() {
         : "";
 
     if (normalizedRoomId) {
-      titleParts.push(normalizedRoomId);
+      titleParts.push(`Room ${normalizedRoomId}`);
     }
     if (normalizedPlayerName) {
-      titleParts.push(normalizedPlayerName);
+      titleParts.push(`Player ${normalizedPlayerName}`);
     }
 
     document.title = titleParts.join(" | ");

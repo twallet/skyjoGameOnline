@@ -449,6 +449,7 @@ body {
   border: 1px solid rgba(148, 163, 184, 0.3);
   display: flex;
   justify-content: center;
+  width: clamp(var(--card-width-min), 10vw, var(--card-width-max) + 24px);
 }
 
 .player-entry__drawn-card--dragging {
@@ -591,8 +592,6 @@ body {
 }
 
 .deck-entry__image--base {
-  width: 68px;
-  height: 96px;
   border: none;
 }
 
@@ -770,4 +769,23 @@ button:disabled {
   --card-width-min: 40px;
   --card-width-max: 72px;
   --card-aspect-ratio: 7 / 10;
+}
+
+.deck-entry-wrapper {
+  display: grid;
+  justify-items: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.deck-entry__instruction {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(31, 41, 55, 0.8);
+  text-align: center;
+}
+
+.gameplay__instruction-banner {
+  display: none;
 }
