@@ -54,10 +54,15 @@ export function GamePlayView({
     deck.firstCard.visible !== false;
 
   const [mainActionMode, setMainActionMode] = useState("replace");
+  const [isDraggingDrawnCard, setIsDraggingDrawnCard] = useState(false);
+  const [pendingDiscardReveal, setPendingDiscardReveal] = useState(false);
+  const canDropOnDiscard = drawnBelongsToLocal;
 
   useEffect(() => {
     if (!drawnBelongsToLocal) {
       setMainActionMode("replace");
+      setIsDraggingDrawnCard(false);
+      setPendingDiscardReveal(false);
     }
   }, [drawnBelongsToLocal, drawnCard?.playerName, drawnCard?.value]);
 
@@ -66,10 +71,9 @@ export function GamePlayView({
     instruction = "Flip two of your cards";
   } else if (phase === "main-play") {
     if (drawnBelongsToLocal) {
-      instruction =
-        mainActionMode === "replace"
-          ? "Select a card in your grid to replace with the drawn card."
-          : "Choose one of your hidden cards to reveal after discarding.";
+      instruction = pendingDiscardReveal
+        ? "Drag completed. Choose one of your hidden cards to reveal."
+        : "Drag the drawn card onto a hand position to replace it, or onto the discard pile.";
     } else if (drawnCard?.playerName) {
       instruction = `${drawnCard.playerName} is resolving a drawn card`;
     } else {
@@ -212,6 +216,40 @@ export function GamePlayView({
     onDrawCard?.(normalizedLocalName, "discard");
   };
 
+  const handleDrawnCardDragStart = (event) => {
+    if (!drawnBelongsToLocal) {
+      event.preventDefault();
+      return;
+    }
+    setIsDraggingDrawnCard(true);
+    setMainActionMode("replace");
+    setPendingDiscardReveal(false);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", "drawn-card");
+  };
+
+  const handleDrawnCardDragEnd = () => {
+    setIsDraggingDrawnCard(false);
+  };
+
+  const handleDiscardDragOver = (event) => {
+    if (!drawnBelongsToLocal) {
+      return;
+    }
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDiscardDrop = (event) => {
+    if (!drawnBelongsToLocal) {
+      return;
+    }
+    event.preventDefault();
+    setMainActionMode("reveal");
+    setPendingDiscardReveal(true);
+    setIsDraggingDrawnCard(false);
+  };
+
   const canReplaceCards =
     drawnBelongsToLocal &&
     mainActionMode === "replace" &&
@@ -224,54 +262,40 @@ export function GamePlayView({
     typeof onRevealCard === "function" &&
     !isSubmittingAction;
 
-  players.forEach((player, index) => {
-    const seat = layout.seats[index] ?? layout.seats[layout.seats.length - 1];
-    const initialFlipInfo = initialFlipPlayers.find(
-      (entry) => entry?.name === player.name
+  const instructionBanner = instruction
+    ? React.createElement(
+        "div",
+        { className: "gameplay__instruction-banner" },
+        React.createElement(
+          "p",
+          { className: "gameplay__instruction-text" },
+          instruction
+        )
+      )
+    : null;
+
+  const playerEntries = [];
+
+  if (instructionBanner) {
+    playerEntries.push(
+      React.createElement(
+        "li",
+        {
+          key: "instruction",
+          className: "player-entry deck-instruction",
+          style: {
+            gridColumn: `${layout.deck.colStart} / ${layout.deck.colEnd}`,
+            gridRow: `${layout.deck.rowEnd} / ${layout.deck.rowEnd + 1}`,
+            justifySelf: "center",
+            alignSelf: "start",
+          },
+        },
+        instructionBanner
+      )
     );
-    const flippedPositions = new Set(
-      Array.isArray(initialFlipInfo?.flippedPositions)
-        ? initialFlipInfo.flippedPositions
-        : []
-    );
-    const normalizedPlayerName =
-      typeof player.name === "string" ? player.name.trim() : "";
-    const isLocalPlayer =
-      normalizedLocalName.length > 0 &&
-      normalizedPlayerName.length > 0 &&
-      normalizedLocalName.localeCompare(normalizedPlayerName, undefined, {
-        sensitivity: "accent",
-      }) === 0;
-    gridItems.push({
-      type: "player",
-      key: `player-${player.name}`,
-      player,
-      isLocalPlayer,
-      flippedPositions,
-      rowStart: seat.row,
-      rowEnd: seat.row + 1,
-      colStart: seat.col,
-      colEnd: seat.col + 1,
-    });
-  });
+  }
 
-  const maxRow =
-    gridItems.reduce(
-      (largest, item) => Math.max(largest, item.rowEnd - 1),
-      1
-    ) || 1;
-
-  const gridListStyle = {
-    display: "grid",
-    gridTemplateColumns: `repeat(${layout.columns}, minmax(0, 1fr))`,
-    gridTemplateRows: `repeat(${Math.max(maxRow, layout.rows)}, auto)`,
-    gap: "0.75rem",
-    justifyItems: "stretch",
-    alignItems: "center",
-    justifyContent: "center",
-  };
-
-  const playerEntries = gridItems.map((item) => {
+  gridItems.forEach((item) => {
     const baseStyle = {
       gridColumn: `${item.colStart} / ${item.colEnd}`,
       gridRow: `${item.rowStart} / ${item.rowEnd}`,
@@ -282,9 +306,12 @@ export function GamePlayView({
       const deckTitle = canDrawFromDeck
         ? "Draw a card from the deck"
         : "Deck of cards";
-      const discardTitle = canDrawFromDiscard
-        ? "Take the top discard card"
-        : (deck?.firstCard?.alt ?? "Visible top card");
+      const discardTitle = canDropOnDiscard
+        ? "Drop here to discard"
+        : canDrawFromDiscard
+          ? "Take the top discard card"
+          : (deck?.firstCard?.alt ?? "Visible top card");
+
       const baseImageClasses = ["deck-entry__image", "deck-entry__image--base"];
       if (canDrawFromDeck) {
         baseImageClasses.push("deck-entry__image--interactive");
@@ -294,46 +321,68 @@ export function GamePlayView({
         "deck-entry__image",
         "deck-entry__image--top-card",
       ];
-      if (canDrawFromDiscard) {
+      if (canDrawFromDiscard || canDropOnDiscard) {
         topCardClasses.push("deck-entry__image--interactive");
       }
 
-      return React.createElement(
-        "li",
-        {
-          key: item.key,
-          className: "player-entry deck-entry",
-          style: {
-            ...baseStyle,
-            justifySelf: "center",
-            alignSelf: "center",
-            backgroundColor: "transparent",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          },
-        },
+      const allowDiscardDrop = canDropOnDiscard;
+
+      playerEntries.push(
         React.createElement(
-          "div",
-          { className: "deck-entry__images" },
-          React.createElement("img", {
-            className: baseImageClasses.join(" "),
-            src: deck.baseImage,
-            alt: "Deck of cards",
-            title: deckTitle,
-            onClick: canDrawFromDeck ? handleDrawFromDeck : undefined,
-          }),
-          deck.firstCard && deck.firstCard.visible !== false
-            ? React.createElement("img", {
-                className: topCardClasses.join(" "),
-                src: deck.firstCard.image,
-                alt: deck.firstCard.alt ?? "Visible top card",
-                title: discardTitle,
-                onClick: canDrawFromDiscard ? handleDrawFromDiscard : undefined,
-              })
-            : null
+          "li",
+          {
+            key: item.key,
+            className: `player-entry deck-entry${
+              isDraggingDrawnCard && allowDiscardDrop
+                ? " deck-entry--drop-active"
+                : ""
+            }`,
+            style: {
+              ...baseStyle,
+              justifySelf: "center",
+              alignSelf: "center",
+              backgroundColor: "transparent",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            },
+          },
+          React.createElement(
+            "div",
+            { className: "deck-entry__images" },
+            React.createElement("img", {
+              className: baseImageClasses.join(" "),
+              src: deck.baseImage,
+              alt: "Deck of cards",
+              title: deckTitle,
+              onClick: canDrawFromDeck ? handleDrawFromDeck : undefined,
+            }),
+            deck.firstCard && deck.firstCard.visible !== false
+              ? React.createElement("img", {
+                  className: topCardClasses.join(" "),
+                  src: deck.firstCard.image,
+                  alt: deck.firstCard.alt ?? "Visible top card",
+                  title: discardTitle,
+                  onClick: canDrawFromDiscard
+                    ? handleDrawFromDiscard
+                    : undefined,
+                  onDragOver: allowDiscardDrop
+                    ? handleDiscardDragOver
+                    : undefined,
+                  onDrop: allowDiscardDrop ? handleDiscardDrop : undefined,
+                })
+              : allowDiscardDrop
+                ? React.createElement("div", {
+                    className: "deck-entry__drop-zone",
+                    title: discardTitle,
+                    onDragOver: handleDiscardDragOver,
+                    onDrop: handleDiscardDrop,
+                  })
+                : null
+          )
         )
       );
+      return;
     }
 
     const handMatrix = Array.isArray(item.player.handMatrix)
@@ -345,91 +394,173 @@ export function GamePlayView({
       return offset + row.length;
     }, 0);
 
-    return React.createElement(
-      "li",
-      {
-        key: item.key,
-        className: "player-entry player-entry--active",
-        style: {
-          ...baseStyle,
-          backgroundColor: item.player.color ?? "rgba(255,255,255,0.85)",
+    const normalizedPlayerName =
+      typeof item.player.name === "string" ? item.player.name.trim() : "";
+    const isDrawnCardOwner =
+      Boolean(drawnCard?.playerName) &&
+      normalizedPlayerName.length > 0 &&
+      drawnCard.playerName.localeCompare(normalizedPlayerName, undefined, {
+        sensitivity: "accent",
+      }) === 0;
+
+    playerEntries.push(
+      React.createElement(
+        "li",
+        {
+          key: item.key,
+          className: "player-entry player-entry--active",
+          style: {
+            ...baseStyle,
+            backgroundColor: item.player.color ?? "rgba(255,255,255,0.85)",
+          },
         },
-      },
-      React.createElement(
-        "span",
-        { className: "player-entry__name" },
-        item.player.name
-      ),
-      React.createElement(
-        "div",
-        { className: "player-entry__hand" },
-        handMatrix.map((row, rowIndex) =>
-          React.createElement(
-            "div",
-            {
-              key: `row-${rowIndex}`,
-              className: "player-entry__hand-row",
-              style: {
-                gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))`,
+        React.createElement(
+          "span",
+          { className: "player-entry__name" },
+          item.player.name
+        ),
+        React.createElement(
+          "div",
+          { className: "player-entry__hand" },
+          handMatrix.map((row, rowIndex) =>
+            React.createElement(
+              "div",
+              {
+                key: `row-${rowIndex}`,
+                className: "player-entry__hand-row",
+                style: {
+                  gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))`,
+                },
               },
-            },
-            row.map((cardData, cardIndex) => {
-              const position = rowOffsets[rowIndex] + cardIndex;
-              const cardValue = cardData.value;
-              const isHidden = cardValue === "X";
-              const alreadyFlipped = item.flippedPositions.has(position);
-              const canFlip =
-                phase === "initial-flip" &&
-                item.isLocalPlayer &&
-                typeof onFlipCard === "function" &&
-                requiredInitialReveals > item.flippedPositions.size &&
-                isHidden &&
-                !alreadyFlipped &&
-                !isSubmittingAction;
+              row.map((cardData, cardIndex) => {
+                const position = rowOffsets[rowIndex] + cardIndex;
+                const cardValue = cardData.value;
+                const isHidden = cardValue === "X";
+                const alreadyFlipped = item.flippedPositions.has(position);
+                const canFlip =
+                  phase === "initial-flip" &&
+                  item.isLocalPlayer &&
+                  typeof onFlipCard === "function" &&
+                  requiredInitialReveals > item.flippedPositions.size &&
+                  isHidden &&
+                  !alreadyFlipped &&
+                  !isSubmittingAction;
 
-              const allowReplace = item.isLocalPlayer && canReplaceCards;
-              const allowReveal =
-                item.isLocalPlayer && canRevealCards && isHidden;
+                const allowReplace = item.isLocalPlayer && canReplaceCards;
+                const allowReveal =
+                  item.isLocalPlayer && canRevealCards && isHidden;
+                const allowDropReplace =
+                  allowReplace && drawnBelongsToLocal && isDraggingDrawnCard;
 
-              let onCardClick = null;
-              let cardTitle = `${item.player.name} card ${cardValue}`;
+                let onCardClick = null;
+                let cardTitle = `${item.player.name} card ${cardValue}`;
 
-              if (canFlip) {
-                onCardClick = () => {
-                  onFlipCard(item.player.name, position);
-                };
-                cardTitle = "Flip this card";
-              } else if (allowReplace) {
-                onCardClick = () => {
+                if (canFlip) {
+                  onCardClick = () => {
+                    onFlipCard(item.player.name, position);
+                  };
+                  cardTitle = "Flip this card";
+                } else if (allowReplace) {
+                  onCardClick = () => {
+                    setPendingDiscardReveal(false);
+                    onReplaceCard(item.player.name, position);
+                  };
+                  cardTitle = "Replace this card with the drawn card";
+                } else if (allowReveal) {
+                  onCardClick = () => {
+                    setPendingDiscardReveal(false);
+                    onRevealCard(item.player.name, position);
+                  };
+                  cardTitle = "Reveal this hidden card after discarding";
+                }
+
+                const cardClasses = ["player-entry__card"];
+                if (allowDropReplace) {
+                  cardClasses.push("player-entry__card--drop-target");
+                }
+                if (onCardClick) {
+                  cardClasses.push("player-entry__card--interactive");
+                } else {
+                  cardClasses.push("player-entry__card--inactive");
+                }
+
+                const handleCardDrop = (event) => {
+                  if (!allowDropReplace) {
+                    return;
+                  }
+                  event.preventDefault();
+                  setIsDraggingDrawnCard(false);
+                  setPendingDiscardReveal(false);
                   onReplaceCard(item.player.name, position);
                 };
-                cardTitle = "Replace this card with the drawn card";
-              } else if (allowReveal) {
-                onCardClick = () => {
-                  onRevealCard(item.player.name, position);
+
+                const handleCardDragOver = (event) => {
+                  if (!allowDropReplace) {
+                    return;
+                  }
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = "move";
                 };
-                cardTitle = "Reveal this hidden card after discarding";
-              }
 
-              const cardClasses = ["player-entry__card"];
-              if (onCardClick) {
-                cardClasses.push("player-entry__card--interactive");
-              } else {
-                cardClasses.push("player-entry__card--inactive");
-              }
-
-              return React.createElement("img", {
-                key: `card-${rowIndex}-${cardIndex}`,
-                className: cardClasses.join(" "),
-                src: cardData.image,
-                alt: `${item.player.name} card ${cardValue}`,
-                title: cardTitle,
-                onClick: onCardClick ?? undefined,
-                style: onCardClick ? { cursor: "pointer" } : undefined,
-              });
-            })
+                return React.createElement("img", {
+                  key: `card-${rowIndex}-${cardIndex}`,
+                  className: cardClasses.join(" "),
+                  src: cardData.image,
+                  alt: `${item.player.name} card ${cardValue}`,
+                  title: cardTitle,
+                  onClick: onCardClick ?? undefined,
+                  draggable: false,
+                  onDragOver: allowDropReplace ? handleCardDragOver : undefined,
+                  onDrop: allowDropReplace ? handleCardDrop : undefined,
+                });
+              })
+            )
           )
-        )
+        ),
+        isDrawnCardOwner && drawnCard
+          ? React.createElement(
+              "div",
+              {
+                className: `player-entry__drawn-card${
+                  isDraggingDrawnCard && drawnBelongsToLocal
+                    ? " player-entry__drawn-card--dragging"
+                    : ""
+                }`,
+              },
+              React.createElement(
+                "div",
+                { className: "drawn-card__content" },
+                React.createElement("img", {
+                  className: `drawn-card__image${
+                    isDraggingDrawnCard && drawnBelongsToLocal
+                      ? " drawn-card__image--dragging"
+                      : ""
+                  }`,
+                  src: drawnCard?.image,
+                  alt: `Drawn card ${drawnCard?.value}`,
+                  draggable: drawnBelongsToLocal,
+                  onDragStart: drawnBelongsToLocal
+                    ? handleDrawnCardDragStart
+                    : undefined,
+                  onDragEnd: drawnBelongsToLocal
+                    ? handleDrawnCardDragEnd
+                    : undefined,
+                  style: drawnBelongsToLocal
+                    ? undefined
+                    : { cursor: "default" },
+                }),
+                drawnBelongsToLocal
+                  ? React.createElement(
+                      "span",
+                      { className: "drawn-card__helper" },
+                      pendingDiscardReveal
+                        ? "Select a hidden card to reveal."
+                        : "Drag to replace a card or drop on the discard pile."
+                    )
+                  : null
+              )
+            )
+          : null
       )
     );
   });
@@ -452,7 +583,10 @@ export function GamePlayView({
               {
                 key: "replace",
                 type: "button",
-                onClick: () => setMainActionMode("replace"),
+                onClick: () => {
+                  setMainActionMode("replace");
+                  setPendingDiscardReveal(false);
+                },
                 disabled: isSubmittingAction,
                 style:
                   mainActionMode === "replace"
@@ -466,7 +600,10 @@ export function GamePlayView({
               {
                 key: "reveal",
                 type: "button",
-                onClick: () => setMainActionMode("reveal"),
+                onClick: () => {
+                  setMainActionMode("reveal");
+                  setPendingDiscardReveal(true);
+                },
                 disabled: isSubmittingAction,
                 style:
                   mainActionMode === "reveal"
@@ -488,13 +625,6 @@ export function GamePlayView({
       React.createElement("h2", null, "Skyjo"),
       React.createElement("ul", { style: gridListStyle }, playerEntries)
     ),
-    instruction
-      ? React.createElement(
-          "p",
-          { className: "gameplay__instruction" },
-          instruction
-        )
-      : null,
     actionControls
   );
 }
