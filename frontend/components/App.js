@@ -103,7 +103,7 @@ export function App() {
       }
 
       if (urlName) {
-        const cappedName = urlName.slice(0, 20);
+        const cappedName = urlName.slice(0, 15);
         setNewPlayerName((prev) => (prev ? prev : cappedName));
       }
     } catch (error) {
@@ -465,15 +465,15 @@ export function App() {
 
   const trimmedPlayerName = newPlayerName.trim();
   const playerNameLength = trimmedPlayerName.length;
-  const isPlayerNameValid = playerNameLength > 0 && playerNameLength <= 20;
+  const isPlayerNameValid = playerNameLength > 0 && playerNameLength <= 15;
 
   const ensureValidPlayerName = () => {
     if (playerNameLength === 0) {
       setErrorMessage("Player name must not be empty.");
       return false;
     }
-    if (playerNameLength > 20) {
-      setErrorMessage("Player name must be 20 characters or fewer.");
+    if (playerNameLength > 15) {
+      setErrorMessage("Player name must be 15 characters or fewer.");
       return false;
     }
     setErrorMessage("");
@@ -576,7 +576,7 @@ export function App() {
       setNewPlayerName("");
       return;
     }
-    const capped = value.slice(0, 20);
+    const capped = value.slice(0, 15);
     setNewPlayerName(capped);
   };
 

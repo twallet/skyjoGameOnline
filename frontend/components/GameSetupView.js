@@ -66,7 +66,7 @@ export function GameSetupView({
               className: "setup__player-input",
               type: "text",
               placeholder: "Your Name",
-              maxLength: 20,
+              maxLength: 15,
               value: playerName,
               onChange: (event) => onPlayerNameChange(event.target.value),
               onKeyDown: (event) => {
@@ -78,7 +78,7 @@ export function GameSetupView({
                 const noSelection =
                   event.currentTarget.selectionStart ===
                   event.currentTarget.selectionEnd;
-                if (isCharacterKey && noSelection && playerName.length >= 20) {
+                if (isCharacterKey && noSelection && playerName.length >= 15) {
                   event.preventDefault();
                 }
               },

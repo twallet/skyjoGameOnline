@@ -438,6 +438,12 @@ export function GamePlayView({
       return offset + row.length;
     }, 0);
 
+    const isCurrentTurn =
+      typeof activeName === "string" &&
+      activeName.localeCompare(normalizedPlayerName, undefined, {
+        sensitivity: "accent",
+      }) === 0;
+
     playerEntries.push(
       React.createElement(
         "div",
@@ -451,13 +457,43 @@ export function GamePlayView({
           },
         },
         React.createElement(
-          "span",
-          { className: "player-entry__name" },
-          player.name
-        ),
-        React.createElement(
           "div",
           { className: "player-entry__hand" },
+          React.createElement(
+            "div",
+            {
+              className: "player-entry__hand-row player-entry__hand-row--label",
+            },
+            React.createElement(
+              "div",
+              { className: "player-entry__hand-label" },
+              isCurrentTurn
+                ? React.createElement("img", {
+                    className: "player-entry__indicator",
+                    src: "./assets/images/here.gif",
+                    alt: "Current turn indicator",
+                  })
+                : null,
+              player.name
+            ),
+            isDrawnCardOwner && drawnCard
+              ? React.createElement("img", {
+                  className: "drawn-card__image drawn-card__image--inline",
+                  src: drawnCard.image,
+                  alt: `Drawn card ${drawnCard.value}`,
+                  draggable: drawnBelongsToLocal,
+                  onDragStart: drawnBelongsToLocal
+                    ? handleDrawnCardDragStart
+                    : undefined,
+                  onDragEnd: drawnBelongsToLocal
+                    ? handleDrawnCardDragEnd
+                    : undefined,
+                  style: drawnBelongsToLocal
+                    ? undefined
+                    : { cursor: "default" },
+                })
+              : null
+          ),
           handMatrix.map((row, rowIndex) =>
             React.createElement(
               "div",
@@ -561,50 +597,7 @@ export function GamePlayView({
             )
           )
         ),
-        isDrawnCardOwner && drawnCard
-          ? React.createElement(
-              "div",
-              {
-                className: `player-entry__drawn-card${
-                  isDraggingDrawnCard && drawnBelongsToLocal
-                    ? " player-entry__drawn-card--dragging"
-                    : ""
-                }`,
-              },
-              React.createElement(
-                "div",
-                { className: "drawn-card__content" },
-                React.createElement("img", {
-                  className: `drawn-card__image${
-                    isDraggingDrawnCard && drawnBelongsToLocal
-                      ? " drawn-card__image--dragging"
-                      : ""
-                  }`,
-                  src: drawnCard?.image,
-                  alt: `Drawn card ${drawnCard?.value}`,
-                  draggable: drawnBelongsToLocal,
-                  onDragStart: drawnBelongsToLocal
-                    ? handleDrawnCardDragStart
-                    : undefined,
-                  onDragEnd: drawnBelongsToLocal
-                    ? handleDrawnCardDragEnd
-                    : undefined,
-                  style: drawnBelongsToLocal
-                    ? undefined
-                    : { cursor: "default" },
-                }),
-                drawnBelongsToLocal
-                  ? React.createElement(
-                      "span",
-                      { className: "drawn-card__helper" },
-                      pendingDiscardReveal
-                        ? "Select a hidden card to reveal."
-                        : "Drag to replace a card or drop on the discard pile."
-                    )
-                  : null
-              )
-            )
-          : null
+        null
       )
     );
   });
