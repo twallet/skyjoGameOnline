@@ -8,6 +8,7 @@ export const SkyjoPhases = Object.freeze({
 });
 
 const INITIAL_FLIP_REVEALS = 2;
+const COLUMN_REMOVAL_DELAY_MS = 3000;
 
 export class SkyjoEngine {
   #game;
@@ -24,8 +25,12 @@ export class SkyjoEngine {
   #drawnCard = null;
   #finalRoundQueue = [];
   #finalRoundTrigger = null;
+  #pendingColumnRemovals = new Map();
+  #recentColumnRemovalEvents = [];
+  #stateChangeHandler = null;
+  #columnRemovalHandler = null;
 
-  constructor(game, dealer, players, logger = noopLogger) {
+  constructor(game, dealer, players, logger = noopLogger, hooks = null) {
     this.#game = SkyjoEngine.#validateGame(game);
     this.#dealer = SkyjoEngine.#validateDealer(dealer);
     this.#players = SkyjoEngine.#validatePlayers(players);
@@ -34,6 +39,14 @@ export class SkyjoEngine {
     this.#turnOrder = this.#players.map((_, index) => index);
     this.#turnCursor = 0;
     this.#initializeDiscardPile();
+
+    const options = typeof hooks === "object" && hooks !== null ? hooks : {};
+    if (typeof options.onStateChange === "function") {
+      this.#stateChangeHandler = options.onStateChange;
+    }
+    if (typeof options.onColumnsRemoved === "function") {
+      this.#columnRemovalHandler = options.onColumnsRemoved;
+    }
   }
 
   get phase() {
@@ -138,6 +151,7 @@ export class SkyjoEngine {
       `SkyjoEngine: player '${this.#players[playerIndex].name}' replaced card at position ${position} with ${drawn.card.value}; discarded ${replacedCard.value}`
     );
 
+    this.#scheduleColumnRemoval(playerIndex);
     this.#advanceTurn();
 
     return {
@@ -172,6 +186,7 @@ export class SkyjoEngine {
       `SkyjoEngine: player '${this.#players[playerIndex].name}' discarded drawn card ${drawn.card.value} and revealed position ${position} (${revealed.value})`
     );
 
+    this.#scheduleColumnRemoval(playerIndex);
     this.#advanceTurn();
 
     return {
@@ -185,6 +200,172 @@ export class SkyjoEngine {
       phase: this.#phase,
       nextPlayerIndex: this.#activePlayerIndex,
     };
+  }
+
+  #pruneColumnRemovalEvents() {
+    const cutoff = Date.now() - 5000;
+    this.#recentColumnRemovalEvents = this.#recentColumnRemovalEvents.filter(
+      (entry) => entry.timestamp >= cutoff
+    );
+  }
+
+  #notifyStateChange() {
+    this.#pruneColumnRemovalEvents();
+    if (typeof this.#stateChangeHandler === "function") {
+      this.#stateChangeHandler();
+    }
+  }
+
+  #clearPendingColumnRemoval(playerIndex) {
+    const pending = this.#pendingColumnRemovals.get(playerIndex);
+    if (pending) {
+      clearTimeout(pending.timeoutId);
+      this.#pendingColumnRemovals.delete(playerIndex);
+    }
+    this.#pruneColumnRemovalEvents();
+  }
+
+  #findMatchingColumns(playerIndex) {
+    const hand = this.#resolvePlayerHand(playerIndex);
+    const matrix = hand.cardsMatrix();
+    const columnCount = hand.columns;
+    const rowCount = matrix.length;
+
+    if (columnCount <= 0 || rowCount === 0) {
+      return [];
+    }
+
+    const matches = [];
+
+    for (let column = 0; column < columnCount; column += 1) {
+      let referenceValue = null;
+      let isMatch = true;
+
+      for (let row = 0; row < rowCount; row += 1) {
+        const rowCards = matrix[row] ?? [];
+        const card = rowCards[column];
+        if (!card) {
+          isMatch = false;
+          break;
+        }
+        if (card.value === "X") {
+          isMatch = false;
+          break;
+        }
+        if (referenceValue === null) {
+          referenceValue = card.value;
+        } else if (card.value !== referenceValue) {
+          isMatch = false;
+          break;
+        }
+      }
+
+      if (isMatch && referenceValue !== null) {
+        matches.push({
+          columnIndex: column,
+          value: referenceValue,
+        });
+      }
+    }
+
+    return matches;
+  }
+
+  #scheduleColumnRemoval(playerIndex) {
+    const matches = this.#findMatchingColumns(playerIndex);
+    if (matches.length === 0) {
+      this.#clearPendingColumnRemoval(playerIndex);
+      return;
+    }
+
+    const existing = this.#pendingColumnRemovals.get(playerIndex);
+    if (existing) {
+      clearTimeout(existing.timeoutId);
+    }
+
+    const expiresAt = Date.now() + COLUMN_REMOVAL_DELAY_MS;
+    const timeoutId = setTimeout(() => {
+      this.#executePendingColumnRemoval(playerIndex);
+    }, COLUMN_REMOVAL_DELAY_MS);
+
+    this.#pendingColumnRemovals.set(playerIndex, {
+      matches,
+      startedAt: Date.now(),
+      expiresAt,
+      timeoutId,
+    });
+  }
+
+  #executePendingColumnRemoval(playerIndex) {
+    const pending = this.#pendingColumnRemovals.get(playerIndex);
+    if (!pending) {
+      return;
+    }
+    clearTimeout(pending.timeoutId);
+    this.#pendingColumnRemovals.delete(playerIndex);
+
+    const matches = this.#findMatchingColumns(playerIndex);
+    if (matches.length === 0) {
+      this.#notifyStateChange();
+      return;
+    }
+
+    const hand = this.#resolvePlayerHand(playerIndex);
+    const matchesDescending = [...matches].sort(
+      (a, b) => b.columnIndex - a.columnIndex
+    );
+    const matchesAscending = [...matches].sort(
+      (a, b) => a.columnIndex - b.columnIndex
+    );
+
+    matchesDescending.forEach(({ columnIndex }) => {
+      hand.removeColumn(columnIndex);
+    });
+
+    const removedColumns = matchesAscending.map((match) => match.columnIndex);
+    const removedValues = matchesAscending.map((match) => match.value);
+
+    const playerName =
+      this.#players[playerIndex]?.name ?? `Player ${playerIndex + 1}`;
+    const timestamp = Date.now();
+    const eventId = `${timestamp}-${playerIndex}-${removedColumns.join("-")}`;
+    this.#logger.info(
+      `SkyjoEngine: removed column(s) ${removedColumns
+        .map(
+          (index, idx) =>
+            `${index + 1}${
+              removedValues[idx] !== undefined
+                ? ` (value ${removedValues[idx]})`
+                : ""
+            }`
+        )
+        .join(", ")} for player '${playerName}'`
+    );
+
+    if (typeof this.#columnRemovalHandler === "function") {
+      this.#columnRemovalHandler({
+        playerIndex,
+        playerName,
+        columns: removedColumns,
+        values: removedValues,
+        timestamp,
+        id: eventId,
+      });
+    }
+
+    this.#recentColumnRemovalEvents.push({
+      id: eventId,
+      playerIndex,
+      playerName,
+      columns: removedColumns,
+      values: removedValues,
+      timestamp,
+    });
+    this.#pruneColumnRemovalEvents();
+
+    // Check again in case new columns were formed after removal.
+    this.#scheduleColumnRemoval(playerIndex);
+    this.#notifyStateChange();
   }
 
   revealInitialCard(playerIndex, position) {
@@ -273,6 +454,26 @@ export class SkyjoEngine {
         triggeredBy: this.#finalRoundTrigger,
         pendingTurns: [...this.#finalRoundQueue],
       },
+      pendingColumnRemovals: Array.from(
+        this.#pendingColumnRemovals.entries()
+      ).map(([playerIndex, pending]) => ({
+        playerIndex,
+        playerName: this.#players[playerIndex]?.name ?? null,
+        columns: pending.matches.map((match) => match.columnIndex),
+        values: pending.matches.map((match) => match.value),
+        expiresAt: pending.expiresAt,
+        startedAt: pending.startedAt,
+      })),
+      recentColumnRemovalEvents: this.#recentColumnRemovalEvents.map(
+        (entry) => ({
+          id: entry.id,
+          playerIndex: entry.playerIndex,
+          playerName: entry.playerName,
+          columns: [...entry.columns],
+          values: [...entry.values],
+          timestamp: entry.timestamp,
+        })
+      ),
     };
   }
 

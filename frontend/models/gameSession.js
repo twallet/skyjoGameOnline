@@ -131,7 +131,32 @@ export class GameSession {
       this.#game,
       this.#dealer,
       this.#players,
-      this.#logger
+      this.#logger,
+      {
+        onStateChange: () => {
+          this.#updateSnapshots();
+        },
+        onColumnsRemoved: ({ playerIndex, columns, values, playerName }) => {
+          if (Array.isArray(columns) && columns.length > 0) {
+            const name =
+              playerName ?? this.#players[playerIndex]?.name ?? "Unknown";
+            const columnLabels = columns
+              .map((columnIndex, idx) => {
+                const value =
+                  Array.isArray(values) && values.length > idx
+                    ? values[idx]
+                    : undefined;
+                return value !== undefined
+                  ? `${columnIndex + 1} (value ${value})`
+                  : `${columnIndex + 1}`;
+              })
+              .join(", ");
+            this.#appendLog(
+              `Main play: ${name} cleared column ${columnLabels}`
+            );
+          }
+        },
+      }
     );
 
     this.#logger.info(
@@ -504,6 +529,26 @@ export class GameSession {
         triggeredBy: state.finalRound.triggeredBy,
         pendingTurns: [...state.finalRound.pendingTurns],
       },
+      pendingColumnRemovals: Array.isArray(state.pendingColumnRemovals)
+        ? state.pendingColumnRemovals.map((entry) => ({
+            playerIndex: entry.playerIndex,
+            playerName: entry.playerName,
+            columns: Array.isArray(entry.columns) ? [...entry.columns] : [],
+            values: Array.isArray(entry.values) ? [...entry.values] : [],
+            expiresAt: entry.expiresAt ?? null,
+            startedAt: entry.startedAt ?? null,
+          }))
+        : [],
+      recentColumnRemovalEvents: Array.isArray(state.recentColumnRemovalEvents)
+        ? state.recentColumnRemovalEvents.map((entry) => ({
+            id: entry.id,
+            playerIndex: entry.playerIndex,
+            playerName: entry.playerName,
+            columns: Array.isArray(entry.columns) ? [...entry.columns] : [],
+            values: Array.isArray(entry.values) ? [...entry.values] : [],
+            timestamp: entry.timestamp ?? null,
+          }))
+        : [],
     };
   }
 }

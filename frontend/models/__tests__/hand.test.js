@@ -107,4 +107,47 @@ describe("Hand", () => {
       );
     }
   );
+
+  test("removeColumn removes the entire column and keeps remaining cards aligned", () => {
+    const hand = new Hand(4);
+    const cards = [];
+    for (let index = 0; index < 12; index += 1) {
+      const card = buildCard(index + 1, { visible: true });
+      cards.push(card);
+      hand.add(card);
+    }
+
+    const removed = hand.removeColumn(1);
+
+    expect(removed).toHaveLength(3);
+    expect(hand.lines).toBe(3);
+    expect(hand.rows).toBe(3);
+    expect(hand.cardsMatrix()).toEqual([
+      [
+        { value: 1, image: expect.any(String) },
+        { value: 3, image: expect.any(String) },
+        { value: 4, image: expect.any(String) },
+      ],
+      [
+        { value: 5, image: expect.any(String) },
+        { value: 7, image: expect.any(String) },
+        { value: 8, image: expect.any(String) },
+      ],
+      [
+        { value: 9, image: expect.any(String) },
+        { value: 11, image: expect.any(String) },
+        { value: 12, image: expect.any(String) },
+      ],
+    ]);
+  });
+
+  test("removeColumn throws when column index is invalid", () => {
+    const hand = new Hand(3);
+    hand.add(buildCard(1));
+    hand.add(buildCard(2));
+    hand.add(buildCard(3));
+
+    expect(() => hand.removeColumn(-1)).toThrow("Column index out of bounds");
+    expect(() => hand.removeColumn(3)).toThrow("Column index out of bounds");
+  });
 });

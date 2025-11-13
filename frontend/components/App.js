@@ -265,6 +265,44 @@ export function App() {
     if (!roomId) {
       return;
     }
+    const pendingRemovals = Array.isArray(sessionState?.pendingColumnRemovals)
+      ? sessionState.pendingColumnRemovals
+      : [];
+    if (pendingRemovals.length === 0) {
+      return;
+    }
+    const now = Date.now();
+    const timers = pendingRemovals
+      .map((entry) => {
+        const expiresAt =
+          typeof entry?.expiresAt === "number" ? entry.expiresAt : null;
+        if (!expiresAt) {
+          return null;
+        }
+        if (expiresAt <= now) {
+          loadRoomState(roomId, { silent: true });
+          return null;
+        }
+        const delay = Math.max(expiresAt - now + 50, 0);
+        return setTimeout(() => {
+          loadRoomState(roomId, { silent: true });
+        }, delay);
+      })
+      .filter(Boolean);
+
+    return () => {
+      timers.forEach((timerId) => {
+        if (timerId) {
+          clearTimeout(timerId);
+        }
+      });
+    };
+  }, [roomId, sessionState?.pendingColumnRemovals, loadRoomState]);
+
+  useEffect(() => {
+    if (!roomId) {
+      return;
+    }
 
     loadRoomState(roomId, {
       silent: false,

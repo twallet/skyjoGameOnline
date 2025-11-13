@@ -63,6 +63,17 @@ export class Hand {
     return this.cardsMatrix();
   }
 
+  get columns() {
+    return this.#lines;
+  }
+
+  get rows() {
+    if (this.#lines <= 0) {
+      return 0;
+    }
+    return Math.floor(this.#cards.length / this.#lines);
+  }
+
   revealCard(position) {
     const card = this.#getCardAt(position);
 
@@ -87,6 +98,43 @@ export class Hand {
     const nextCard = this.#validateCard(replacement);
     this.#cards[position] = nextCard;
     return card;
+  }
+
+  removeColumn(columnIndex) {
+    if (!Number.isInteger(columnIndex)) {
+      throw new TypeError("Column index must be an integer");
+    }
+
+    if (columnIndex < 0 || columnIndex >= this.#lines) {
+      throw new RangeError("Column index out of bounds");
+    }
+
+    const rowCount = this.rows;
+    if (rowCount === 0) {
+      return [];
+    }
+
+    const removedCards = [];
+    const nextCards = [];
+
+    for (let row = 0; row < rowCount; row += 1) {
+      const rowStart = row * this.#lines;
+      for (let column = 0; column < this.#lines; column += 1) {
+        const index = rowStart + column;
+        const card = this.#cards[index];
+        if (column === columnIndex) {
+          removedCards.push(card);
+        } else {
+          nextCards.push(card);
+        }
+      }
+    }
+
+    this.#cards = nextCards;
+    const nextLines = this.#lines - 1;
+    this.#lines = nextLines > 0 ? nextLines : 1;
+
+    return removedCards;
   }
 
   allCardsVisible() {

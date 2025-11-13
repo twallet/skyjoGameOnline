@@ -260,6 +260,130 @@ export function GamePlayView({
     drawnBelongsToLocal && mainActionMode === "replace" && canDropOnDiscard;
   const shouldShakeDrawSources =
     isLocalActive && !drawnCard && (canDrawFromDeck || canDrawFromDiscard);
+  const [columnRemovalNotices, setColumnRemovalNotices] = useState([]);
+
+  const cardMetrics = React.useMemo(() => {
+    const parseDimension = (value, fallback) => {
+      if (typeof value === "number" && Number.isFinite(value)) {
+        return value;
+      }
+      if (typeof value === "string") {
+        const parsed = parseFloat(value);
+        return Number.isFinite(parsed) ? parsed : fallback;
+      }
+      return fallback;
+    };
+
+    const width = parseDimension(cardSizeStyle["--card-width"], 80);
+    const height = parseDimension(cardSizeStyle["--card-height"], 114);
+    const gap = parseDimension(cardSizeStyle["--card-gap"], 12);
+    const maxColumns = Math.max(maxHandColumns, 0);
+    const totalWidth =
+      maxColumns > 0
+        ? maxColumns * width + Math.max(maxColumns - 1, 0) * gap
+        : width;
+
+    return {
+      width,
+      height,
+      gap,
+      maxColumns,
+      totalWidth,
+      columnStride: width + gap,
+    };
+  }, [cardSizeStyle, maxHandColumns]);
+
+  const pendingColumnRemovalMap = React.useMemo(() => {
+    const entries = Array.isArray(state?.pendingColumnRemovals)
+      ? state.pendingColumnRemovals
+      : [];
+    const map = new Map();
+    entries.forEach((entry) => {
+      const playerName =
+        typeof entry?.playerName === "string" ? entry.playerName : null;
+      if (!playerName) {
+        return;
+      }
+      const columns = Array.isArray(entry?.columns) ? entry.columns : [];
+      const values = Array.isArray(entry?.values) ? entry.values : [];
+      const columnSet = new Set();
+      const valueMap = new Map();
+      columns.forEach((index, idx) => {
+        if (!Number.isInteger(index)) {
+          return;
+        }
+        columnSet.add(index);
+        const columnValueRaw = values[idx];
+        const numericValue =
+          columnValueRaw !== undefined && columnValueRaw !== null
+            ? Number(columnValueRaw)
+            : NaN;
+        if (Number.isFinite(numericValue)) {
+          valueMap.set(index, numericValue);
+        }
+      });
+      if (columnSet.size === 0) {
+        return;
+      }
+      map.set(playerName, { columns: columnSet, values: valueMap });
+    });
+    return map;
+  }, [state?.pendingColumnRemovals]);
+
+  useEffect(() => {
+    const events = Array.isArray(state?.recentColumnRemovalEvents)
+      ? state.recentColumnRemovalEvents
+      : [];
+    if (!events.length) {
+      return;
+    }
+    const seenIds = displayedColumnRemovalIdsRef.current;
+    const additions = events.filter(
+      (event) => event && typeof event.id === "string" && !seenIds.has(event.id)
+    );
+    if (!additions.length) {
+      return;
+    }
+    additions.forEach((event) => {
+      seenIds.add(event.id);
+    });
+    setColumnRemovalNotices((previous) => {
+      const mapped = additions.map((event) => {
+        const timestamp =
+          typeof event.timestamp === "number" ? event.timestamp : Date.now();
+        const playerName =
+          typeof event.playerName === "string" && event.playerName.trim().length
+            ? event.playerName
+            : Number.isInteger(event.playerIndex)
+              ? `Player ${event.playerIndex + 1}`
+              : "Unknown player";
+        const columns = Array.isArray(event.columns) ? event.columns : [];
+        return {
+          id: event.id,
+          playerName,
+          columns,
+          createdAt: timestamp,
+          expiresAt: timestamp + 3000,
+        };
+      });
+      return [...previous, ...mapped];
+    });
+  }, [state?.recentColumnRemovalEvents]);
+
+  useEffect(() => {
+    if (!columnRemovalNotices.length) {
+      return undefined;
+    }
+    const intervalId = setInterval(() => {
+      const now = Date.now();
+      setColumnRemovalNotices((previous) =>
+        previous.filter((entry) => entry.expiresAt > now)
+      );
+    }, 200);
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [columnRemovalNotices.length]);
 
   const resetToReplaceMode = () => {
     if (!drawnBelongsToLocal) {
@@ -399,18 +523,16 @@ export function GamePlayView({
                   title: discardTitle,
                   onClick: discardClickHandler ?? undefined,
                 })
-              : allowDiscardDrop
-                ? React.createElement("div", {
-                    className: [
-                      "deck-entry__drop-zone",
-                      shouldShakeDiscard ? "shake-animation" : null,
-                    ]
-                      .filter(Boolean)
-                      .join(" "),
-                    title: discardTitle,
-                    onClick: discardClickHandler ?? undefined,
-                  })
-                : null
+              : React.createElement("div", {
+                  className: [
+                    "deck-entry__drop-zone",
+                    shouldShakeDiscard ? "shake-animation" : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" "),
+                  title: discardTitle,
+                  onClick: discardClickHandler ?? undefined,
+                })
           ),
           null
         )
@@ -445,6 +567,12 @@ export function GamePlayView({
       drawnCard.playerName.localeCompare(normalizedPlayerName, undefined, {
         sensitivity: "accent",
       }) === 0;
+    const isCurrentTurn =
+      normalizedActiveName.length > 0 &&
+      normalizedPlayerName.length > 0 &&
+      normalizedActiveName.localeCompare(normalizedPlayerName, undefined, {
+        sensitivity: "accent",
+      }) === 0;
     const hasInlineDrawnCard = isDrawnCardOwner && Boolean(drawnCard);
     const showInlineDrawnCard = hasInlineDrawnCard && !pendingDiscardReveal;
     const needsInitialFlipIndicator =
@@ -452,18 +580,201 @@ export function GamePlayView({
       requiredInitialReveals > 0 &&
       flippedPositions.size < requiredInitialReveals;
     const shouldShowIndicator = needsInitialFlipIndicator || isCurrentTurn;
-    const isCurrentTurn =
-      normalizedActiveName.length > 0 &&
-      normalizedPlayerName.length > 0 &&
-      normalizedActiveName.localeCompare(normalizedPlayerName, undefined, {
-        sensitivity: "accent",
-      }) === 0;
-
+    const pendingRemovalInfo =
+      pendingColumnRemovalMap.get(player.name) ??
+      pendingColumnRemovalMap.get(normalizedPlayerName) ??
+      null;
+    const playerColumnSet =
+      pendingRemovalInfo && pendingRemovalInfo.columns instanceof Set
+        ? pendingRemovalInfo.columns
+        : null;
+    const columnValueMap =
+      pendingRemovalInfo && pendingRemovalInfo.values instanceof Map
+        ? pendingRemovalInfo.values
+        : null;
+    const rowCount = handMatrix.length;
+    const playerColumnCount = handMatrix.reduce(
+      (max, row) => Math.max(max, Array.isArray(row) ? row.length : 0),
+      0
+    );
     const rowOffsets = [];
     handMatrix.reduce((offset, row, rowIndex) => {
       rowOffsets[rowIndex] = offset;
       return offset + row.length;
     }, 0);
+    const playerWidth =
+      playerColumnCount * cardMetrics.width +
+      Math.max(playerColumnCount - 1, 0) * cardMetrics.gap;
+    const totalWidth = Math.max(cardMetrics.totalWidth, playerWidth);
+    const leftMargin = Math.max((totalWidth - playerWidth) / 2, 0);
+    const overlayHeight =
+      rowCount * cardMetrics.height +
+      Math.max(rowCount - 1, 0) * cardMetrics.gap;
+    const overlayPadding = Math.max(cardMetrics.gap * 0.7, 8);
+    const overlayWidth = cardMetrics.width + overlayPadding;
+    const overlayTopBase = cardMetrics.height + cardMetrics.gap;
+    const overlayTop = Math.max(overlayTopBase - overlayPadding / 2, 0);
+    const overlayHeightWithPadding = overlayHeight + overlayPadding;
+    const columnOverlayElements =
+      playerColumnSet && playerColumnSet.size > 0 && rowCount > 0
+        ? Array.from(playerColumnSet)
+            .filter(
+              (columnIndex) =>
+                Number.isInteger(columnIndex) &&
+                columnIndex >= 0 &&
+                columnIndex < playerColumnCount
+            )
+            .map((columnIndex) => {
+              const overlayLeft =
+                leftMargin + columnIndex * cardMetrics.columnStride;
+              const overlayValue = columnValueMap?.get(columnIndex);
+              return React.createElement("div", {
+                key: `overlay-${player.name}-${columnIndex}`,
+                className: "player-entry__column-overlay",
+                style: {
+                  left: `${overlayLeft - overlayPadding / 2}px`,
+                  top: `${overlayTop}px`,
+                  width: `${overlayWidth}px`,
+                  height: `${overlayHeightWithPadding}px`,
+                },
+                title:
+                  overlayValue !== undefined
+                    ? `Column ${columnIndex + 1} (value ${overlayValue})`
+                    : `Column ${columnIndex + 1}`,
+              });
+            })
+        : [];
+
+    const labelRowElement = React.createElement(
+      "div",
+      {
+        className: "player-entry__hand-row player-entry__hand-row--label",
+        style: {
+          gridTemplateColumns: showInlineDrawnCard
+            ? "auto 1fr var(--card-width)"
+            : "auto 1fr",
+        },
+      },
+      shouldShowIndicator
+        ? React.createElement("img", {
+            className: "player-entry__indicator",
+            src: "./assets/images/here.gif",
+            alt: "Current turn indicator",
+          })
+        : React.createElement("span", {
+            className: "player-entry__indicator-placeholder",
+          }),
+      React.createElement(
+        "div",
+        { className: "player-entry__hand-label" },
+        player.name
+      ),
+      showInlineDrawnCard
+        ? React.createElement("img", {
+            className: ["drawn-card__image", "drawn-card__image--inline"]
+              .filter(Boolean)
+              .join(" "),
+            src: drawnCard.image,
+            alt: `Drawn card ${drawnCard.value}`,
+            draggable: false,
+            onClick: drawnBelongsToLocal ? resetToReplaceMode : undefined,
+            style: {
+              cursor: drawnBelongsToLocal ? "pointer" : "default",
+            },
+          })
+        : null
+    );
+
+    const cardRowElements = handMatrix.map((row, rowIndex) =>
+      React.createElement(
+        "div",
+        {
+          key: `row-${rowIndex}`,
+          className: "player-entry__hand-row",
+          style: {
+            gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))`,
+          },
+        },
+        row.map((cardData, cardIndex) => {
+          const position = rowOffsets[rowIndex] + cardIndex;
+          const cardValue = cardData.value;
+          const isHidden = cardValue === "X";
+          const alreadyFlipped = flippedPositions.has(position);
+          const canFlip =
+            phase === "initial-flip" &&
+            isLocalPlayer &&
+            typeof onFlipCard === "function" &&
+            requiredInitialReveals > flippedPositions.size &&
+            isHidden &&
+            !alreadyFlipped &&
+            !isSubmittingAction;
+
+          const allowReplace =
+            isLocalPlayer &&
+            canResolveDrawnCard &&
+            mainActionMode === "replace" &&
+            typeof onReplaceCard === "function";
+          const allowReveal =
+            isLocalPlayer &&
+            canResolveDrawnCard &&
+            mainActionMode === "reveal" &&
+            typeof onRevealCard === "function" &&
+            isHidden;
+          let onCardClick = null;
+          let cardTitle = `${player.name} card ${cardValue}`;
+
+          if (canFlip) {
+            onCardClick = () => {
+              onFlipCard(player.name, position);
+            };
+            cardTitle = "Flip this card";
+          } else if (allowReplace) {
+            onCardClick = () => {
+              setPendingDiscardReveal(false);
+              onReplaceCard(player.name, position);
+            };
+            cardTitle = "Replace this card with the drawn card";
+          } else if (allowReveal) {
+            onCardClick = () => {
+              setPendingDiscardReveal(false);
+              onRevealCard(player.name, position);
+            };
+            cardTitle = "Reveal this hidden card after discarding";
+          }
+
+          const cardClasses = ["player-entry__card"];
+          if (allowReplace) {
+            cardClasses.push("player-entry__card--drop-target");
+          }
+          if (onCardClick) {
+            cardClasses.push("player-entry__card--interactive");
+          } else {
+            cardClasses.push("player-entry__card--inactive");
+          }
+          if (
+            !playerColumnSet?.has(cardIndex) &&
+            (allowReplace || allowReveal || canFlip)
+          ) {
+            cardClasses.push("shake-animation");
+          }
+
+          return React.createElement("img", {
+            key: `card-${rowIndex}-${cardIndex}`,
+            className: cardClasses.join(" "),
+            src: cardData.image,
+            alt: `${player.name} card ${cardValue}`,
+            title: cardTitle,
+            onClick: onCardClick ?? undefined,
+            draggable: false,
+          });
+        })
+      )
+    );
+
+    const handChildren = [labelRowElement, ...cardRowElements];
+    if (columnOverlayElements.length > 0) {
+      handChildren.push(...columnOverlayElements);
+    }
 
     playerEntries.push(
       React.createElement(
@@ -480,127 +791,7 @@ export function GamePlayView({
         React.createElement(
           "div",
           { className: "player-entry__hand" },
-          React.createElement(
-            "div",
-            {
-              className: "player-entry__hand-row player-entry__hand-row--label",
-              style: {
-                gridTemplateColumns: showInlineDrawnCard
-                  ? "auto 1fr var(--card-width)"
-                  : "auto 1fr",
-              },
-            },
-            shouldShowIndicator
-              ? React.createElement("img", {
-                  className: "player-entry__indicator",
-                  src: "./assets/images/here.gif",
-                  alt: "Current turn indicator",
-                })
-              : React.createElement("span", {
-                  className: "player-entry__indicator-placeholder",
-                }),
-            React.createElement(
-              "div",
-              { className: "player-entry__hand-label" },
-              player.name
-            ),
-            showInlineDrawnCard
-              ? React.createElement("img", {
-                  className: ["drawn-card__image", "drawn-card__image--inline"]
-                    .filter(Boolean)
-                    .join(" "),
-                  src: drawnCard.image,
-                  alt: `Drawn card ${drawnCard.value}`,
-                  draggable: false,
-                  onClick: drawnBelongsToLocal ? resetToReplaceMode : undefined,
-                  style: {
-                    cursor: drawnBelongsToLocal ? "pointer" : "default",
-                  },
-                })
-              : null
-          ),
-          handMatrix.map((row, rowIndex) =>
-            React.createElement(
-              "div",
-              {
-                key: `row-${rowIndex}`,
-                className: "player-entry__hand-row",
-                style: {
-                  gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))`,
-                },
-              },
-              row.map((cardData, cardIndex) => {
-                const position = rowOffsets[rowIndex] + cardIndex;
-                const cardValue = cardData.value;
-                const isHidden = cardValue === "X";
-                const alreadyFlipped = flippedPositions.has(position);
-                const canFlip =
-                  phase === "initial-flip" &&
-                  isLocalPlayer &&
-                  typeof onFlipCard === "function" &&
-                  requiredInitialReveals > flippedPositions.size &&
-                  isHidden &&
-                  !alreadyFlipped &&
-                  !isSubmittingAction;
-
-                const allowReplace =
-                  isLocalPlayer &&
-                  canResolveDrawnCard &&
-                  mainActionMode === "replace" &&
-                  typeof onReplaceCard === "function";
-                const allowReveal =
-                  isLocalPlayer &&
-                  canResolveDrawnCard &&
-                  mainActionMode === "reveal" &&
-                  typeof onRevealCard === "function" &&
-                  isHidden;
-                let onCardClick = null;
-                let cardTitle = `${player.name} card ${cardValue}`;
-
-                if (canFlip) {
-                  onCardClick = () => {
-                    onFlipCard(player.name, position);
-                  };
-                  cardTitle = "Flip this card";
-                } else if (allowReplace) {
-                  onCardClick = () => {
-                    setPendingDiscardReveal(false);
-                    onReplaceCard(player.name, position);
-                  };
-                  cardTitle = "Replace this card with the drawn card";
-                } else if (allowReveal) {
-                  onCardClick = () => {
-                    setPendingDiscardReveal(false);
-                    onRevealCard(player.name, position);
-                  };
-                  cardTitle = "Reveal this hidden card after discarding";
-                }
-
-                const cardClasses = ["player-entry__card"];
-                if (allowReplace) {
-                  cardClasses.push("player-entry__card--drop-target");
-                }
-                if (onCardClick) {
-                  cardClasses.push("player-entry__card--interactive");
-                } else {
-                  cardClasses.push("player-entry__card--inactive");
-                }
-                if (allowReplace || allowReveal || canFlip) {
-                  cardClasses.push("shake-animation");
-                }
-
-                return React.createElement("img", {
-                  key: `card-${rowIndex}-${cardIndex}`,
-                  className: cardClasses.join(" "),
-                  src: cardData.image,
-                  alt: `${player.name} card ${cardValue}`,
-                  title: cardTitle,
-                  onClick: onCardClick ?? undefined,
-                  draggable: false,
-                });
-              })
-            )
-          )
+          ...handChildren
         ),
         null
       )
@@ -614,6 +805,26 @@ export function GamePlayView({
       "section",
       { className: "players" },
       React.createElement("h2", null, "Skyjo"),
+      columnRemovalNotices.length
+        ? React.createElement(
+            "div",
+            { className: "column-removal-notifications" },
+            columnRemovalNotices.map((notice) => {
+              const columnLabel =
+                Array.isArray(notice.columns) && notice.columns.length
+                  ? notice.columns.map((column) => column + 1).join(", ")
+                  : "?";
+              return React.createElement(
+                "div",
+                {
+                  key: notice.id,
+                  className: "column-removal-notification",
+                },
+                `Column ${columnLabel} removed for player ${notice.playerName}`
+              );
+            })
+          )
+        : null,
       React.createElement(
         "div",
         {
