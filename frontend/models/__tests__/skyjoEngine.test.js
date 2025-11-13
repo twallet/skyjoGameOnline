@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 import { Game } from "../game.js";
 import { Player } from "../player.js";
 import { Card } from "../card.js";
@@ -71,6 +72,10 @@ describe("SkyjoEngine", () => {
       engine.revealInitialCard(index, 1);
     }
   }
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
 
   test("initializes discard pile with a visible card", () => {
     const players = [
@@ -165,6 +170,39 @@ describe("SkyjoEngine", () => {
     expect(actionResult.revealed.value).toBe(3);
     expect(players[0].hand.isCardVisible(2)).toBe(true);
     expect(engine.discardTopCard().value).toBe(5);
+    expect(engine.activePlayerIndex).toBe(1);
+  });
+
+  test("column removal delay keeps turn with current player until removal resolves", () => {
+    jest.useFakeTimers();
+    const players = [
+      buildPlayer("Alice", [1, 2, 3, 4], game),
+      buildPlayer("Bob", [5, 6, 7, 8], game),
+    ];
+    const deck = new StubDeck([new Card(4, game), new Card(9, game)]);
+    const dealer = { deck, players };
+
+    const engine = new SkyjoEngine(game, dealer, players);
+    advanceToMainPhase(engine, players.length);
+
+    const drawResult = engine.drawFromDeck(0);
+    expect(drawResult.card.value).toBe(4);
+
+    const actionResult = engine.replaceWithDrawnCard(0, 1);
+
+    expect(actionResult.nextPlayerIndex).toBe(1);
+    expect(engine.activePlayerIndex).toBe(0);
+
+    let snapshot = engine.buildStateSnapshot();
+    expect(snapshot.pendingColumnRemovals).toHaveLength(1);
+    expect(players[0].hand.columns).toBe(2);
+
+    jest.advanceTimersByTime(3000);
+    jest.runOnlyPendingTimers();
+
+    snapshot = engine.buildStateSnapshot();
+    expect(snapshot.pendingColumnRemovals).toHaveLength(0);
+    expect(players[0].hand.columns).toBe(1);
     expect(engine.activePlayerIndex).toBe(1);
   });
 

@@ -151,8 +151,12 @@ export class SkyjoEngine {
       `SkyjoEngine: player '${this.#players[playerIndex].name}' replaced card at position ${position} with ${drawn.card.value}; discarded ${replacedCard.value}`
     );
 
-    this.#scheduleColumnRemoval(playerIndex);
-    this.#advanceTurn();
+    const hasPendingColumnRemoval = this.#scheduleColumnRemoval(playerIndex, {
+      advanceTurnAfterResolve: true,
+    });
+    if (!hasPendingColumnRemoval) {
+      this.#advanceTurn();
+    }
 
     return {
       playerIndex,
@@ -166,7 +170,9 @@ export class SkyjoEngine {
         image: replacedCard.image,
       },
       phase: this.#phase,
-      nextPlayerIndex: this.#activePlayerIndex,
+      nextPlayerIndex: hasPendingColumnRemoval
+        ? this.#peekNextPlayerIndex()
+        : this.#activePlayerIndex,
     };
   }
 
@@ -186,8 +192,12 @@ export class SkyjoEngine {
       `SkyjoEngine: player '${this.#players[playerIndex].name}' discarded drawn card ${drawn.card.value} and revealed position ${position} (${revealed.value})`
     );
 
-    this.#scheduleColumnRemoval(playerIndex);
-    this.#advanceTurn();
+    const hasPendingColumnRemoval = this.#scheduleColumnRemoval(playerIndex, {
+      advanceTurnAfterResolve: true,
+    });
+    if (!hasPendingColumnRemoval) {
+      this.#advanceTurn();
+    }
 
     return {
       playerIndex,
@@ -198,7 +208,9 @@ export class SkyjoEngine {
         image: drawn.card.image,
       },
       phase: this.#phase,
-      nextPlayerIndex: this.#activePlayerIndex,
+      nextPlayerIndex: hasPendingColumnRemoval
+        ? this.#peekNextPlayerIndex()
+        : this.#activePlayerIndex,
     };
   }
 
@@ -271,14 +283,18 @@ export class SkyjoEngine {
     return matches;
   }
 
-  #scheduleColumnRemoval(playerIndex) {
+  #scheduleColumnRemoval(playerIndex, options = {}) {
+    const existing = this.#pendingColumnRemovals.get(playerIndex);
+    const advanceTurnAfterResolve =
+      options.advanceTurnAfterResolve === true ||
+      Boolean(existing?.advanceTurnAfterResolve);
+
     const matches = this.#findMatchingColumns(playerIndex);
     if (matches.length === 0) {
       this.#clearPendingColumnRemoval(playerIndex);
-      return;
+      return false;
     }
 
-    const existing = this.#pendingColumnRemovals.get(playerIndex);
     if (existing) {
       clearTimeout(existing.timeoutId);
     }
@@ -293,7 +309,9 @@ export class SkyjoEngine {
       startedAt: Date.now(),
       expiresAt,
       timeoutId,
+      advanceTurnAfterResolve,
     });
+    return true;
   }
 
   #executePendingColumnRemoval(playerIndex) {
@@ -304,8 +322,13 @@ export class SkyjoEngine {
     clearTimeout(pending.timeoutId);
     this.#pendingColumnRemovals.delete(playerIndex);
 
+    const shouldAdvanceAfterResolve = Boolean(pending.advanceTurnAfterResolve);
+
     const matches = this.#findMatchingColumns(playerIndex);
     if (matches.length === 0) {
+      if (shouldAdvanceAfterResolve) {
+        this.#advanceTurn();
+      }
       this.#notifyStateChange();
       return;
     }
@@ -364,7 +387,12 @@ export class SkyjoEngine {
     this.#pruneColumnRemovalEvents();
 
     // Check again in case new columns were formed after removal.
-    this.#scheduleColumnRemoval(playerIndex);
+    const hasMorePending = this.#scheduleColumnRemoval(playerIndex, {
+      advanceTurnAfterResolve: shouldAdvanceAfterResolve,
+    });
+    if (!hasMorePending && shouldAdvanceAfterResolve) {
+      this.#advanceTurn();
+    }
     this.#notifyStateChange();
   }
 
@@ -580,6 +608,14 @@ export class SkyjoEngine {
 
     this.#turnCursor = (this.#turnCursor + 1) % this.#turnOrder.length;
     this.#activePlayerIndex = this.#turnOrder[this.#turnCursor];
+  }
+
+  #peekNextPlayerIndex() {
+    if (this.#turnOrder.length === 0) {
+      return null;
+    }
+    const nextCursor = (this.#turnCursor + 1) % this.#turnOrder.length;
+    return this.#turnOrder[nextCursor];
   }
 
   #allPlayersCompletedInitialFlip() {
