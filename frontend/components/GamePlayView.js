@@ -614,12 +614,6 @@ export function GamePlayView({
       return [];
     }
     const hints = [];
-    if (pendingLocalColumns && pendingLocalColumns.size > 0) {
-      const labels = Array.from(pendingLocalColumns)
-        .map((index) => index + 1)
-        .join(", ");
-      hints.push(`column ${labels} will be cleared automatically`);
-    }
     if (state?.finalRound?.inProgress) {
       const trigger = state.finalRound.triggeredBy;
       if (typeof trigger === "string" && trigger.trim().length > 0) {
