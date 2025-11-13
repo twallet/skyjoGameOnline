@@ -549,13 +549,13 @@ export function GamePlayView({
               ? `${drawnCard.value}`
               : "a card";
           if (mainActionMode === "replace") {
-            return `You drew ${cardValue}. Replace one of your cards or discard it to reveal another card.`;
+            return `You drew ${cardValue}. Replace one of your cards or discard it.`;
           }
           return `You drew ${cardValue}. Select a hidden card to reveal.`;
         }
         if (!drawnCard) {
           if (canDrawFromDeck && canDrawFromDiscard) {
-            return "Draw from the deck or take the top discard card.";
+            return "Draw from the deck or take the discarded card.";
           }
           if (canDrawFromDeck) {
             return "Draw a card from the deck.";
@@ -573,7 +573,7 @@ export function GamePlayView({
           return "Choose a hidden card to reveal after discarding.";
         }
         if (mainActionMode === "replace") {
-          return "Replace one of your cards or discard to reveal another card.";
+          return "Replace one of your cards or discard.";
         }
         return "Select a hidden card to reveal.";
       }
@@ -585,12 +585,12 @@ export function GamePlayView({
         return `Waiting for ${state.activePlayer.name} to play.`;
       }
       return isFinalRoundPhase
-        ? "Final round in progress. Waiting for the next player."
+        ? "Waiting for the next player."
         : "Waiting for the next player.";
     }
 
     if (currentPhase === "finished") {
-      return "Review the final scores and prepare a new game.";
+      return "Review the final scores.";
     }
 
     return "Waiting for the latest game state...";
