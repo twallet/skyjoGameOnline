@@ -85,8 +85,9 @@ describe("GamePlayView information section", () => {
         logEntries: [],
       })
     );
+    expect(screen.getByText("Preparation")).toBeInTheDocument();
     expect(
-      screen.getByText(/initial flip: reveal 2 more cards/i)
+      screen.getByText(/reveal 2 more cards to determine turn order/i)
     ).toBeInTheDocument();
   });
 
@@ -127,9 +128,7 @@ describe("GamePlayView information section", () => {
         logEntries: [],
       })
     );
-    expect(
-      screen.getByText(/main phase: waiting for bob to play/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/waiting for bob to play/i)).toBeInTheDocument();
   });
 
   it("shows the newest event at the top of the log when expanded", async () => {
@@ -157,6 +156,6 @@ describe("GamePlayView information section", () => {
     });
     const log = await screen.findByRole("list", { name: /game log entries/i });
     const items = within(log).getAllByRole("listitem");
-    expect(items[0]).toHaveTextContent("Alice drew 3");
+    expect(items[0]).toHaveTextContent("Preparation | Alice drew 3");
   });
 });

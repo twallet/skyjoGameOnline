@@ -367,7 +367,6 @@ export function GamePlayView({
     return trimmed.reverse();
   }, [eventEntries]);
   const logEntryCount = eventEntries.length;
-
   const pendingLocalColumns = useMemo(() => {
     if (!normalizedLocalName) {
       return null;
@@ -388,6 +387,40 @@ export function GamePlayView({
     });
     return match;
   }, [pendingColumnRemovalMap, normalizedLocalName]);
+
+  const activePlayerDisplayName =
+    typeof state?.activePlayer?.name === "string"
+      ? state.activePlayer.name.trim()
+      : "";
+
+  const friendlyPhaseLabel = useMemo(() => {
+    const phaseKey = state?.phase ?? null;
+    if (!phaseKey) {
+      return "Preparation";
+    }
+    switch (phaseKey) {
+      case "initial-flip":
+        return "Preparation";
+      case "main-play": {
+        if (activePlayerDisplayName.length > 0) {
+          const suffix = /s$/i.test(activePlayerDisplayName) ? "'" : "'s";
+          return `${activePlayerDisplayName}${suffix} Turn`;
+        }
+        return "Player Turn";
+      }
+      case "final-round":
+        return "Final Round";
+      case "finished":
+        return "Finished";
+      default:
+        return "Preparation";
+    }
+  }, [state?.phase, activePlayerDisplayName]);
+
+  const formattedLogEntries = useMemo(
+    () => visibleLogEntries.map((entry) => `${friendlyPhaseLabel} | ${entry}`),
+    [visibleLogEntries, friendlyPhaseLabel]
+  );
 
   const instructionMessage = useMemo(() => {
     if (isSubmittingAction) {
@@ -417,7 +450,7 @@ export function GamePlayView({
             : 0;
           const remaining = Math.max(requiredInitialReveals - reveals, 0);
           if (remaining > 0) {
-            return `Initial flip: Reveal ${remaining} more card${
+            return `Reveal ${remaining} more card${
               remaining === 1 ? "" : "s"
             } to determine turn order.`;
           }
@@ -434,66 +467,67 @@ export function GamePlayView({
           .map((player) => player?.name)
           .filter((name) => typeof name === "string" && name.trim().length > 0);
         if (waitingNames.length > 0) {
-          return `Initial flip: Waiting for ${waitingNames.join(
-            ", "
-          )} to finish.`;
+          return `Waiting for ${waitingNames.join(", ")} to finish.`;
         }
       }
-      return "Initial flip: Waiting for the turn order to be resolved.";
+      return "Waiting for the turn order to be resolved.";
     }
 
     if (currentPhase === "main-play" || currentPhase === "final-round") {
-      const phaseLabel = finalRoundActive ? "Final round" : "Main phase";
+      const isFinalRoundPhase =
+        finalRoundActive || currentPhase === "final-round";
       if (isLocalActive) {
         if (drawnBelongsToLocal && Boolean(drawnCard)) {
           if (pendingDiscardReveal) {
-            return `${phaseLabel}: Choose a hidden card to reveal after discarding.`;
+            return "Choose a hidden card to reveal after discarding.";
           }
           const cardValue =
             drawnCard.value !== undefined && drawnCard.value !== null
               ? `${drawnCard.value}`
               : "a card";
           if (mainActionMode === "replace") {
-            return `${phaseLabel}: You drew ${cardValue}. Replace one of your cards or discard it to reveal another card.`;
+            return `You drew ${cardValue}. Replace one of your cards or discard it to reveal another card.`;
           }
-          return `${phaseLabel}: You drew ${cardValue}. Select a hidden card to reveal.`;
+          return `You drew ${cardValue}. Select a hidden card to reveal.`;
         }
         if (!drawnCard) {
           if (canDrawFromDeck && canDrawFromDiscard) {
-            return `${phaseLabel}: It is your turn. Draw from the deck or take the top discard card.`;
+            return "Draw from the deck or take the top discard card.";
           }
           if (canDrawFromDeck) {
-            return `${phaseLabel}: It is your turn. Draw a card from the deck.`;
+            return "Draw a card from the deck.";
           }
           if (canDrawFromDiscard) {
-            return `${phaseLabel}: It is your turn. Take the top discard card.`;
+            return "Take the top discard card.";
           }
-          return `${phaseLabel}: It is your turn. Waiting for draw options to become available.`;
+          return "Waiting for draw options to become available.";
         }
-        return `${phaseLabel}: Resolve the drawn card to continue.`;
+        return "Resolve the drawn card to continue.";
       }
 
       if (drawnBelongsToLocal && Boolean(drawnCard)) {
         if (pendingDiscardReveal) {
-          return `${phaseLabel}: Choose a hidden card to reveal after discarding.`;
+          return "Choose a hidden card to reveal after discarding.";
         }
         if (mainActionMode === "replace") {
-          return `${phaseLabel}: Replace one of your cards or discard to reveal another card.`;
+          return "Replace one of your cards or discard to reveal another card.";
         }
-        return `${phaseLabel}: Select a hidden card to reveal.`;
+        return "Select a hidden card to reveal.";
       }
 
       if (
         typeof state.activePlayer?.name === "string" &&
         state.activePlayer.name.trim().length > 0
       ) {
-        return `${phaseLabel}: Waiting for ${state.activePlayer.name} to play.`;
+        return `Waiting for ${state.activePlayer.name} to play.`;
       }
-      return `${phaseLabel}: Waiting for the next player.`;
+      return isFinalRoundPhase
+        ? "Final round in progress. Waiting for the next player."
+        : "Waiting for the next player.";
     }
 
     if (currentPhase === "finished") {
-      return "Game finished: Review the final scores and prepare a new game.";
+      return "Review the final scores and prepare a new game.";
     }
 
     return "Waiting for the latest game state...";
@@ -544,6 +578,16 @@ export function GamePlayView({
     }
     return hints;
   }, [pendingLocalColumns, state, normalizedLocalName, isSubmittingAction]);
+
+  const combinedInstruction = useMemo(() => {
+    if (!instructionMessage) {
+      return "";
+    }
+    if (!instructionHints.length) {
+      return instructionMessage;
+    }
+    return `${instructionMessage} · ${instructionHints.join(" · ")}`;
+  }, [instructionMessage, instructionHints]);
 
   const toggleLogExpansion = () => {
     setIsLogExpanded((previous) => !previous);
@@ -940,73 +984,63 @@ export function GamePlayView({
     ),
     React.createElement(
       "section",
-      { className: "game-info", "aria-live": "polite" },
+      { className: "game-status", "aria-live": "polite" },
       React.createElement(
         "div",
-        { className: "game-info__instructions" },
+        { className: "game-status__line" },
         React.createElement(
-          "h3",
-          { className: "game-info__heading" },
-          "Instructions"
+          "span",
+          { className: "game-status__phase setup__current-room-value" },
+          friendlyPhaseLabel
         ),
         React.createElement(
           "p",
-          { className: "game-info__message" },
-          instructionMessage
+          {
+            className: "game-status__message",
+            title: combinedInstruction,
+          },
+          combinedInstruction
         ),
-        instructionHints.map((hint, index) =>
-          React.createElement(
-            "p",
-            { className: "game-info__hint", key: `${index}-${hint}` },
-            hint
-          )
-        )
-      ),
-      React.createElement(
-        "div",
-        { className: "game-info__log-control" },
         React.createElement(
           "button",
           {
             type: "button",
-            className: "game-info__log-toggle",
+            className: "game-status__toggle",
             onClick: toggleLogExpansion,
             "aria-expanded": isLogExpanded,
             "aria-controls": "game-log-panel",
           },
-          isLogExpanded ? "Hide Log" : `Show Log (${logEntryCount})`
-        ),
-        isLogExpanded
-          ? React.createElement(
-              "div",
-              { className: "game-info__log-panel", id: "game-log-panel" },
-              visibleLogEntries.length
-                ? React.createElement(
-                    "div",
-                    { className: "game-info__log-container" },
+          isLogExpanded
+            ? "Hide Log"
+            : `Show Log${logEntryCount ? ` (${logEntryCount})` : ""}`
+        )
+      ),
+      isLogExpanded
+        ? React.createElement(
+            "div",
+            { className: "game-status__log", id: "game-log-panel" },
+            formattedLogEntries.length
+              ? React.createElement(
+                  "ul",
+                  {
+                    className: "game-status__log-list",
+                    "aria-label": "Game log entries",
+                  },
+                  formattedLogEntries.map((entry, index) =>
                     React.createElement(
-                      "ul",
-                      {
-                        className: "game-info__log",
-                        "aria-label": "Game log entries",
-                      },
-                      visibleLogEntries.map((entry, index) =>
-                        React.createElement(
-                          "li",
-                          { key: `${index}-${entry}` },
-                          entry
-                        )
-                      )
+                      "li",
+                      { key: `${index}-${entry}` },
+                      entry
                     )
                   )
-                : React.createElement(
-                    "p",
-                    { className: "game-info__empty" },
-                    "Log is empty."
-                  )
-            )
-          : null
-      )
+                )
+              : React.createElement(
+                  "p",
+                  { className: "game-status__log-empty" },
+                  "Log is empty."
+                )
+          )
+        : null
     )
   );
 }
