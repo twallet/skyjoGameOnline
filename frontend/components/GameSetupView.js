@@ -66,6 +66,7 @@ export function GameSetupView({
               className: "setup__player-input",
               type: "text",
               placeholder: "Your Name",
+              autoFocus: true,
               maxLength: 15,
               value: playerName,
               onChange: (event) => onPlayerNameChange(event.target.value),

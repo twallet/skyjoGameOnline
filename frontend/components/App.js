@@ -667,6 +667,7 @@ export function App() {
       setGameStarted(false);
       setNewPlayerName(trimmedPlayerName);
       setHasCreatedRoom(true);
+      let lanHostForCopy = undefined;
       if (
         !lanHostSkipped &&
         !lanHost &&
@@ -680,6 +681,7 @@ export function App() {
         if (promptResult && promptResult.trim().length > 0) {
           const trimmed = promptResult.trim();
           setLanHost(trimmed);
+          lanHostForCopy = trimmed;
           try {
             window.localStorage?.setItem("skyjo:lanHost", trimmed);
           } catch (storageError) {
@@ -692,6 +694,10 @@ export function App() {
       consoleLogger.info(
         `Client event: created room '${finalRoomId}' and joined as '${trimmedPlayerName}'. Total players: ${updatedNames.length}`
       );
+      await copyInviteLinkToClipboard({
+        roomIdToCopy: finalRoomId,
+        hostOverride: lanHostForCopy,
+      });
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : String(error));
     } finally {
@@ -699,8 +705,12 @@ export function App() {
     }
   };
 
-  const handleCopyRoomId = async () => {
-    if (!roomId) {
+  const copyInviteLinkToClipboard = async ({
+    roomIdToCopy,
+    hostOverride,
+  } = {}) => {
+    const targetRoomId = roomIdToCopy ?? roomId;
+    if (!targetRoomId) {
       return;
     }
     try {
@@ -709,14 +719,14 @@ export function App() {
         navigator.clipboard &&
         typeof navigator.clipboard.writeText === "function"
       ) {
-        let inviteLink = roomId;
+        let inviteLink = targetRoomId;
         if (
           typeof window !== "undefined" &&
           typeof window.location === "object"
         ) {
           try {
             const url = new URL(window.location.href);
-            url.searchParams.set("roomId", roomId);
+            url.searchParams.set("roomId", targetRoomId);
             const hostname = window.location.hostname;
             const isLocalHost =
               hostname === "localhost" ||
@@ -724,7 +734,7 @@ export function App() {
               hostname === "0.0.0.0";
             if (isLocalHost) {
               const port = window.location.port || "4000";
-              let resolvedHost = lanHost;
+              let resolvedHost = hostOverride ?? lanHost;
               if (typeof window !== "undefined" && window.localStorage) {
                 if (!resolvedHost) {
                   const storedHost =
@@ -749,7 +759,7 @@ export function App() {
                 }
               }
               inviteLink = resolvedHost
-                ? `http://${resolvedHost}:${port}/?roomId=${roomId}`
+                ? `http://${resolvedHost}:${port}/?roomId=${targetRoomId}`
                 : url.toString();
             } else {
               inviteLink = url.toString();
@@ -767,6 +777,10 @@ export function App() {
         error instanceof Error ? error.message : "Unable to copy join link."
       );
     }
+  };
+
+  const handleCopyRoomId = async () => {
+    await copyInviteLinkToClipboard();
   };
 
   if (gameStarted) {
