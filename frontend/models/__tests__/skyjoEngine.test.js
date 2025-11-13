@@ -176,19 +176,26 @@ describe("SkyjoEngine", () => {
   test("column removal delay keeps turn with current player until removal resolves", () => {
     jest.useFakeTimers();
     const players = [
-      buildPlayer("Alice", [1, 2, 3, 4], game),
-      buildPlayer("Bob", [5, 6, 7, 8], game),
+      buildPlayer("Alice", [1, 3, 1, 4], game),
+      buildPlayer("Bob", [0, 0, 0, 0], game),
     ];
-    const deck = new StubDeck([new Card(4, game), new Card(9, game)]);
+    const deck = new StubDeck([new Card(1, game), new Card(9, game)]);
     const dealer = { deck, players };
 
     const engine = new SkyjoEngine(game, dealer, players);
-    advanceToMainPhase(engine, players.length);
+
+    engine.revealInitialCard(0, 0);
+    engine.revealInitialCard(1, 0);
+    engine.revealInitialCard(0, 1);
+    engine.revealInitialCard(1, 1);
+
+    expect(engine.phase).toBe(SkyjoPhases.MAIN_PLAY);
+    expect(engine.activePlayerIndex).toBe(0);
 
     const drawResult = engine.drawFromDeck(0);
-    expect(drawResult.card.value).toBe(4);
+    expect(drawResult.card.value).toBe(1);
 
-    const actionResult = engine.replaceWithDrawnCard(0, 1);
+    const actionResult = engine.replaceWithDrawnCard(0, 2);
 
     expect(actionResult.nextPlayerIndex).toBe(1);
     expect(engine.activePlayerIndex).toBe(0);
