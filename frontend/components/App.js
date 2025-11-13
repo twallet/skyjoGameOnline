@@ -771,6 +771,7 @@ export function App() {
       deck: deckView,
       snapshot: currentSnapshot,
       sessionState,
+      logEntries,
       onFlipCard: handleRevealInitialCard,
       onDrawCard: handleDrawCard,
       onReplaceCard: handleReplaceWithDrawnCard,

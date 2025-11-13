@@ -1,4 +1,8 @@
-import React, { useEffect, useState } from "https://esm.sh/react@18?dev";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+} from "https://esm.sh/react@18?dev";
 
 export function GamePlayView({
   activePlayers,
@@ -7,6 +11,7 @@ export function GamePlayView({
   gameState = null,
   sessionState = null,
   localPlayerName = "",
+  logEntries = [],
   onFlipCard = null,
   onDrawCard = null,
   onReplaceCard = null,
@@ -344,6 +349,199 @@ export function GamePlayView({
       clearInterval(intervalId);
     };
   }, [columnRemovalNotices.length]);
+
+  const eventEntries = useMemo(() => {
+    if (Array.isArray(logEntries) && logEntries.length > 0) {
+      return [...logEntries];
+    }
+    if (snapshot && Array.isArray(snapshot.logEntries)) {
+      return [...snapshot.logEntries];
+    }
+    return [];
+  }, [logEntries, snapshot]);
+
+  const MAX_LOG_ENTRIES = 20;
+  const visibleLogEntries = useMemo(() => {
+    const trimmed = eventEntries.slice(-MAX_LOG_ENTRIES);
+    return trimmed.reverse();
+  }, [eventEntries]);
+
+  const pendingLocalColumns = useMemo(() => {
+    if (!normalizedLocalName) {
+      return null;
+    }
+    let match = null;
+    pendingColumnRemovalMap.forEach((columns, playerName) => {
+      if (match) {
+        return;
+      }
+      if (
+        typeof playerName === "string" &&
+        playerName.localeCompare(normalizedLocalName, undefined, {
+          sensitivity: "accent",
+        }) === 0
+      ) {
+        match = columns;
+      }
+    });
+    return match;
+  }, [pendingColumnRemovalMap, normalizedLocalName]);
+
+  const instructionMessage = useMemo(() => {
+    if (isSubmittingAction) {
+      return "Processing your action...";
+    }
+    if (!state) {
+      return "Waiting for the latest game state...";
+    }
+    const currentPhase = state.phase ?? null;
+    const finalRoundActive = Boolean(state?.finalRound?.inProgress);
+
+    if (currentPhase === "initial-flip") {
+      if (normalizedLocalName) {
+        const localEntry = initialFlipPlayers.find((player) => {
+          if (typeof player?.name !== "string") {
+            return false;
+          }
+          return (
+            player.name.localeCompare(normalizedLocalName, undefined, {
+              sensitivity: "accent",
+            }) === 0
+          );
+        });
+        if (localEntry) {
+          const reveals = Array.isArray(localEntry.flippedPositions)
+            ? localEntry.flippedPositions.length
+            : 0;
+          const remaining = Math.max(requiredInitialReveals - reveals, 0);
+          if (remaining > 0) {
+            return `Initial flip: Reveal ${remaining} more card${
+              remaining === 1 ? "" : "s"
+            } to determine turn order.`;
+          }
+        }
+      }
+      const remainingPlayers = initialFlipPlayers.filter((player) => {
+        const flips = Array.isArray(player?.flippedPositions)
+          ? player.flippedPositions.length
+          : 0;
+        return flips < requiredInitialReveals;
+      });
+      if (remainingPlayers.length > 0) {
+        const waitingNames = remainingPlayers
+          .map((player) => player?.name)
+          .filter((name) => typeof name === "string" && name.trim().length > 0);
+        if (waitingNames.length > 0) {
+          return `Initial flip: Waiting for ${waitingNames.join(
+            ", "
+          )} to finish.`;
+        }
+      }
+      return "Initial flip: Waiting for the turn order to be resolved.";
+    }
+
+    if (currentPhase === "main-play" || currentPhase === "final-round") {
+      const phaseLabel = finalRoundActive ? "Final round" : "Main phase";
+      if (isLocalActive) {
+        if (drawnBelongsToLocal && Boolean(drawnCard)) {
+          if (pendingDiscardReveal) {
+            return `${phaseLabel}: Choose a hidden card to reveal after discarding.`;
+          }
+          const cardValue =
+            drawnCard.value !== undefined && drawnCard.value !== null
+              ? `${drawnCard.value}`
+              : "a card";
+          if (mainActionMode === "replace") {
+            return `${phaseLabel}: You drew ${cardValue}. Replace one of your cards or discard it to reveal another card.`;
+          }
+          return `${phaseLabel}: You drew ${cardValue}. Select a hidden card to reveal.`;
+        }
+        if (!drawnCard) {
+          if (canDrawFromDeck && canDrawFromDiscard) {
+            return `${phaseLabel}: It is your turn. Draw from the deck or take the top discard card.`;
+          }
+          if (canDrawFromDeck) {
+            return `${phaseLabel}: It is your turn. Draw a card from the deck.`;
+          }
+          if (canDrawFromDiscard) {
+            return `${phaseLabel}: It is your turn. Take the top discard card.`;
+          }
+          return `${phaseLabel}: It is your turn. Waiting for draw options to become available.`;
+        }
+        return `${phaseLabel}: Resolve the drawn card to continue.`;
+      }
+
+      if (drawnBelongsToLocal && Boolean(drawnCard)) {
+        if (pendingDiscardReveal) {
+          return `${phaseLabel}: Choose a hidden card to reveal after discarding.`;
+        }
+        if (mainActionMode === "replace") {
+          return `${phaseLabel}: Replace one of your cards or discard to reveal another card.`;
+        }
+        return `${phaseLabel}: Select a hidden card to reveal.`;
+      }
+
+      if (
+        typeof state.activePlayer?.name === "string" &&
+        state.activePlayer.name.trim().length > 0
+      ) {
+        return `${phaseLabel}: Waiting for ${state.activePlayer.name} to play.`;
+      }
+      return `${phaseLabel}: Waiting for the next player.`;
+    }
+
+    if (currentPhase === "finished") {
+      return "Game finished: Review the final scores and prepare a new game.";
+    }
+
+    return "Waiting for the latest game state...";
+  }, [
+    isSubmittingAction,
+    state,
+    initialFlipPlayers,
+    requiredInitialReveals,
+    normalizedLocalName,
+    isLocalActive,
+    drawnBelongsToLocal,
+    drawnCard,
+    pendingDiscardReveal,
+    canDrawFromDiscard,
+    canDrawFromDeck,
+    mainActionMode,
+  ]);
+
+  const instructionHints = useMemo(() => {
+    if (isSubmittingAction) {
+      return [];
+    }
+    const hints = [];
+    if (pendingLocalColumns && pendingLocalColumns.size > 0) {
+      const labels = Array.from(pendingLocalColumns)
+        .map((index) => index + 1)
+        .join(", ");
+      hints.push(
+        `Column removal pending: Column ${labels} will clear automatically.`
+      );
+    }
+    if (state?.finalRound?.inProgress) {
+      const trigger = state.finalRound.triggeredBy;
+      if (typeof trigger === "string" && trigger.trim().length > 0) {
+        if (
+          normalizedLocalName &&
+          trigger.localeCompare(normalizedLocalName, undefined, {
+            sensitivity: "accent",
+          }) === 0
+        ) {
+          hints.push("Final round was triggered by you.");
+        } else {
+          hints.push(`Final round triggered by ${trigger}.`);
+        }
+      } else {
+        hints.push("Final round is in progress.");
+      }
+    }
+    return hints;
+  }, [pendingLocalColumns, state, normalizedLocalName, isSubmittingAction]);
 
   const resetToReplaceMode = () => {
     if (!drawnBelongsToLocal) {
@@ -732,6 +930,60 @@ export function GamePlayView({
           ref: gridRef,
         },
         playerEntries
+      )
+    ),
+    React.createElement(
+      "section",
+      { className: "game-info", "aria-live": "polite" },
+      React.createElement(
+        "div",
+        { className: "game-info__instructions" },
+        React.createElement(
+          "h3",
+          { className: "game-info__heading" },
+          "Instructions"
+        ),
+        React.createElement(
+          "p",
+          { className: "game-info__message" },
+          instructionMessage
+        ),
+        instructionHints.map((hint, index) =>
+          React.createElement(
+            "p",
+            { className: "game-info__hint", key: `${index}-${hint}` },
+            hint
+          )
+        )
+      ),
+      React.createElement(
+        "div",
+        { className: "game-info__events" },
+        React.createElement(
+          "h3",
+          { className: "game-info__heading" },
+          "Event Log"
+        ),
+        visibleLogEntries.length
+          ? React.createElement(
+              "div",
+              { className: "game-info__log-container" },
+              React.createElement(
+                "ul",
+                {
+                  className: "game-info__log",
+                  "aria-label": "Event log entries",
+                },
+                visibleLogEntries.map((entry, index) =>
+                  React.createElement("li", { key: `${index}-${entry}` }, entry)
+                )
+              )
+            )
+          : React.createElement(
+              "p",
+              { className: "game-info__empty" },
+              "Event log is empty."
+            )
       )
     )
   );
