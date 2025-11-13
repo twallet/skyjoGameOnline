@@ -1,9 +1,9 @@
 import { Hand } from "../hand.js";
 import { Card } from "../card.js";
 
-const buildGame = () => {
-  const values = [1, 2, 3, 4];
-  const images = values.map((_, index) => `images/test-theme-${index}.jpg`);
+const buildGame = (maxValue = 12) => {
+  const values = Array.from({ length: maxValue }, (_, index) => index + 1);
+  const images = values.map((value) => `images/test-theme-${value}.jpg`);
 
   return {
     name: "Test Game",
@@ -21,7 +21,8 @@ const buildGame = () => {
 };
 
 const buildCard = (value, { visible = false } = {}) => {
-  const game = buildGame();
+  const maxValue = Math.max(12, Number(value) || 0);
+  const game = buildGame(maxValue);
   const card = new Card(value, game);
   if (visible) {
     card.visible = true;

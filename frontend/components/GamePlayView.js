@@ -261,37 +261,7 @@ export function GamePlayView({
   const shouldShakeDrawSources =
     isLocalActive && !drawnCard && (canDrawFromDeck || canDrawFromDiscard);
   const [columnRemovalNotices, setColumnRemovalNotices] = useState([]);
-
-  const cardMetrics = React.useMemo(() => {
-    const parseDimension = (value, fallback) => {
-      if (typeof value === "number" && Number.isFinite(value)) {
-        return value;
-      }
-      if (typeof value === "string") {
-        const parsed = parseFloat(value);
-        return Number.isFinite(parsed) ? parsed : fallback;
-      }
-      return fallback;
-    };
-
-    const width = parseDimension(cardSizeStyle["--card-width"], 80);
-    const height = parseDimension(cardSizeStyle["--card-height"], 114);
-    const gap = parseDimension(cardSizeStyle["--card-gap"], 12);
-    const maxColumns = Math.max(maxHandColumns, 0);
-    const totalWidth =
-      maxColumns > 0
-        ? maxColumns * width + Math.max(maxColumns - 1, 0) * gap
-        : width;
-
-    return {
-      width,
-      height,
-      gap,
-      maxColumns,
-      totalWidth,
-      columnStride: width + gap,
-    };
-  }, [cardSizeStyle, maxHandColumns]);
+  const displayedColumnRemovalIdsRef = React.useRef(new Set());
 
   const pendingColumnRemovalMap = React.useMemo(() => {
     const entries = Array.isArray(state?.pendingColumnRemovals)
@@ -305,27 +275,17 @@ export function GamePlayView({
         return;
       }
       const columns = Array.isArray(entry?.columns) ? entry.columns : [];
-      const values = Array.isArray(entry?.values) ? entry.values : [];
       const columnSet = new Set();
-      const valueMap = new Map();
-      columns.forEach((index, idx) => {
+      columns.forEach((index) => {
         if (!Number.isInteger(index)) {
           return;
         }
         columnSet.add(index);
-        const columnValueRaw = values[idx];
-        const numericValue =
-          columnValueRaw !== undefined && columnValueRaw !== null
-            ? Number(columnValueRaw)
-            : NaN;
-        if (Number.isFinite(numericValue)) {
-          valueMap.set(index, numericValue);
-        }
       });
       if (columnSet.size === 0) {
         return;
       }
-      map.set(playerName, { columns: columnSet, values: valueMap });
+      map.set(playerName, columnSet);
     });
     return map;
   }, [state?.pendingColumnRemovals]);
@@ -580,71 +540,15 @@ export function GamePlayView({
       requiredInitialReveals > 0 &&
       flippedPositions.size < requiredInitialReveals;
     const shouldShowIndicator = needsInitialFlipIndicator || isCurrentTurn;
-    const pendingRemovalInfo =
+    const playerColumnSet =
       pendingColumnRemovalMap.get(player.name) ??
       pendingColumnRemovalMap.get(normalizedPlayerName) ??
       null;
-    const playerColumnSet =
-      pendingRemovalInfo && pendingRemovalInfo.columns instanceof Set
-        ? pendingRemovalInfo.columns
-        : null;
-    const columnValueMap =
-      pendingRemovalInfo && pendingRemovalInfo.values instanceof Map
-        ? pendingRemovalInfo.values
-        : null;
-    const rowCount = handMatrix.length;
-    const playerColumnCount = handMatrix.reduce(
-      (max, row) => Math.max(max, Array.isArray(row) ? row.length : 0),
-      0
-    );
     const rowOffsets = [];
     handMatrix.reduce((offset, row, rowIndex) => {
       rowOffsets[rowIndex] = offset;
       return offset + row.length;
     }, 0);
-    const playerWidth =
-      playerColumnCount * cardMetrics.width +
-      Math.max(playerColumnCount - 1, 0) * cardMetrics.gap;
-    const totalWidth = Math.max(cardMetrics.totalWidth, playerWidth);
-    const leftMargin = Math.max((totalWidth - playerWidth) / 2, 0);
-    const overlayHeight =
-      rowCount * cardMetrics.height +
-      Math.max(rowCount - 1, 0) * cardMetrics.gap;
-    const overlayPadding = Math.max(cardMetrics.gap * 0.7, 8);
-    const overlayWidth = cardMetrics.width + overlayPadding;
-    const overlayTopBase = cardMetrics.height + cardMetrics.gap;
-    const overlayTop = Math.max(overlayTopBase - overlayPadding / 2, 0);
-    const overlayHeightWithPadding = overlayHeight + overlayPadding;
-    const columnOverlayElements =
-      playerColumnSet && playerColumnSet.size > 0 && rowCount > 0
-        ? Array.from(playerColumnSet)
-            .filter(
-              (columnIndex) =>
-                Number.isInteger(columnIndex) &&
-                columnIndex >= 0 &&
-                columnIndex < playerColumnCount
-            )
-            .map((columnIndex) => {
-              const overlayLeft =
-                leftMargin + columnIndex * cardMetrics.columnStride;
-              const overlayValue = columnValueMap?.get(columnIndex);
-              return React.createElement("div", {
-                key: `overlay-${player.name}-${columnIndex}`,
-                className: "player-entry__column-overlay",
-                style: {
-                  left: `${overlayLeft - overlayPadding / 2}px`,
-                  top: `${overlayTop}px`,
-                  width: `${overlayWidth}px`,
-                  height: `${overlayHeightWithPadding}px`,
-                },
-                title:
-                  overlayValue !== undefined
-                    ? `Column ${columnIndex + 1} (value ${overlayValue})`
-                    : `Column ${columnIndex + 1}`,
-              });
-            })
-        : [];
-
     const labelRowElement = React.createElement(
       "div",
       {
@@ -751,10 +655,9 @@ export function GamePlayView({
           } else {
             cardClasses.push("player-entry__card--inactive");
           }
-          if (
-            !playerColumnSet?.has(cardIndex) &&
-            (allowReplace || allowReveal || canFlip)
-          ) {
+          if (playerColumnSet?.has(cardIndex)) {
+            cardClasses.push("player-entry__card--removal-pending");
+          } else if (allowReplace || allowReveal || canFlip) {
             cardClasses.push("shake-animation");
           }
 
@@ -771,11 +674,6 @@ export function GamePlayView({
       )
     );
 
-    const handChildren = [labelRowElement, ...cardRowElements];
-    if (columnOverlayElements.length > 0) {
-      handChildren.push(...columnOverlayElements);
-    }
-
     playerEntries.push(
       React.createElement(
         "div",
@@ -791,7 +689,8 @@ export function GamePlayView({
         React.createElement(
           "div",
           { className: "player-entry__hand" },
-          ...handChildren
+          labelRowElement,
+          ...cardRowElements
         ),
         null
       )
