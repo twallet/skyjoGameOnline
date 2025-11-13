@@ -615,21 +615,7 @@ export function GamePlayView({
     }
     const hints = [];
     if (state?.finalRound?.inProgress) {
-      const trigger = state.finalRound.triggeredBy;
-      if (typeof trigger === "string" && trigger.trim().length > 0) {
-        if (
-          normalizedLocalName &&
-          trigger.localeCompare(normalizedLocalName, undefined, {
-            sensitivity: "accent",
-          }) === 0
-        ) {
-          hints.push("final round was triggered by you");
-        } else {
-          hints.push(`final round triggered by ${trigger}`);
-        }
-      } else {
-        hints.push("final round is in progress");
-      }
+      hints.push("final round is in progress");
     }
     return hints;
   }, [pendingLocalColumns, state, normalizedLocalName, isSubmittingAction]);
@@ -646,6 +632,13 @@ export function GamePlayView({
       return `${sanitizedHints.join("; ")}.`;
     }
 
+    if (
+      state?.finalRound?.triggeredBy &&
+      instructionMessage.includes(state.finalRound.triggeredBy)
+    ) {
+      return instructionMessage.replace(/\s*\.+\s*$/, ".");
+    }
+
     const baseMessage = instructionMessage.replace(/\s*\.+\s*$/, "");
 
     if (!sanitizedHints.length) {
@@ -653,7 +646,7 @@ export function GamePlayView({
     }
 
     return `${baseMessage} (${sanitizedHints.join("; ")}).`;
-  }, [instructionMessage, instructionHints]);
+  }, [instructionMessage, instructionHints, state?.finalRound?.triggeredBy]);
 
   const toggleLogExpansion = () => {
     setIsLogExpanded((previous) => !previous);
@@ -1056,7 +1049,15 @@ export function GamePlayView({
         { className: "game-status__line" },
         React.createElement(
           "span",
-          { className: "game-status__phase setup__current-room-value" },
+          {
+            className: [
+              "game-status__phase",
+              "setup__current-room-value",
+              state?.phase ? `game-status__phase--${state.phase}` : null,
+            ]
+              .filter(Boolean)
+              .join(" "),
+          },
           friendlyPhaseLabel
         ),
         React.createElement(
