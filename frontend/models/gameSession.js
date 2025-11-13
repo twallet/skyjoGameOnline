@@ -48,11 +48,32 @@ export class GameSession {
     return position;
   }
 
-  #appendLog(entry) {
-    if (!entry) {
+  #appendLog(message, options = {}) {
+    if (!message) {
       return;
     }
-    this.#logEntries = [...this.#logEntries, entry];
+
+    const phaseFallback =
+      this.#engine && this.#engine.phase
+        ? this.#engine.phase
+        : SkyjoPhases.INITIAL_FLIP;
+    const phase =
+      typeof options.phase === "string" && options.phase.length
+        ? options.phase
+        : phaseFallback;
+    const actor =
+      typeof options.actor === "string" && options.actor.trim().length
+        ? options.actor.trim()
+        : null;
+
+    this.#logEntries = [
+      ...this.#logEntries,
+      {
+        message,
+        phase,
+        actor,
+      },
+    ];
   }
 
   #updateSnapshots() {
@@ -67,7 +88,7 @@ export class GameSession {
     return {
       event,
       snapshot: GameSession.#cloneSnapshot(latestSnapshot),
-      logEntries: [...this.#logEntries],
+      logEntries: this.#logEntries.map(GameSession.#cloneLogEntry),
       deck: {
         size: latestSnapshot.deck.size,
         topCard: latestSnapshot.deck.topCard
@@ -97,7 +118,11 @@ export class GameSession {
    *       matrix: Array<Array<{ value: string | number, image: string }>>
    *     }
    *   }>,
-   *   logEntries: string[],
+   *   logEntries: Array<{
+   *     message: string,
+   *     phase: string | null,
+   *     actor: string | null
+   *   }>,
    *   deck: { size: number, topCard: { value: string | number, image: string, visible: boolean } | null, discardSize: number },
    *   state: ReturnType<import("./skyjoEngine.js").SkyjoEngine["buildStateSnapshot"]> | null
    * }}
@@ -151,7 +176,10 @@ export class GameSession {
                   : `${columnIndex + 1}`;
               })
               .join(", ");
-            this.#appendLog(`${name} cleared column ${columnLabels}`);
+            this.#appendLog(`${name} cleared column ${columnLabels}`, {
+              phase: this.#engine?.phase ?? null,
+              actor: name,
+            });
           }
         },
       }
@@ -164,7 +192,8 @@ export class GameSession {
     this.#logEntries = GameSession.#buildInitialLog(
       this.#game,
       this.#dealer,
-      this.#players
+      this.#players,
+      this.#engine?.phase ?? SkyjoPhases.INITIAL_FLIP
     );
     const snapshot = this.#buildSessionSnapshot();
     this.#deckSnapshot = snapshot.deck;
@@ -182,7 +211,7 @@ export class GameSession {
   }
 
   get logEntries() {
-    return [...this.#logEntries];
+    return this.#logEntries.map(GameSession.#cloneLogEntry);
   }
 
   get deckSnapshot() {
@@ -213,7 +242,10 @@ export class GameSession {
 
     const result = this.#engine.revealInitialCard(index, normalizedPosition);
 
-    this.#appendLog(`${name} revealed ${result.card.value}`);
+    this.#appendLog(`${name} revealed ${result.card.value}`, {
+      phase: result.phase ?? null,
+      actor: name,
+    });
 
     if (
       result.phase === SkyjoPhases.MAIN_PLAY &&
@@ -230,12 +262,22 @@ export class GameSession {
 
       if (starterTotal !== null) {
         this.#appendLog(
-          `${starterName} has the higher value (${starterTotal}).`
+          `${starterName} has the higher value (${starterTotal}).`,
+          {
+            phase: SkyjoPhases.MAIN_PLAY,
+            actor: starterName,
+          }
         );
       } else {
-        this.#appendLog(`${starterName} has the higher value.`);
+        this.#appendLog(`${starterName} has the higher value.`, {
+          phase: SkyjoPhases.MAIN_PLAY,
+          actor: starterName,
+        });
       }
-      this.#appendLog(`${starterName} starts the round.`);
+      this.#appendLog(`${starterName} starts the round.`, {
+        phase: SkyjoPhases.MAIN_PLAY,
+        actor: starterName,
+      });
       this.#mainPhaseAnnounced = true;
     }
 
@@ -257,9 +299,15 @@ export class GameSession {
         : this.#engine.drawFromDeck(index);
 
     if (normalizedSource === "discard") {
-      this.#appendLog(`${name} took discard card ${result.card.value}`);
+      this.#appendLog(`${name} took discard card ${result.card.value}`, {
+        phase: result.phase ?? null,
+        actor: name,
+      });
     } else {
-      this.#appendLog(`${name} drew ${result.card.value} from the deck`);
+      this.#appendLog(`${name} drew ${result.card.value} from the deck`, {
+        phase: result.phase ?? null,
+        actor: name,
+      });
     }
 
     return this.#buildActionResponse({
@@ -277,7 +325,11 @@ export class GameSession {
     const result = this.#engine.replaceWithDrawnCard(index, normalizedPosition);
 
     this.#appendLog(
-      `${name} replaced position ${normalizedPosition} with ${result.newCard.value}, discarding ${result.discarded.value}`
+      `${name} replaced position ${normalizedPosition} with ${result.newCard.value}, discarding ${result.discarded.value}`,
+      {
+        phase: result.phase ?? null,
+        actor: name,
+      }
     );
 
     return this.#buildActionResponse({
@@ -298,7 +350,11 @@ export class GameSession {
     );
 
     this.#appendLog(
-      `${name} discarded ${result.discarded.value} and revealed ${result.revealed.value} at position ${normalizedPosition}`
+      `${name} discarded ${result.discarded.value} and revealed ${result.revealed.value} at position ${normalizedPosition}`,
+      {
+        phase: result.phase ?? null,
+        actor: name,
+      }
     );
 
     return this.#buildActionResponse({
@@ -429,8 +485,46 @@ export class GameSession {
     return cleaned;
   }
 
-  static #buildInitialLog(game, dealer, players) {
-    return ["Skyjo game started."];
+  static #cloneLogEntry(entry) {
+    if (!entry || typeof entry !== "object") {
+      const message =
+        entry === undefined || entry === null ? "" : String(entry);
+      return {
+        message,
+        phase: SkyjoPhases.INITIAL_FLIP,
+        actor: null,
+      };
+    }
+
+    const message =
+      typeof entry.message === "string"
+        ? entry.message
+        : String(entry.message ?? "");
+    const phase =
+      typeof entry.phase === "string" && entry.phase.length
+        ? entry.phase
+        : SkyjoPhases.INITIAL_FLIP;
+    const actor =
+      typeof entry.actor === "string" && entry.actor.trim().length
+        ? entry.actor.trim()
+        : null;
+
+    return { message, phase, actor };
+  }
+
+  static #buildInitialLog(
+    game,
+    dealer,
+    players,
+    phase = SkyjoPhases.INITIAL_FLIP
+  ) {
+    return [
+      {
+        message: "Skyjo game started.",
+        phase,
+        actor: null,
+      },
+    ];
   }
 
   static #buildDeckSnapshot(deck) {
@@ -475,7 +569,7 @@ export class GameSession {
 
     return {
       players,
-      logEntries: [...this.#logEntries],
+      logEntries: this.#logEntries.map(GameSession.#cloneLogEntry),
       deck,
       state: state ? GameSession.#cloneStateSnapshot(state) : null,
     };
@@ -494,7 +588,7 @@ export class GameSession {
           ),
         },
       })),
-      logEntries: [...snapshot.logEntries],
+      logEntries: snapshot.logEntries.map(GameSession.#cloneLogEntry),
       deck: {
         size: snapshot.deck.size,
         topCard: snapshot.deck.topCard ? { ...snapshot.deck.topCard } : null,

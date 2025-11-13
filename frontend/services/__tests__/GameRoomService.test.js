@@ -81,7 +81,13 @@ describe("GameRoomService", () => {
     const snapshot = service.startGame();
 
     expect(snapshot.players).toHaveLength(2);
-    expect(snapshot.logEntries).toEqual(["Skyjo game started."]);
+    expect(snapshot.logEntries).toEqual([
+      expect.objectContaining({
+        message: "Skyjo game started.",
+        phase: "initial-flip",
+        actor: null,
+      }),
+    ]);
     expect(service.canAddPlayer()).toBe(false);
     expect(service.canStartGame()).toBe(false);
     expect(service.getSnapshot()).toEqual(snapshot);

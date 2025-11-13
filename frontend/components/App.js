@@ -152,7 +152,11 @@ export function App() {
     const newEntries = logEntries.slice(startIndex);
 
     newEntries.forEach((entry) => {
-      consoleLogger.info(`Client event: ${entry}`);
+      const message =
+        entry && typeof entry === "object" && entry !== null
+          ? (entry.message ?? "")
+          : entry;
+      consoleLogger.info(`Client event: ${message}`);
     });
 
     loggedEventCountRef.current = logEntries.length;

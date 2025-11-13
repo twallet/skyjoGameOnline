@@ -58,9 +58,35 @@ const createBaseState = () => ({
 
 const createSnapshot = (stateOverrides = {}, logOverrides = []) => {
   const baseState = createBaseState();
+  const normalizeEntry = (entry) => {
+    if (entry && typeof entry === "object") {
+      return {
+        message:
+          typeof entry.message === "string"
+            ? entry.message
+            : String(entry.message ?? ""),
+        phase:
+          typeof entry.phase === "string" && entry.phase.length
+            ? entry.phase
+            : null,
+        actor:
+          typeof entry.actor === "string" && entry.actor.trim().length
+            ? entry.actor.trim()
+            : null,
+      };
+    }
+    return {
+      message: typeof entry === "string" ? entry : String(entry ?? ""),
+      phase: null,
+      actor: null,
+    };
+  };
+
   return {
     players: [],
-    logEntries: Array.isArray(logOverrides) ? [...logOverrides] : [],
+    logEntries: Array.isArray(logOverrides)
+      ? logOverrides.map(normalizeEntry)
+      : [],
     deck: { size: 0, topCard: null, discardSize: 0 },
     state: { ...baseState, ...stateOverrides },
   };

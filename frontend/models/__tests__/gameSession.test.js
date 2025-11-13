@@ -96,7 +96,13 @@ describe("GameSession", () => {
       });
 
       expect(Array.isArray(result.logEntries)).toBe(true);
-      expect(result.logEntries).toEqual(["Skyjo game started."]);
+      expect(result.logEntries).toEqual([
+        expect.objectContaining({
+          message: "Skyjo game started.",
+          phase: "initial-flip",
+          actor: null,
+        }),
+      ]);
 
       expect(result.deck.size).toBeGreaterThan(0);
       expect(result.deck).toEqual(
@@ -143,14 +149,32 @@ describe("GameSession", () => {
       const logs = session.logEntries;
       const lastLog = logs[logs.length - 1];
       const previousLog = logs[logs.length - 2];
-      const starterName = result.snapshot.state.activePlayer?.name;
+      const starterName = result.snapshot.state.activePlayer?.name ?? null;
 
-      expect(previousLog).toMatch(/has the higher value \(\d+\)\./);
+      expect(previousLog).toEqual(
+        expect.objectContaining({
+          message: expect.stringMatching(/has the higher value/),
+          phase: "main-play",
+        })
+      );
       if (starterName) {
-        expect(previousLog).toContain(starterName);
-        expect(lastLog).toBe(`${starterName} starts the round.`);
+        expect(previousLog.actor).toBe(starterName);
+        expect(lastLog).toEqual(
+          expect.objectContaining({
+            message: `${starterName} starts the round.`,
+            phase: "main-play",
+            actor: starterName,
+          })
+        );
       } else {
-        expect(lastLog).toMatch(/starts the round\./);
+        expect(previousLog.actor).toEqual(expect.any(String));
+        expect(lastLog).toEqual(
+          expect.objectContaining({
+            message: expect.stringMatching(/starts the round\./),
+            phase: "main-play",
+            actor: expect.any(String),
+          })
+        );
       }
       expect(result.snapshot.state.activePlayer).toEqual(
         expect.objectContaining({ name: expect.any(String) })

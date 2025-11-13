@@ -450,59 +450,80 @@ export function GamePlayView({
     const escapeRegExp = (string) =>
       string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-    const derivePhaseForEntry = (entry) => {
-      if (typeof entry !== "string") {
-        return { phase: "Preparation", message: `${entry}` };
+    const matchNameFromMessage = (message) => {
+      if (typeof message !== "string") {
+        return null;
       }
-
-      const trimmed = entry.trim();
-      if (!trimmed) {
-        return { phase: "Preparation", message: trimmed };
-      }
-
-      const lower = trimmed.toLowerCase();
-      if (lower === "skyjo game started." || lower === "skyjo game started") {
-        return { phase: "Preparation", message: trimmed };
-      }
-
-      if (lower.includes("final round")) {
-        return { phase: "Final Round", message: trimmed };
-      }
-
-      if (lower.includes("revealed")) {
-        return { phase: "Preparation", message: trimmed };
-      }
-
-      const matchedName = knownPlayerNames.find((name) => {
+      for (const name of knownPlayerNames) {
         if (!name) {
-          return false;
+          continue;
         }
         const normalized = name.trim();
         if (!normalized) {
-          return false;
+          continue;
         }
         const pattern = new RegExp(
           `^${escapeRegExp(normalized)}(?:\\b|'s\\b|'\\b|\\s)`,
           "i"
         );
-        return pattern.test(trimmed);
-      });
+        if (pattern.test(message)) {
+          return normalized;
+        }
+      }
+      return null;
+    };
 
-      if (matchedName) {
-        return {
-          phase: buildPossessiveTurnLabel(matchedName),
-          message: trimmed,
-        };
+    const resolvePhaseLabel = (phase, actor, message) => {
+      if (phase === "initial-flip" || phase === "setup") {
+        return "Preparation";
+      }
+      if (phase === "main-play") {
+        if (actor) {
+          return buildPossessiveTurnLabel(actor);
+        }
+        return friendlyPhaseLabel;
+      }
+      if (phase === "final-round") {
+        return "Final Round";
+      }
+      if (phase === "finished") {
+        return "Finished";
       }
 
-      return { phase: "Preparation", message: trimmed };
+      if (actor) {
+        return buildPossessiveTurnLabel(actor);
+      }
+
+      const lower = typeof message === "string" ? message.toLowerCase() : "";
+      if (lower.includes("final round")) {
+        return "Final Round";
+      }
+      if (lower.includes("revealed") || lower.includes("skyjo game started")) {
+        return "Preparation";
+      }
+
+      return friendlyPhaseLabel;
     };
 
     return visibleLogEntries.map((entry) => {
-      const { phase, message } = derivePhaseForEntry(entry);
-      return `${phase} | ${message}`;
+      const message =
+        typeof entry.message === "string"
+          ? entry.message
+          : String(entry.message ?? "");
+      const actorFromMessage = matchNameFromMessage(message);
+      const actor =
+        (entry.actor && entry.actor.trim().length
+          ? entry.actor.trim()
+          : null) || actorFromMessage;
+      const phaseLabel = resolvePhaseLabel(entry.phase, actor, message);
+      return `${phaseLabel} | ${message}`;
     });
-  }, [visibleLogEntries, knownPlayerNames, buildPossessiveTurnLabel]);
+  }, [
+    visibleLogEntries,
+    knownPlayerNames,
+    buildPossessiveTurnLabel,
+    friendlyPhaseLabel,
+  ]);
 
   const instructionMessage = useMemo(() => {
     if (isSubmittingAction) {
