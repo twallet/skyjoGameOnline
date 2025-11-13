@@ -151,9 +151,7 @@ export class GameSession {
                   : `${columnIndex + 1}`;
               })
               .join(", ");
-            this.#appendLog(
-              `Main play: ${name} cleared column ${columnLabels}`
-            );
+            this.#appendLog(`${name} cleared column ${columnLabels}`);
           }
         },
       }
@@ -215,16 +213,25 @@ export class GameSession {
 
     const result = this.#engine.revealInitialCard(index, normalizedPosition);
 
-    this.#appendLog(`Initial flip: ${name} revealed ${result.card.value}`);
+    this.#appendLog(`${name} revealed ${result.card.value}`);
 
     if (
       result.phase === SkyjoPhases.MAIN_PLAY &&
       !this.#mainPhaseAnnounced &&
       result.activePlayerIndex !== null
     ) {
-      const starterName =
-        this.#players[result.activePlayerIndex]?.name ?? "Unknown";
-      this.#appendLog(`Main phase: ${starterName} starts the round.`);
+      const starterIndex = result.activePlayerIndex;
+      const starterName = this.#players[starterIndex]?.name ?? "Unknown";
+      const stateSnapshot = this.#engine.buildStateSnapshot();
+      const starterInfo =
+        stateSnapshot?.initialFlip?.players?.[starterIndex] ?? null;
+      const starterTotal =
+        typeof starterInfo?.total === "number" ? starterInfo.total : null;
+      const totalMessage =
+        starterTotal !== null
+          ? `${starterName} has the higher value (${starterTotal}). `
+          : "";
+      this.#appendLog(`${totalMessage}${starterName} starts the round.`.trim());
       this.#mainPhaseAnnounced = true;
     }
 
@@ -245,11 +252,11 @@ export class GameSession {
         ? this.#engine.drawFromDiscard(index)
         : this.#engine.drawFromDeck(index);
 
-    const logEntry =
-      normalizedSource === "discard"
-        ? `Main play: ${name} took discard card ${result.card.value}`
-        : `Main play: ${name} drew from deck (${result.card.value})`;
-    this.#appendLog(logEntry);
+    if (normalizedSource === "discard") {
+      this.#appendLog(`${name} took discard card ${result.card.value}`);
+    } else {
+      this.#appendLog(`${name} drew ${result.card.value} from the deck`);
+    }
 
     return this.#buildActionResponse({
       ...result,
@@ -266,7 +273,7 @@ export class GameSession {
     const result = this.#engine.replaceWithDrawnCard(index, normalizedPosition);
 
     this.#appendLog(
-      `Main play: ${name} replaced position ${normalizedPosition} with ${result.newCard.value}, discarding ${result.discarded.value}`
+      `${name} replaced position ${normalizedPosition} with ${result.newCard.value}, discarding ${result.discarded.value}`
     );
 
     return this.#buildActionResponse({
@@ -287,7 +294,7 @@ export class GameSession {
     );
 
     this.#appendLog(
-      `Main play: ${name} discarded drawn ${result.discarded.value} and revealed ${result.revealed.value} at position ${normalizedPosition}`
+      `${name} discarded ${result.discarded.value} and revealed ${result.revealed.value} at position ${normalizedPosition}`
     );
 
     return this.#buildActionResponse({

@@ -141,7 +141,9 @@ describe("GameSession", () => {
 
       expect(result.snapshot.state.phase).toBe(SkyjoPhases.MAIN_PLAY);
       const lastLog = session.logEntries[session.logEntries.length - 1];
-      expect(lastLog).toMatch(/Main phase: .* starts the round\./);
+      expect(lastLog).toMatch(
+        /has the higher value \(\d+\)\. .* starts the round\./
+      );
       expect(result.snapshot.state.activePlayer).toEqual(
         expect.objectContaining({ name: expect.any(String) })
       );
