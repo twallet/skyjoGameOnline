@@ -155,7 +155,7 @@ export class SkyjoEngine {
       advanceTurnAfterResolve: true,
     });
     if (!hasPendingColumnRemoval) {
-      this.#advanceTurn();
+      this.#advanceTurnAndCheckCompletion(playerIndex);
     }
 
     return {
@@ -196,7 +196,7 @@ export class SkyjoEngine {
       advanceTurnAfterResolve: true,
     });
     if (!hasPendingColumnRemoval) {
-      this.#advanceTurn();
+      this.#advanceTurnAndCheckCompletion(playerIndex);
     }
 
     return {
@@ -391,7 +391,7 @@ export class SkyjoEngine {
       advanceTurnAfterResolve: shouldAdvanceAfterResolve,
     });
     if (!hasMorePending && shouldAdvanceAfterResolve) {
-      this.#advanceTurn();
+      this.#advanceTurnAndCheckCompletion(playerIndex);
     }
     this.#notifyStateChange();
   }
@@ -610,6 +610,41 @@ export class SkyjoEngine {
     this.#activePlayerIndex = this.#turnOrder[this.#turnCursor];
   }
 
+  #advanceTurnAndCheckCompletion(completedPlayerIndex) {
+    this.#advanceTurn();
+    if (
+      Number.isInteger(completedPlayerIndex) &&
+      completedPlayerIndex >= 0 &&
+      completedPlayerIndex < this.#players.length
+    ) {
+      const completedHand = this.#resolvePlayerHand(completedPlayerIndex);
+      if (completedHand.allCardsVisible()) {
+        this.#triggerFinalRoundIfNeeded(completedPlayerIndex);
+      }
+    }
+  }
+
+  #triggerFinalRoundIfNeeded(triggeringPlayerIndex) {
+    if (
+      this.#phase === SkyjoPhases.FINAL_ROUND ||
+      this.#phase === SkyjoPhases.FINISHED
+    ) {
+      return;
+    }
+
+    this.#phase = SkyjoPhases.FINAL_ROUND;
+    const triggeringPlayer = this.#players[triggeringPlayerIndex];
+    this.#finalRoundTrigger =
+      triggeringPlayer?.name ?? `Player ${triggeringPlayerIndex + 1}`;
+    const currentOrder = [...this.#turnOrder];
+    const startCursor = this.#turnCursor;
+    const queue = [];
+    for (let offset = 1; offset < currentOrder.length; offset += 1) {
+      const cursor = (startCursor + offset) % currentOrder.length;
+      queue.push(currentOrder[cursor]);
+    }
+    this.#finalRoundQueue = queue;
+  }
   #peekNextPlayerIndex() {
     if (this.#turnOrder.length === 0) {
       return null;
