@@ -227,11 +227,15 @@ export class GameSession {
         stateSnapshot?.initialFlip?.players?.[starterIndex] ?? null;
       const starterTotal =
         typeof starterInfo?.total === "number" ? starterInfo.total : null;
-      const totalMessage =
-        starterTotal !== null
-          ? `${starterName} has the higher value (${starterTotal}). `
-          : "";
-      this.#appendLog(`${totalMessage}${starterName} starts the round.`.trim());
+
+      if (starterTotal !== null) {
+        this.#appendLog(
+          `${starterName} has the higher value (${starterTotal}).`
+        );
+      } else {
+        this.#appendLog(`${starterName} has the higher value.`);
+      }
+      this.#appendLog(`${starterName} starts the round.`);
       this.#mainPhaseAnnounced = true;
     }
 

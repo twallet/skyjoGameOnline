@@ -156,6 +156,6 @@ describe("GamePlayView information section", () => {
     });
     const log = await screen.findByRole("list", { name: /game log entries/i });
     const items = within(log).getAllByRole("listitem");
-    expect(items[0]).toHaveTextContent("Preparation | Alice drew 3");
+    expect(items[0]).toHaveTextContent("Alice's Turn | Alice drew 3");
   });
 });

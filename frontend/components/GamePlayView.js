@@ -22,6 +22,18 @@ export function GamePlayView({
   const gridRef = React.useRef(null);
   const [cardSizeStyle, setCardSizeStyle] = useState({});
 
+  const buildPossessiveTurnLabel = React.useCallback((rawName) => {
+    const trimmed =
+      typeof rawName === "string" && rawName.trim().length > 0
+        ? rawName.trim()
+        : "";
+    if (!trimmed) {
+      return "Player Turn";
+    }
+    const suffix = /s$/i.test(trimmed) ? "'" : "'s";
+    return `${trimmed}${suffix} Turn`;
+  }, []);
+
   const maxHandColumns = React.useMemo(() => {
     if (!players.length) {
       return 4;
@@ -367,6 +379,24 @@ export function GamePlayView({
     return trimmed.reverse();
   }, [eventEntries]);
   const logEntryCount = eventEntries.length;
+
+  const knownPlayerNames = useMemo(() => {
+    const names = new Set();
+    activePlayers.forEach((player) => {
+      if (player?.name) {
+        names.add(player.name);
+      }
+    });
+    if (Array.isArray(snapshot?.players)) {
+      snapshot.players.forEach((player) => {
+        if (player?.name) {
+          names.add(player.name);
+        }
+      });
+    }
+    return Array.from(names).sort((a, b) => b.length - a.length);
+  }, [activePlayers, snapshot?.players]);
+
   const pendingLocalColumns = useMemo(() => {
     if (!normalizedLocalName) {
       return null;
@@ -403,8 +433,7 @@ export function GamePlayView({
         return "Preparation";
       case "main-play": {
         if (activePlayerDisplayName.length > 0) {
-          const suffix = /s$/i.test(activePlayerDisplayName) ? "'" : "'s";
-          return `${activePlayerDisplayName}${suffix} Turn`;
+          return buildPossessiveTurnLabel(activePlayerDisplayName);
         }
         return "Player Turn";
       }
@@ -415,12 +444,65 @@ export function GamePlayView({
       default:
         return "Preparation";
     }
-  }, [state?.phase, activePlayerDisplayName]);
+  }, [state?.phase, activePlayerDisplayName, buildPossessiveTurnLabel]);
 
-  const formattedLogEntries = useMemo(
-    () => visibleLogEntries.map((entry) => `${friendlyPhaseLabel} | ${entry}`),
-    [visibleLogEntries, friendlyPhaseLabel]
-  );
+  const formattedLogEntries = useMemo(() => {
+    const escapeRegExp = (string) =>
+      string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const derivePhaseForEntry = (entry) => {
+      if (typeof entry !== "string") {
+        return { phase: "Preparation", message: `${entry}` };
+      }
+
+      const trimmed = entry.trim();
+      if (!trimmed) {
+        return { phase: "Preparation", message: trimmed };
+      }
+
+      const lower = trimmed.toLowerCase();
+      if (lower === "skyjo game started." || lower === "skyjo game started") {
+        return { phase: "Preparation", message: trimmed };
+      }
+
+      if (lower.includes("final round")) {
+        return { phase: "Final Round", message: trimmed };
+      }
+
+      if (lower.includes("revealed")) {
+        return { phase: "Preparation", message: trimmed };
+      }
+
+      const matchedName = knownPlayerNames.find((name) => {
+        if (!name) {
+          return false;
+        }
+        const normalized = name.trim();
+        if (!normalized) {
+          return false;
+        }
+        const pattern = new RegExp(
+          `^${escapeRegExp(normalized)}(?:\\b|'s\\b|'\\b|\\s)`,
+          "i"
+        );
+        return pattern.test(trimmed);
+      });
+
+      if (matchedName) {
+        return {
+          phase: buildPossessiveTurnLabel(matchedName),
+          message: trimmed,
+        };
+      }
+
+      return { phase: "Preparation", message: trimmed };
+    };
+
+    return visibleLogEntries.map((entry) => {
+      const { phase, message } = derivePhaseForEntry(entry);
+      return `${phase} | ${message}`;
+    });
+  }, [visibleLogEntries, knownPlayerNames, buildPossessiveTurnLabel]);
 
   const instructionMessage = useMemo(() => {
     if (isSubmittingAction) {

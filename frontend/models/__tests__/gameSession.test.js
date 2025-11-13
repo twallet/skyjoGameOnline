@@ -140,10 +140,18 @@ describe("GameSession", () => {
       const result = session.revealInitialCard("Bob", 1);
 
       expect(result.snapshot.state.phase).toBe(SkyjoPhases.MAIN_PLAY);
-      const lastLog = session.logEntries[session.logEntries.length - 1];
-      expect(lastLog).toMatch(
-        /has the higher value \(\d+\)\. .* starts the round\./
-      );
+      const logs = session.logEntries;
+      const lastLog = logs[logs.length - 1];
+      const previousLog = logs[logs.length - 2];
+      const starterName = result.snapshot.state.activePlayer?.name;
+
+      expect(previousLog).toMatch(/has the higher value \(\d+\)\./);
+      if (starterName) {
+        expect(previousLog).toContain(starterName);
+        expect(lastLog).toBe(`${starterName} starts the round.`);
+      } else {
+        expect(lastLog).toMatch(/starts the round\./);
+      }
       expect(result.snapshot.state.activePlayer).toEqual(
         expect.objectContaining({ name: expect.any(String) })
       );
