@@ -469,15 +469,13 @@ body {
   border-color: rgba(148, 163, 184, 0.55);
 }
 
-.player-entry__column-overlay {
-  position: absolute;
-  border: 3px solid rgba(59, 130, 246, 0.75);
-  border-radius: 16px;
-  box-sizing: border-box;
-  pointer-events: none;
-  background: rgba(191, 219, 254, 0.08);
-  backdrop-filter: blur(1.5px);
-  z-index: 1;
+.player-entry__card--removal-pending {
+  animation: column-removal-blink 1s ease-in-out 3;
+  animation-fill-mode: forwards;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.75),
+    0 14px 26px rgba(37, 99, 235, 0.32);
+  border-color: rgba(59, 130, 246, 0.7);
+  z-index: 2;
 }
 
 .player-entry__drawn-card {
@@ -560,6 +558,11 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .shake-animation {
     animation: none;
+  }
+
+  .player-entry__card--removal-pending {
+    animation: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.55);
   }
 }
 
@@ -681,6 +684,22 @@ body {
   100% {
     opacity: 0;
     transform: translateY(-6px);
+  }
+}
+
+@keyframes column-removal-blink {
+
+  0%,
+  100% {
+    filter: none;
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+
+  50% {
+    filter: drop-shadow(0 0 14px rgba(59, 130, 246, 0.85));
+    transform: translate3d(0, -3px, 0) scale(1.05);
+    opacity: 0.45;
   }
 }
 
