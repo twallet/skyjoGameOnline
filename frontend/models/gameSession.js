@@ -419,15 +419,7 @@ export class GameSession {
   }
 
   static #buildInitialLog(game, dealer, players) {
-    const entries = players.map(
-      (player) => `${player.name}: ${player.hand.show()}`
-    );
-    return [
-      `Game: ${game.name}`,
-      `Players: ${players.map((player) => player.name).join(", ")}`,
-      ...entries,
-      `${dealer.deck.size()} cards in deck.`,
-    ];
+    return ["Skyjo game started."];
   }
 
   static #buildDeckSnapshot(deck) {

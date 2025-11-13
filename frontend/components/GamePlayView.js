@@ -258,6 +258,7 @@ export function GamePlayView({
 
   const [mainActionMode, setMainActionMode] = useState("replace");
   const [pendingDiscardReveal, setPendingDiscardReveal] = useState(false);
+  const [isLogExpanded, setIsLogExpanded] = useState(false);
   const canDropOnDiscard = drawnBelongsToLocal && !drawnFromDiscard;
   const canResolveDrawnCard =
     drawnBelongsToLocal && !isSubmittingAction && Boolean(drawnCard);
@@ -365,6 +366,7 @@ export function GamePlayView({
     const trimmed = eventEntries.slice(-MAX_LOG_ENTRIES);
     return trimmed.reverse();
   }, [eventEntries]);
+  const logEntryCount = eventEntries.length;
 
   const pendingLocalColumns = useMemo(() => {
     if (!normalizedLocalName) {
@@ -542,6 +544,10 @@ export function GamePlayView({
     }
     return hints;
   }, [pendingLocalColumns, state, normalizedLocalName, isSubmittingAction]);
+
+  const toggleLogExpansion = () => {
+    setIsLogExpanded((previous) => !previous);
+  };
 
   const resetToReplaceMode = () => {
     if (!drawnBelongsToLocal) {
@@ -958,32 +964,48 @@ export function GamePlayView({
       ),
       React.createElement(
         "div",
-        { className: "game-info__events" },
+        { className: "game-info__log-control" },
         React.createElement(
-          "h3",
-          { className: "game-info__heading" },
-          "Event Log"
+          "button",
+          {
+            type: "button",
+            className: "game-info__log-toggle",
+            onClick: toggleLogExpansion,
+            "aria-expanded": isLogExpanded,
+            "aria-controls": "game-log-panel",
+          },
+          isLogExpanded ? "Hide Log" : `Show Log (${logEntryCount})`
         ),
-        visibleLogEntries.length
+        isLogExpanded
           ? React.createElement(
               "div",
-              { className: "game-info__log-container" },
-              React.createElement(
-                "ul",
-                {
-                  className: "game-info__log",
-                  "aria-label": "Event log entries",
-                },
-                visibleLogEntries.map((entry, index) =>
-                  React.createElement("li", { key: `${index}-${entry}` }, entry)
-                )
-              )
+              { className: "game-info__log-panel", id: "game-log-panel" },
+              visibleLogEntries.length
+                ? React.createElement(
+                    "div",
+                    { className: "game-info__log-container" },
+                    React.createElement(
+                      "ul",
+                      {
+                        className: "game-info__log",
+                        "aria-label": "Game log entries",
+                      },
+                      visibleLogEntries.map((entry, index) =>
+                        React.createElement(
+                          "li",
+                          { key: `${index}-${entry}` },
+                          entry
+                        )
+                      )
+                    )
+                  )
+                : React.createElement(
+                    "p",
+                    { className: "game-info__empty" },
+                    "Log is empty."
+                  )
             )
-          : React.createElement(
-              "p",
-              { className: "game-info__empty" },
-              "Event log is empty."
-            )
+          : null
       )
     )
   );

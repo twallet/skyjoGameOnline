@@ -1,5 +1,6 @@
-import React from "react";
+import React, { act } from "react";
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import { GamePlayView } from "../GamePlayView.js";
 
@@ -131,8 +132,9 @@ describe("GamePlayView information section", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows the newest event at the top of the log", () => {
+  it("shows the newest event at the top of the log when expanded", async () => {
     const snapshot = createSnapshot({}, ["Game: Skyjo", "Alice drew 3"]);
+    const user = userEvent.setup();
     render(
       React.createElement(GamePlayView, {
         activePlayers: [createPlayer("Alice"), createPlayer("Bob")],
@@ -143,7 +145,14 @@ describe("GamePlayView information section", () => {
         logEntries: snapshot.logEntries,
       })
     );
-    const log = screen.getByRole("list", { name: /event log entries/i });
+    expect(
+      screen.queryByRole("list", { name: /game log entries/i })
+    ).not.toBeInTheDocument();
+    const toggle = screen.getByRole("button", { name: /show log/i });
+    await act(async () => {
+      await user.click(toggle);
+    });
+    const log = await screen.findByRole("list", { name: /game log entries/i });
     const items = within(log).getAllByRole("listitem");
     expect(items[0]).toHaveTextContent("Alice drew 3");
   });
