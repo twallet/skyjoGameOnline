@@ -153,7 +153,7 @@ describe("GameSession", () => {
 
       expect(previousLog).toEqual(
         expect.objectContaining({
-          message: expect.stringMatching(/has the higher value/),
+          message: expect.stringMatching(/has the highest value/),
           phase: "main-play",
         })
       );
