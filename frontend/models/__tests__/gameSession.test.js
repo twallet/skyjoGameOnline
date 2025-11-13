@@ -96,9 +96,7 @@ describe("GameSession", () => {
       });
 
       expect(Array.isArray(result.logEntries)).toBe(true);
-      expect(result.logEntries.length).toBeGreaterThanOrEqual(
-        playerNames.length + 2
-      );
+      expect(result.logEntries).toEqual(["Skyjo game started."]);
 
       expect(result.deck.size).toBeGreaterThan(0);
       expect(result.deck).toEqual(

@@ -81,7 +81,7 @@ describe("GameRoomService", () => {
     const snapshot = service.startGame();
 
     expect(snapshot.players).toHaveLength(2);
-    expect(snapshot.logEntries.length).toBeGreaterThanOrEqual(4);
+    expect(snapshot.logEntries).toEqual(["Skyjo game started."]);
     expect(service.canAddPlayer()).toBe(false);
     expect(service.canStartGame()).toBe(false);
     expect(service.getSnapshot()).toEqual(snapshot);

@@ -133,7 +133,10 @@ describe("GamePlayView information section", () => {
   });
 
   it("shows the newest event at the top of the log when expanded", async () => {
-    const snapshot = createSnapshot({}, ["Game: Skyjo", "Alice drew 3"]);
+    const snapshot = createSnapshot({}, [
+      "Skyjo game started.",
+      "Alice drew 3",
+    ]);
     const user = userEvent.setup();
     render(
       React.createElement(GamePlayView, {
