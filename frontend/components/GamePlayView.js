@@ -618,9 +618,7 @@ export function GamePlayView({
       const labels = Array.from(pendingLocalColumns)
         .map((index) => index + 1)
         .join(", ");
-      hints.push(
-        `Column removal pending: Column ${labels} will clear automatically.`
-      );
+      hints.push(`Column ${labels} will be cleared.`);
     }
     if (state?.finalRound?.inProgress) {
       const trigger = state.finalRound.triggeredBy;
