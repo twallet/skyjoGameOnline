@@ -262,7 +262,7 @@ export class GameSession {
 
       if (starterTotal !== null) {
         this.#appendLog(
-          `${starterName} has the higher value (${starterTotal}).`,
+          `${starterName} has the higher value: ${starterTotal}.`,
           {
             phase: SkyjoPhases.MAIN_PLAY,
             actor: starterName,
