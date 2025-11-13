@@ -549,7 +549,7 @@ export function GamePlayView({
               ? `${drawnCard.value}`
               : "a card";
           if (mainActionMode === "replace") {
-            return `You drew ${cardValue}. Replace one of your cards or discard it.`;
+            return `You drew ${cardValue}. Replace one of your cards.`;
           }
           return `You drew ${cardValue}. Select a hidden card to reveal.`;
         }
