@@ -496,10 +496,11 @@ export class GameSession {
       };
     }
 
-    const message =
+    const messageRaw =
       typeof entry.message === "string"
         ? entry.message
         : String(entry.message ?? "");
+    const message = /[.!?]$/.test(messageRaw) ? messageRaw : `${messageRaw}.`;
     const phase =
       typeof entry.phase === "string" && entry.phase.length
         ? entry.phase

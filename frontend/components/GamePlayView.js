@@ -364,14 +364,38 @@ export function GamePlayView({
   }, [columnRemovalNotices.length]);
 
   const eventEntries = useMemo(() => {
-    if (Array.isArray(logEntries) && logEntries.length > 0) {
-      return [...logEntries];
-    }
-    if (snapshot && Array.isArray(snapshot.logEntries)) {
-      return [...snapshot.logEntries];
-    }
-    return [];
-  }, [logEntries, snapshot]);
+    const sourceEntries =
+      Array.isArray(logEntries) && logEntries.length > 0
+        ? logEntries
+        : Array.isArray(snapshot?.logEntries)
+          ? snapshot.logEntries
+          : [];
+
+    return sourceEntries.map((entry) => {
+      if (entry && typeof entry === "object") {
+        const rawMessage =
+          typeof entry.message === "string"
+            ? entry.message
+            : String(entry.message ?? "");
+        const message = /[.!?]$/.test(rawMessage)
+          ? rawMessage
+          : `${rawMessage}.`;
+        const phase =
+          typeof entry.phase === "string" && entry.phase.length
+            ? entry.phase
+            : null;
+        const actor =
+          typeof entry.actor === "string" && entry.actor.trim().length
+            ? entry.actor.trim()
+            : null;
+        return { message, phase, actor };
+      }
+      const rawMessage =
+        typeof entry === "string" ? entry : String(entry ?? "");
+      const message = /[.!?]$/.test(rawMessage) ? rawMessage : `${rawMessage}.`;
+      return { message, phase: null, actor: null };
+    });
+  }, [logEntries, snapshot?.logEntries]);
 
   const MAX_LOG_ENTRIES = 20;
   const visibleLogEntries = useMemo(() => {
@@ -394,8 +418,13 @@ export function GamePlayView({
         }
       });
     }
+    eventEntries.forEach((entry) => {
+      if (entry?.actor) {
+        names.add(entry.actor);
+      }
+    });
     return Array.from(names).sort((a, b) => b.length - a.length);
-  }, [activePlayers, snapshot?.players]);
+  }, [activePlayers, snapshot?.players, eventEntries]);
 
   const pendingLocalColumns = useMemo(() => {
     if (!normalizedLocalName) {
@@ -446,84 +475,15 @@ export function GamePlayView({
     }
   }, [state?.phase, activePlayerDisplayName, buildPossessiveTurnLabel]);
 
-  const formattedLogEntries = useMemo(() => {
-    const escapeRegExp = (string) =>
-      string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-    const matchNameFromMessage = (message) => {
-      if (typeof message !== "string") {
-        return null;
-      }
-      for (const name of knownPlayerNames) {
-        if (!name) {
-          continue;
-        }
-        const normalized = name.trim();
-        if (!normalized) {
-          continue;
-        }
-        const pattern = new RegExp(
-          `^${escapeRegExp(normalized)}(?:\\b|'s\\b|'\\b|\\s)`,
-          "i"
-        );
-        if (pattern.test(message)) {
-          return normalized;
-        }
-      }
-      return null;
-    };
-
-    const resolvePhaseLabel = (phase, actor, message) => {
-      if (phase === "initial-flip" || phase === "setup") {
-        return "Preparation";
-      }
-      if (phase === "main-play") {
-        if (actor) {
-          return buildPossessiveTurnLabel(actor);
-        }
-        return friendlyPhaseLabel;
-      }
-      if (phase === "final-round") {
-        return "Final Round";
-      }
-      if (phase === "finished") {
-        return "Finished";
-      }
-
-      if (actor) {
-        return buildPossessiveTurnLabel(actor);
-      }
-
-      const lower = typeof message === "string" ? message.toLowerCase() : "";
-      if (lower.includes("final round")) {
-        return "Final Round";
-      }
-      if (lower.includes("revealed") || lower.includes("skyjo game started")) {
-        return "Preparation";
-      }
-
-      return friendlyPhaseLabel;
-    };
-
-    return visibleLogEntries.map((entry) => {
-      const message =
+  const formattedLogEntries = useMemo(
+    () =>
+      visibleLogEntries.map((entry) =>
         typeof entry.message === "string"
           ? entry.message
-          : String(entry.message ?? "");
-      const actorFromMessage = matchNameFromMessage(message);
-      const actor =
-        (entry.actor && entry.actor.trim().length
-          ? entry.actor.trim()
-          : null) || actorFromMessage;
-      const phaseLabel = resolvePhaseLabel(entry.phase, actor, message);
-      return `${phaseLabel} | ${message}`;
-    });
-  }, [
-    visibleLogEntries,
-    knownPlayerNames,
-    buildPossessiveTurnLabel,
-    friendlyPhaseLabel,
-  ]);
+          : String(entry.message ?? "")
+      ),
+    [visibleLogEntries]
+  );
 
   const instructionMessage = useMemo(() => {
     if (isSubmittingAction) {
