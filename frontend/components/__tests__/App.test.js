@@ -42,6 +42,11 @@ describe("App component room selection flow", () => {
         writeText: jest.fn(),
       },
     });
+    Object.defineProperty(window, "prompt", {
+      configurable: true,
+      writable: true,
+      value: jest.fn(() => ""),
+    });
     installConsoleErrorSpy();
   });
 
@@ -52,6 +57,7 @@ describe("App component room selection flow", () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+    window.prompt = jest.fn(() => "");
     installConsoleErrorSpy();
   });
 
