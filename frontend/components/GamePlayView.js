@@ -618,7 +618,7 @@ export function GamePlayView({
       const labels = Array.from(pendingLocalColumns)
         .map((index) => index + 1)
         .join(", ");
-      hints.push(`Column ${labels} will be cleared.`);
+      hints.push(`column ${labels} will be cleared automatically`);
     }
     if (state?.finalRound?.inProgress) {
       const trigger = state.finalRound.triggeredBy;
@@ -629,25 +629,36 @@ export function GamePlayView({
             sensitivity: "accent",
           }) === 0
         ) {
-          hints.push("Final round was triggered by you.");
+          hints.push("final round was triggered by you");
         } else {
-          hints.push(`Final round triggered by ${trigger}.`);
+          hints.push(`final round triggered by ${trigger}`);
         }
       } else {
-        hints.push("Final round is in progress.");
+        hints.push("final round is in progress");
       }
     }
     return hints;
   }, [pendingLocalColumns, state, normalizedLocalName, isSubmittingAction]);
 
   const combinedInstruction = useMemo(() => {
+    const sanitizedHints = instructionHints
+      .map((hint) => hint.replace(/\.+\s*$/, ""))
+      .filter((hint) => hint.length > 0);
+
     if (!instructionMessage) {
-      return "";
+      if (!sanitizedHints.length) {
+        return "";
+      }
+      return `${sanitizedHints.join("; ")}.`;
     }
-    if (!instructionHints.length) {
-      return instructionMessage;
+
+    const baseMessage = instructionMessage.replace(/\s*\.+\s*$/, "");
+
+    if (!sanitizedHints.length) {
+      return `${baseMessage}.`;
     }
-    return `${instructionMessage} · ${instructionHints.join(" · ")}`;
+
+    return `${baseMessage} (${sanitizedHints.join("; ")}).`;
   }, [instructionMessage, instructionHints]);
 
   const toggleLogExpansion = () => {
