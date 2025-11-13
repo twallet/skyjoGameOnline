@@ -213,6 +213,39 @@ describe("SkyjoEngine", () => {
     expect(engine.activePlayerIndex).toBe(1);
   });
 
+  test("triggers final round when player reveals their last hidden card", () => {
+    const players = [
+      buildPlayer("Alice", [9, 8, 3, 4], game),
+      buildPlayer("Bob", [1, 2, 7, 8], game),
+    ];
+    const deck = new StubDeck([
+      new Card(11, game),
+      new Card(9, game),
+      new Card(7, game),
+    ]);
+    const dealer = { deck, players };
+
+    const engine = new SkyjoEngine(game, dealer, players);
+    advanceToMainPhase(engine, players.length);
+
+    players[0].hand.revealCard(2);
+
+    const drawResult = engine.drawFromDeck(0);
+    expect(drawResult.card.value).toBe(9);
+
+    const actionResult = engine.discardDrawnCardAndReveal(0, 3);
+
+    expect(actionResult.phase).toBe(SkyjoPhases.FINAL_ROUND);
+    expect(engine.phase).toBe(SkyjoPhases.FINAL_ROUND);
+    expect(engine.activePlayerIndex).toBe(1);
+    expect(actionResult.nextPlayerIndex).toBe(1);
+
+    const snapshot = engine.buildStateSnapshot();
+    expect(snapshot.finalRound.inProgress).toBe(true);
+    expect(snapshot.finalRound.triggeredBy).toBe("Alice");
+    expect(snapshot.finalRound.pendingTurns).toEqual([]);
+  });
+
   test("prevents drawing more than once per turn", () => {
     const players = [
       buildPlayer("Alice", [9, 6, 3, 4], game),

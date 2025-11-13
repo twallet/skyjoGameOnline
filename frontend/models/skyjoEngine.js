@@ -327,7 +327,7 @@ export class SkyjoEngine {
     const matches = this.#findMatchingColumns(playerIndex);
     if (matches.length === 0) {
       if (shouldAdvanceAfterResolve) {
-        this.#advanceTurn();
+        this.#advanceTurnAndCheckCompletion(playerIndex);
       }
       this.#notifyStateChange();
       return;
@@ -639,11 +639,24 @@ export class SkyjoEngine {
     const currentOrder = [...this.#turnOrder];
     const startCursor = this.#turnCursor;
     const queue = [];
-    for (let offset = 1; offset < currentOrder.length; offset += 1) {
+    for (let offset = 0; offset < currentOrder.length; offset += 1) {
       const cursor = (startCursor + offset) % currentOrder.length;
-      queue.push(currentOrder[cursor]);
+      const candidate = currentOrder[cursor];
+      if (
+        candidate === triggeringPlayerIndex ||
+        candidate === this.#activePlayerIndex
+      ) {
+        continue;
+      }
+      if (!queue.includes(candidate)) {
+        queue.push(candidate);
+      }
     }
     this.#finalRoundQueue = queue;
+    const triggerName = this.#finalRoundTrigger;
+    this.#logger.info(
+      `SkyjoEngine: final round triggered by '${triggerName}' with ${queue.length} pending turn(s)`
+    );
   }
   #peekNextPlayerIndex() {
     if (this.#turnOrder.length === 0) {
