@@ -462,9 +462,10 @@ export function GamePlayView({
         return "Preparation";
       case "main-play": {
         if (activePlayerDisplayName.length > 0) {
-          return buildPossessiveTurnLabel(activePlayerDisplayName);
+          const turnLabel = buildPossessiveTurnLabel(activePlayerDisplayName);
+          return `Play (${turnLabel})`;
         }
-        return "Player Turn";
+        return "Play";
       }
       case "final-round":
         return "Final Round";
