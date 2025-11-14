@@ -1,6 +1,6 @@
 import express from "express";
 
-import { staticRoot } from "./config/paths.js";
+import { staticRoot, sharedRoot } from "./config/paths.js";
 import { PORT, isTestEnvironment } from "./config/environment.js";
 import { consoleLogger, resolveLogger } from "../shared/logger.js";
 import { createSkyjoGame } from "./models/gameFactory.js";
@@ -23,6 +23,7 @@ export function createSkyjoServer({ logger = consoleLogger } = {}) {
 
   app.use(express.json());
   app.use(express.static(staticRoot));
+  app.use("/shared", express.static(sharedRoot));
 
   app.get("/health", controller.health);
   app.use("/rooms", createRoomsRouter(controller));
