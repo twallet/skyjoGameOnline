@@ -18,6 +18,7 @@ export class GameSession {
   static #MAX_PLAYER_NAME_LENGTH = 15;
   #logger;
   #finalRoundTriggeredBy = null;
+  #finalScoresLogged = false;
 
   #ensureGameStarted() {
     if (!this.#engine) {
@@ -86,6 +87,13 @@ export class GameSession {
 
   #buildActionResponse(event) {
     const latestSnapshot = this.#updateSnapshots();
+    if (
+      latestSnapshot.state?.phase === SkyjoPhases.FINISHED &&
+      !this.#finalScoresLogged
+    ) {
+      this.#finalScoresLogged = true;
+      this.#logFinalScores(latestSnapshot.state);
+    }
     return {
       event,
       snapshot: GameSession.#cloneSnapshot(latestSnapshot),
@@ -104,6 +112,7 @@ export class GameSession {
     this.#game = GameSession.#validateGame(game);
     this.#logger = resolveLogger(logger);
     this.#finalRoundTriggeredBy = null;
+    this.#finalScoresLogged = false;
   }
 
   /**
@@ -131,6 +140,7 @@ export class GameSession {
    */
   start(playerNames, playerColors = []) {
     this.#finalRoundTriggeredBy = null;
+    this.#finalScoresLogged = false;
     const names = GameSession.#validatePlayerNames(
       playerNames,
       this.#game.minPlayers,
@@ -370,7 +380,10 @@ export class GameSession {
       ...result,
       playerName: name,
       type: "reveal",
-  #handleHandCompletion(playerName, playerIndex, reason = "replace") {
+    });
+  }
+
+  #handleHandCompletion(playerName, playerIndex) {
     if (this.#finalRoundTriggeredBy) {
       return;
     }
@@ -404,7 +417,40 @@ export class GameSession {
       return total;
     }, 0);
   }
+
+  #logFinalScores(state) {
+    const finalRound = state?.finalRound;
+    if (!finalRound || !Array.isArray(finalRound.scores)) {
+      return;
+    }
+
+    finalRound.scores.forEach(({ name, total, doubled }) => {
+      if (!name) {
+        return;
+      }
+      const suffix = doubled ? " (sum doubled)" : "";
+      this.#appendLog(`${name}'s cards sum to ${total}${suffix}.`, {
+        phase: SkyjoPhases.FINISHED,
+        actor: name,
+      });
     });
+
+    const winnerName =
+      finalRound.winner ??
+      finalRound.scores.reduce((best, entry) =>
+        entry.total < best.total ? entry : best
+      ).name;
+    if (winnerName) {
+      const winnerScore =
+        finalRound.scores.find((entry) => entry.name === winnerName)?.total ??
+        null;
+      const scoreText =
+        winnerScore !== null ? ` with ${winnerScore} points` : "";
+      this.#appendLog(`${winnerName} wins${scoreText}.`, {
+        phase: SkyjoPhases.FINISHED,
+        actor: winnerName,
+      });
+    }
   }
 
   reset() {
@@ -416,6 +462,8 @@ export class GameSession {
     this.#lastSnapshot = null;
     this.#mainPhaseAnnounced = false;
     this.#logger.info("GameSession: reset complete");
+    this.#finalRoundTriggeredBy = null;
+    this.#finalScoresLogged = false;
   }
 
   /**

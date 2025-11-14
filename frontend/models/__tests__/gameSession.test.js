@@ -211,8 +211,13 @@ describe("GameSession", () => {
     const lastLog = session.logEntries.at(-1);
     expect(lastLog).toEqual(
       expect.objectContaining({
-        message: `${targetPlayer.name} revealed all cards.`,
+        message: expect.stringMatching(
+          new RegExp(
+            `${targetPlayer.name} revealed all cards and triggered the final round with \\d+ points\\.`
+          )
+        ),
         actor: targetPlayer.name,
+        phase: "final-round",
       })
     );
   });

@@ -29,12 +29,16 @@ export class SkyjoEngine {
   #recentColumnRemovalEvents = [];
   #stateChangeHandler = null;
   #columnRemovalHandler = null;
+  #finalRoundScores = [];
+  #finalRoundWinner = null;
 
   constructor(game, dealer, players, logger = noopLogger, hooks = null) {
     this.#game = SkyjoEngine.#validateGame(game);
     this.#dealer = SkyjoEngine.#validateDealer(dealer);
     this.#players = SkyjoEngine.#validatePlayers(players);
     this.#logger = resolveLogger(logger);
+    this.#finalRoundScores = [];
+    this.#finalRoundWinner = null;
 
     this.#turnOrder = this.#players.map((_, index) => index);
     this.#turnCursor = 0;
@@ -485,6 +489,8 @@ export class SkyjoEngine {
           this.#phase === SkyjoPhases.FINISHED,
         triggeredBy: this.#finalRoundTrigger,
         pendingTurns: [...this.#finalRoundQueue],
+        scores: this.#finalRoundScores.map((entry) => ({ ...entry })),
+        winner: this.#finalRoundWinner,
       },
       pendingColumnRemovals: Array.from(
         this.#pendingColumnRemovals.entries()
@@ -700,26 +706,16 @@ export class SkyjoEngine {
     this.#phase = SkyjoPhases.FINISHED;
     this.#activePlayerIndex = null;
     this.#logger.info("SkyjoEngine: final round completed.");
-    const scores = this.#players.map((player) => ({
-      name: player.name,
-      total: this.#calculateHandTotal(player.hand) ?? 0,
-    }));
-    scores.sort((a, b) => a.total - b.total);
-    const lowest = scores[0]?.total ?? 0;
-    const winner = scores.find((entry) => entry.total === lowest)?.name ?? null;
-    const triggerEntry = this.#finalRoundTrigger
-      ? scores.find((entry) => entry.name === this.#finalRoundTrigger)
-      : null;
-    if (triggerEntry && triggerEntry.total > lowest) {
-      triggerEntry.total = triggerEntry.total * 2;
-      triggerEntry.doubled = true;
-    }
-
-    scores.sort((a, b) => a.total - b.total);
+    const { scores, winner } = computeFinalScores(
+      this.#players,
+      this.#finalRoundTrigger
+    );
+    this.#finalRoundScores = scores.map((entry) => ({ ...entry }));
+    this.#finalRoundWinner = winner;
 
     this.#notifyStateChange({
       finalRoundCompleted: true,
-      scores,
+      scores: this.#finalRoundScores,
       winner,
     });
   }
@@ -838,4 +834,38 @@ export class SkyjoEngine {
     }
     return players;
   }
+}
+
+export function computeFinalScores(players, triggerName = null) {
+  const scores = players
+    .map((player) => ({
+      name: player.name,
+      total: player?.hand
+        ? player.hand.cards().reduce((sum, value) => {
+            if (typeof value === "number" && Number.isFinite(value)) {
+              return sum + value;
+            }
+            return sum;
+          }, 0)
+        : 0,
+    }))
+    .map((entry) => ({ ...entry }));
+
+  scores.sort((a, b) => a.total - b.total);
+  const lowest = scores[0]?.total ?? 0;
+  const triggerEntry = triggerName
+    ? scores.find((entry) => entry.name === triggerName)
+    : null;
+  if (triggerEntry && triggerEntry.total > lowest) {
+    triggerEntry.total *= 2;
+    triggerEntry.doubled = true;
+  }
+
+  scores.sort((a, b) => a.total - b.total);
+  const winner = scores[0]?.name ?? null;
+
+  return {
+    scores,
+    winner,
+  };
 }

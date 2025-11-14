@@ -493,9 +493,12 @@ export function GamePlayView({
   );
 
   const winnerName =
-    state?.phase === "finished" && state?.finalRound?.scores?.length
-      ? ([...state.finalRound.scores].sort((a, b) => a.total - b.total)[0]
-          ?.name ?? null)
+    state?.phase === "finished"
+      ? (state?.finalRound?.winner ??
+        (state?.finalRound?.scores?.length
+          ? ([...state.finalRound.scores].sort((a, b) => a.total - b.total)[0]
+              ?.name ?? null)
+          : null))
       : null;
 
   const instructionMessage = useMemo(() => {

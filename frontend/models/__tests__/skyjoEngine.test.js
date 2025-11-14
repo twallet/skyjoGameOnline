@@ -5,6 +5,7 @@ import { Card } from "../../../shared/models/card.js";
 import {
   SkyjoEngine,
   SkyjoPhases,
+  computeFinalScores,
 } from "../../../shared/models/skyjoEngine.js";
 
 class StubDeck {
@@ -278,35 +279,29 @@ describe("SkyjoEngine", () => {
     expect(actionResult.handCompleted).toBe(true);
   });
 
-  test("computes scores and flags doubled totals", () => {
+  test("computeFinalScores doubles trigger total when not lowest", () => {
     const players = [
-      buildPlayer("Alice", [1, 1, 1, 1], game),
-      buildPlayer("Bob", [2, 2, 2, 2], game),
-      buildPlayer("Carol", [3, 3, 3, 3], game),
+      buildPlayer("Alice", [3, 3, 3, 3], game),
+      buildPlayer("Bob", [1, 1, 1, 1], game),
+      buildPlayer("Carol", [2, 2, 2, 2], game),
     ];
-    const deck = new StubDeck([new Card(4, game), new Card(5, game)]);
-    const dealer = { deck, players };
-
-    const engine = new SkyjoEngine(game, dealer, players);
-    advanceToMainPhase(engine, players.length);
-
-    // Force Alice to complete her hand to trigger final round
-    const aliceHand = players[0].hand;
-    for (let position = 0; position < aliceHand.size; position += 1) {
-      if (!aliceHand.isCardVisible(position)) {
-        aliceHand.revealCard(position);
+    players.forEach((player) => {
+      for (let index = 0; index < player.hand.size; index += 1) {
+        if (!player.hand.isCardVisible(index)) {
+          player.hand.revealCard(index);
+        }
       }
-    }
-    engine.drawFromDeck(0);
-    engine.discardDrawnCardAndReveal(0, 0);
+    });
 
-    // Force remaining players to reveal their cards
-    engine.drawFromDeck(1);
-    engine.discardDrawnCardAndReveal(1, 0);
-    engine.drawFromDeck(2);
-    engine.discardDrawnCardAndReveal(2, 0);
+    const { scores, winner } = computeFinalScores(players, "Alice");
+    const aliceEntry = scores.find((entry) => entry.name === "Alice");
+    const bobEntry = scores.find((entry) => entry.name === "Bob");
 
-    expect(engine.phase).toBe(SkyjoPhases.FINISHED);
+    expect(aliceEntry).toEqual(
+      expect.objectContaining({ total: 24, doubled: true })
+    );
+    expect(bobEntry.total).toBeLessThan(aliceEntry.total);
+    expect(winner).toBe("Bob");
   });
 
   test("final round lets remaining players act once and reveals hidden cards", () => {
