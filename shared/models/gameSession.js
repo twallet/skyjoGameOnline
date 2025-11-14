@@ -56,7 +56,7 @@ export class GameSession {
     const phaseFallback =
       this.#engine && this.#engine.phase
         ? this.#engine.phase
-        : SkyjoPhases.INITIAL_FLIP;
+        : SkyjoPhases.PREPARATION;
     const phase =
       typeof options.phase === "string" && options.phase.length
         ? options.phase
@@ -193,7 +193,7 @@ export class GameSession {
       this.#game,
       this.#dealer,
       this.#players,
-      this.#engine?.phase ?? SkyjoPhases.INITIAL_FLIP
+      this.#engine?.phase ?? SkyjoPhases.PREPARATION
     );
     const snapshot = this.#buildSessionSnapshot();
     this.#deckSnapshot = snapshot.deck;
@@ -248,7 +248,7 @@ export class GameSession {
     });
 
     if (
-      result.phase === SkyjoPhases.MAIN_PLAY &&
+      result.phase === SkyjoPhases.PLAYING &&
       !this.#mainPhaseAnnounced &&
       result.activePlayerIndex !== null
     ) {
@@ -264,18 +264,18 @@ export class GameSession {
         this.#appendLog(
           `${starterName} has the highest value: ${starterTotal}.`,
           {
-            phase: SkyjoPhases.MAIN_PLAY,
+            phase: SkyjoPhases.PLAYING,
             actor: starterName,
           }
         );
       } else {
         this.#appendLog(`${starterName} has the highest value.`, {
-          phase: SkyjoPhases.MAIN_PLAY,
+          phase: SkyjoPhases.PLAYING,
           actor: starterName,
         });
       }
       this.#appendLog(`${starterName} starts the round.`, {
-        phase: SkyjoPhases.MAIN_PLAY,
+        phase: SkyjoPhases.PLAYING,
         actor: starterName,
       });
       this.#mainPhaseAnnounced = true;
@@ -491,7 +491,7 @@ export class GameSession {
         entry === undefined || entry === null ? "" : String(entry);
       return {
         message,
-        phase: SkyjoPhases.INITIAL_FLIP,
+        phase: SkyjoPhases.PREPARATION,
         actor: null,
       };
     }
@@ -504,7 +504,7 @@ export class GameSession {
     const phase =
       typeof entry.phase === "string" && entry.phase.length
         ? entry.phase
-        : SkyjoPhases.INITIAL_FLIP;
+        : SkyjoPhases.PREPARATION;
     const actor =
       typeof entry.actor === "string" && entry.actor.trim().length
         ? entry.actor.trim()
@@ -517,7 +517,7 @@ export class GameSession {
     game,
     dealer,
     players,
-    phase = SkyjoPhases.INITIAL_FLIP
+    phase = SkyjoPhases.PREPARATION
   ) {
     return [
       {

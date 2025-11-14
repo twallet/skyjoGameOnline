@@ -121,7 +121,7 @@ describe("GameSession", () => {
 
       expect(result.state).toEqual(
         expect.objectContaining({
-          phase: SkyjoPhases.INITIAL_FLIP,
+          phase: SkyjoPhases.PREPARATION,
           activePlayerIndex: null,
           initialFlip: expect.objectContaining({
             requiredReveals: 2,
@@ -145,7 +145,7 @@ describe("GameSession", () => {
       session.revealInitialCard("Alice", 1);
       const result = session.revealInitialCard("Bob", 1);
 
-      expect(result.snapshot.state.phase).toBe(SkyjoPhases.MAIN_PLAY);
+      expect(result.snapshot.state.phase).toBe(SkyjoPhases.PLAYING);
       const logs = session.logEntries;
       const lastLog = logs[logs.length - 1];
       const previousLog = logs[logs.length - 2];

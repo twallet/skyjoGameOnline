@@ -469,14 +469,14 @@ export function GamePlayView({
       case "main-play": {
         if (activePlayerDisplayName.length > 0) {
           const turnLabel = buildPossessiveTurnLabel(activePlayerDisplayName);
-          return `Play (${turnLabel})`;
+          return `Playing | ${turnLabel}`;
         }
-        return "Play";
+        return "Playing";
       }
       case "final-round":
         return "Final Round";
       case "finished":
-        return "Finished";
+        return "Game over";
       default:
         return "Preparation";
     }

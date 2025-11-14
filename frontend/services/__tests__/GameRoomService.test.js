@@ -181,7 +181,7 @@ describe("GameRoomService", () => {
         position: 0,
       })
     );
-    expect(result.snapshot.state.phase).toBe(SkyjoPhases.INITIAL_FLIP);
+    expect(result.snapshot.state.phase).toBe(SkyjoPhases.PREPARATION);
     expect(
       result.snapshot.state.initialFlip.players[0].flippedPositions
     ).toEqual([0]);

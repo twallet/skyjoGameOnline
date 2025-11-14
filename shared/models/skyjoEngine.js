@@ -1,13 +1,13 @@
 import { resolveLogger, noopLogger } from "../logger.js";
 
 export const SkyjoPhases = Object.freeze({
-  INITIAL_FLIP: "initial-flip",
-  MAIN_PLAY: "main-play",
-  FINAL_ROUND: "final-round",
+  PREPARATION: "initial-flip",
+  PLAYING: "main-play",
+  FINAL: "final-round",
   FINISHED: "finished",
 });
 
-const INITIAL_FLIP_REVEALS = 2;
+const PREPARATION_REVEALS = 2;
 const COLUMN_REMOVAL_DELAY_MS = 3000;
 
 export class SkyjoEngine {
@@ -15,7 +15,7 @@ export class SkyjoEngine {
   #dealer;
   #players;
   #logger;
-  #phase = SkyjoPhases.INITIAL_FLIP;
+  #phase = SkyjoPhases.PREPARATION;
   #turnOrder = [];
   #turnCursor = 0;
   #activePlayerIndex = null;
@@ -397,7 +397,7 @@ export class SkyjoEngine {
   }
 
   revealInitialCard(playerIndex, position) {
-    this.#assertPhase(SkyjoPhases.INITIAL_FLIP);
+    this.#assertPhase(SkyjoPhases.PREPARATION);
     const hand = this.#resolvePlayerHand(playerIndex);
 
     const selections =
@@ -408,7 +408,7 @@ export class SkyjoEngine {
       );
     }
 
-    if (selections.size >= INITIAL_FLIP_REVEALS) {
+    if (selections.size >= PREPARATION_REVEALS) {
       throw new Error("Player has already revealed the required initial cards");
     }
 
@@ -448,7 +448,7 @@ export class SkyjoEngine {
           }
         : null,
       initialFlip: {
-        requiredReveals: INITIAL_FLIP_REVEALS,
+        requiredReveals: PREPARATION_REVEALS,
         players: this.#players.map((player, index) => ({
           name: player.name,
           color: player.color,
@@ -458,7 +458,7 @@ export class SkyjoEngine {
           total: this.#initialFlipTotals.get(index) ?? 0,
           completed: this.#hasPlayerCompletedInitialFlip(index),
         })),
-        resolved: this.#phase !== SkyjoPhases.INITIAL_FLIP,
+        resolved: this.#phase !== SkyjoPhases.PREPARATION,
       },
       discard: {
         size: this.#discardPile.length,
@@ -477,7 +477,7 @@ export class SkyjoEngine {
         : null,
       finalRound: {
         inProgress:
-          this.#phase === SkyjoPhases.FINAL_ROUND ||
+          this.#phase === SkyjoPhases.FINAL ||
           this.#phase === SkyjoPhases.FINISHED,
         triggeredBy: this.#finalRoundTrigger,
         pendingTurns: [...this.#finalRoundQueue],
@@ -559,8 +559,8 @@ export class SkyjoEngine {
 
   #assertMainPlayPhase() {
     if (
-      this.#phase !== SkyjoPhases.MAIN_PLAY &&
-      this.#phase !== SkyjoPhases.FINAL_ROUND
+      this.#phase !== SkyjoPhases.PLAYING &&
+      this.#phase !== SkyjoPhases.FINAL
     ) {
       throw new Error(
         `Main play action attempted outside main phases (current: '${this.#phase}')`
@@ -611,7 +611,7 @@ export class SkyjoEngine {
   }
 
   #advanceTurnAndCheckCompletion(completedPlayerIndex) {
-    if (this.#phase === SkyjoPhases.FINAL_ROUND) {
+    if (this.#phase === SkyjoPhases.FINAL) {
       this.#completeFinalRoundTurn(completedPlayerIndex);
       return;
     }
@@ -631,13 +631,13 @@ export class SkyjoEngine {
 
   #triggerFinalRoundIfNeeded(triggeringPlayerIndex) {
     if (
-      this.#phase === SkyjoPhases.FINAL_ROUND ||
+      this.#phase === SkyjoPhases.FINAL ||
       this.#phase === SkyjoPhases.FINISHED
     ) {
       return;
     }
 
-    this.#phase = SkyjoPhases.FINAL_ROUND;
+    this.#phase = SkyjoPhases.FINAL;
     const triggeringPlayer = this.#players[triggeringPlayerIndex];
     this.#finalRoundTrigger =
       triggeringPlayer?.name ?? `Player ${triggeringPlayerIndex + 1}`;
@@ -726,7 +726,7 @@ export class SkyjoEngine {
 
   #hasPlayerCompletedInitialFlip(index) {
     const selections = this.#initialFlipSelections.get(index);
-    return selections ? selections.size >= INITIAL_FLIP_REVEALS : false;
+    return selections ? selections.size >= PREPARATION_REVEALS : false;
   }
 
   #resolveInitialTurnOrder() {
@@ -752,7 +752,7 @@ export class SkyjoEngine {
       }
     });
 
-    this.#phase = SkyjoPhases.MAIN_PLAY;
+    this.#phase = SkyjoPhases.PLAYING;
     this.#activePlayerIndex = winnerIndex;
     this.#turnCursor = this.#turnOrder.indexOf(winnerIndex);
 

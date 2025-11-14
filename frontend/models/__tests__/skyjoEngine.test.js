@@ -90,7 +90,7 @@ describe("SkyjoEngine", () => {
 
     const engine = new SkyjoEngine(game, dealer, players);
 
-    expect(engine.phase).toBe(SkyjoPhases.INITIAL_FLIP);
+    expect(engine.phase).toBe(SkyjoPhases.PREPARATION);
     expect(engine.discardSize).toBe(1);
 
     const deckSnapshot = engine.buildDeckSnapshot();
@@ -122,8 +122,8 @@ describe("SkyjoEngine", () => {
     engine.revealInitialCard(1, 1);
     const result = engine.revealInitialCard(2, 1);
 
-    expect(result.phase).toBe(SkyjoPhases.MAIN_PLAY);
-    expect(engine.phase).toBe(SkyjoPhases.MAIN_PLAY);
+    expect(result.phase).toBe(SkyjoPhases.PLAYING);
+    expect(engine.phase).toBe(SkyjoPhases.PLAYING);
     expect(engine.activePlayerIndex).toBe(0);
 
     const state = engine.buildStateSnapshot();
@@ -192,7 +192,7 @@ describe("SkyjoEngine", () => {
     engine.revealInitialCard(0, 1);
     engine.revealInitialCard(1, 1);
 
-    expect(engine.phase).toBe(SkyjoPhases.MAIN_PLAY);
+    expect(engine.phase).toBe(SkyjoPhases.PLAYING);
     expect(engine.activePlayerIndex).toBe(0);
 
     const drawResult = engine.drawFromDeck(0);
@@ -238,8 +238,8 @@ describe("SkyjoEngine", () => {
 
     const actionResult = engine.discardDrawnCardAndReveal(0, 3);
 
-    expect(actionResult.phase).toBe(SkyjoPhases.FINAL_ROUND);
-    expect(engine.phase).toBe(SkyjoPhases.FINAL_ROUND);
+    expect(actionResult.phase).toBe(SkyjoPhases.FINAL);
+    expect(engine.phase).toBe(SkyjoPhases.FINAL);
     expect(engine.activePlayerIndex).toBe(1);
     expect(actionResult.nextPlayerIndex).toBe(1);
 
@@ -271,7 +271,7 @@ describe("SkyjoEngine", () => {
     engine.drawFromDeck(0);
     engine.discardDrawnCardAndReveal(0, 3);
 
-    expect(engine.phase).toBe(SkyjoPhases.FINAL_ROUND);
+    expect(engine.phase).toBe(SkyjoPhases.FINAL);
     expect(engine.activePlayerIndex).toBe(1);
     expect(engine.buildStateSnapshot().finalRound.pendingTurns).toEqual([2]);
 
