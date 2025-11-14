@@ -1,4 +1,4 @@
-import { resolveLogger, noopLogger } from "../utils/logger.js";
+import { resolveLogger, noopLogger } from "../../shared/logger.js";
 
 export const SkyjoPhases = Object.freeze({
   INITIAL_FLIP: "initial-flip",

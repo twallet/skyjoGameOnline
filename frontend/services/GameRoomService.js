@@ -1,5 +1,9 @@
 import { GameSession } from "../models/gameSession.js";
-import { consoleLogger, resolveLogger, noopLogger } from "../utils/logger.js";
+import {
+  consoleLogger,
+  resolveLogger,
+  noopLogger,
+} from "../../shared/logger.js";
 
 /**
  * Provides a facade between the UI layer and the core GameSession.

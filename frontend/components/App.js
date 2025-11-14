@@ -7,7 +7,7 @@ import React, {
 } from "https://esm.sh/react@18?dev";
 
 import { Game } from "../models/game.js";
-import { consoleLogger } from "../utils/logger.js";
+import { consoleLogger } from "../../shared/logger.js";
 import { generateRoomId } from "../utils/id.js";
 import { RoomApi } from "../services/RoomApi.js";
 import { GamePlayView } from "./GamePlayView.js";

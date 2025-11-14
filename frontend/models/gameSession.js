@@ -1,4 +1,4 @@
-import { resolveLogger, noopLogger } from "../utils/logger.js";
+import { resolveLogger, noopLogger } from "../../shared/logger.js";
 import { Dealer } from "./dealer.js";
 import { Player } from "./player.js";
 import { SkyjoEngine, SkyjoPhases } from "./skyjoEngine.js";
