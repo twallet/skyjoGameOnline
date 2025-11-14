@@ -28,10 +28,10 @@ export function GamePlayView({
         ? rawName.trim()
         : "";
     if (!trimmed) {
-      return "Player Turn";
+      return "Player turn";
     }
     const suffix = /s$/i.test(trimmed) ? "'" : "'s";
-    return `${trimmed}${suffix} Turn`;
+    return `${trimmed}${suffix} turn`;
   }, []);
 
   const maxHandColumns = React.useMemo(() => {
