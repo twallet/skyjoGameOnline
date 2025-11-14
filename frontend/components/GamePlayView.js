@@ -452,6 +452,12 @@ export function GamePlayView({
       ? state.activePlayer.name.trim()
       : "";
 
+  const activePlayerColor =
+    typeof state?.activePlayer?.color === "string" &&
+    state.activePlayer.color.trim().length > 0
+      ? state.activePlayer.color
+      : null;
+
   const friendlyPhaseLabel = useMemo(() => {
     const phaseKey = state?.phase ?? null;
     if (!phaseKey) {
@@ -1055,9 +1061,17 @@ export function GamePlayView({
               "game-status__phase",
               "setup__current-room-value",
               state?.phase ? `game-status__phase--${state.phase}` : null,
+              activePlayerColor ? "game-status__phase--custom" : null,
             ]
               .filter(Boolean)
               .join(" "),
+            style: activePlayerColor
+              ? {
+                  backgroundColor: activePlayerColor,
+                  borderColor: activePlayerColor,
+                  color: "#0b2540",
+                }
+              : undefined,
           },
           friendlyPhaseLabel
         ),
