@@ -182,6 +182,41 @@ describe("GameSession", () => {
     });
   });
 
+  it("adds a log entry when a player reveals every card", () => {
+    const session = new GameSession(skyjo);
+    session.start(["Alice", "Bob"]);
+
+    session.revealInitialCard("Alice", 0);
+    session.revealInitialCard("Bob", 0);
+    session.revealInitialCard("Alice", 1);
+    session.revealInitialCard("Bob", 1);
+
+    const snapshot = session.getSnapshot();
+    const activeName = snapshot.state?.activePlayer?.name ?? "Alice";
+    const targetPlayer =
+      session.players.find((player) => player.name === activeName) ??
+      session.players[0];
+
+    const targetHand = targetPlayer.hand;
+    const lastIndex = targetHand.size - 1;
+    for (let position = 0; position < lastIndex; position += 1) {
+      if (!targetHand.isCardVisible(position)) {
+        targetHand.revealCard(position);
+      }
+    }
+
+    session.drawCard(targetPlayer.name, "deck");
+    session.discardDrawnCardAndReveal(targetPlayer.name, lastIndex);
+
+    const lastLog = session.logEntries.at(-1);
+    expect(lastLog).toEqual(
+      expect.objectContaining({
+        message: `${targetPlayer.name} revealed all cards.`,
+        actor: targetPlayer.name,
+      })
+    );
+  });
+
   describe("reset", () => {
     it("clears internal state", () => {
       const session = new GameSession(skyjo);

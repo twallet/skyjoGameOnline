@@ -331,6 +331,12 @@ export class GameSession {
         actor: name,
       }
     );
+    if (result.handCompleted) {
+      this.#appendLog(`${name} revealed all cards.`, {
+        phase: result.phase ?? null,
+        actor: name,
+      });
+    }
 
     return this.#buildActionResponse({
       ...result,
@@ -356,6 +362,12 @@ export class GameSession {
         actor: name,
       }
     );
+    if (result.handCompleted) {
+      this.#appendLog(`${name} revealed all cards.`, {
+        phase: result.phase ?? null,
+        actor: name,
+      });
+    }
 
     return this.#buildActionResponse({
       ...result,

@@ -158,6 +158,7 @@ export class SkyjoEngine {
       this.#advanceTurnAndCheckCompletion(playerIndex);
     }
 
+    const handCompleted = this.#players[playerIndex]?.hand?.allCardsVisible?.();
     return {
       playerIndex,
       position,
@@ -173,6 +174,7 @@ export class SkyjoEngine {
       nextPlayerIndex: hasPendingColumnRemoval
         ? this.#peekNextPlayerIndex()
         : this.#activePlayerIndex,
+      handCompleted: Boolean(handCompleted),
     };
   }
 
@@ -199,6 +201,7 @@ export class SkyjoEngine {
       this.#advanceTurnAndCheckCompletion(playerIndex);
     }
 
+    const handCompleted = this.#players[playerIndex]?.hand?.allCardsVisible?.();
     return {
       playerIndex,
       position,
@@ -211,6 +214,7 @@ export class SkyjoEngine {
       nextPlayerIndex: hasPendingColumnRemoval
         ? this.#peekNextPlayerIndex()
         : this.#activePlayerIndex,
+      handCompleted: Boolean(handCompleted),
     };
   }
 

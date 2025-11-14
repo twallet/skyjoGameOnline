@@ -616,27 +616,9 @@ export function GamePlayView({
     mainActionMode,
   ]);
 
-  const instructionHints = useMemo(() => {
-    if (isSubmittingAction) {
-      return [];
-    }
-    const hints = [];
-    if (state?.finalRound?.inProgress) {
-      hints.push("final round is in progress");
-    }
-    return hints;
-  }, [pendingLocalColumns, state, normalizedLocalName, isSubmittingAction]);
-
   const combinedInstruction = useMemo(() => {
-    const sanitizedHints = instructionHints
-      .map((hint) => hint.replace(/\.+\s*$/, ""))
-      .filter((hint) => hint.length > 0);
-
     if (!instructionMessage) {
-      if (!sanitizedHints.length) {
-        return "";
-      }
-      return `${sanitizedHints.join("; ")}.`;
+      return "";
     }
 
     if (
@@ -646,14 +628,8 @@ export function GamePlayView({
       return instructionMessage.replace(/\s*\.+\s*$/, ".");
     }
 
-    const baseMessage = instructionMessage.replace(/\s*\.+\s*$/, "");
-
-    if (!sanitizedHints.length) {
-      return `${baseMessage}.`;
-    }
-
-    return `${baseMessage} (${sanitizedHints.join("; ")}).`;
-  }, [instructionMessage, instructionHints, state?.finalRound?.triggeredBy]);
+    return instructionMessage.replace(/\s*\.+\s*$/, ".");
+  }, [instructionMessage, state?.finalRound?.triggeredBy]);
 
   const toggleLogExpansion = () => {
     setIsLogExpanded((previous) => !previous);

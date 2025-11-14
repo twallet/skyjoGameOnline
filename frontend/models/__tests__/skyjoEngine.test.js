@@ -249,6 +249,35 @@ describe("SkyjoEngine", () => {
     expect(snapshot.finalRound.pendingTurns).toEqual([]);
   });
 
+  test("reports when a player completes their hand", () => {
+    const players = [
+      buildPlayer("Alice", [2, 8, 3, 5], game),
+      buildPlayer("Bob", [1, 4, 6, 7], game),
+    ];
+    const deck = new StubDeck([
+      new Card(10, game),
+      new Card(11, game),
+      new Card(12, game),
+    ]);
+    const dealer = { deck, players };
+
+    const engine = new SkyjoEngine(game, dealer, players);
+    advanceToMainPhase(engine, players.length);
+
+    const aliceHand = players[0].hand;
+    const lastIndex = aliceHand.size - 1;
+    for (let position = 0; position < lastIndex; position += 1) {
+      if (!aliceHand.isCardVisible(position)) {
+        aliceHand.revealCard(position);
+      }
+    }
+
+    engine.drawFromDeck(0);
+    const actionResult = engine.discardDrawnCardAndReveal(0, lastIndex);
+
+    expect(actionResult.handCompleted).toBe(true);
+  });
+
   test("final round lets remaining players act once and reveals hidden cards", () => {
     const players = [
       buildPlayer("Alice", [9, 8, 3, 4], game),
