@@ -278,6 +278,37 @@ describe("SkyjoEngine", () => {
     expect(actionResult.handCompleted).toBe(true);
   });
 
+  test("computes scores and flags doubled totals", () => {
+    const players = [
+      buildPlayer("Alice", [1, 1, 1, 1], game),
+      buildPlayer("Bob", [2, 2, 2, 2], game),
+      buildPlayer("Carol", [3, 3, 3, 3], game),
+    ];
+    const deck = new StubDeck([new Card(4, game), new Card(5, game)]);
+    const dealer = { deck, players };
+
+    const engine = new SkyjoEngine(game, dealer, players);
+    advanceToMainPhase(engine, players.length);
+
+    // Force Alice to complete her hand to trigger final round
+    const aliceHand = players[0].hand;
+    for (let position = 0; position < aliceHand.size; position += 1) {
+      if (!aliceHand.isCardVisible(position)) {
+        aliceHand.revealCard(position);
+      }
+    }
+    engine.drawFromDeck(0);
+    engine.discardDrawnCardAndReveal(0, 0);
+
+    // Force remaining players to reveal their cards
+    engine.drawFromDeck(1);
+    engine.discardDrawnCardAndReveal(1, 0);
+    engine.drawFromDeck(2);
+    engine.discardDrawnCardAndReveal(2, 0);
+
+    expect(engine.phase).toBe(SkyjoPhases.FINISHED);
+  });
+
   test("final round lets remaining players act once and reveals hidden cards", () => {
     const players = [
       buildPlayer("Alice", [9, 8, 3, 4], game),

@@ -95,6 +95,10 @@ export const RoomApi = {
     return response ?? { rooms: [] };
   },
 
+  async getRoomScores() {
+    return request("/rooms/scores");
+  },
+
   async getRoom(roomId) {
     const normalized = normalizeRequiredRoomId(roomId);
     return request(`/rooms/${normalized}`);

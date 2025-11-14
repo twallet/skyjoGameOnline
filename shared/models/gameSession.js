@@ -17,6 +17,7 @@ export class GameSession {
   #lastSnapshot = null;
   static #MAX_PLAYER_NAME_LENGTH = 15;
   #logger;
+  #finalRoundTriggeredBy = null;
 
   #ensureGameStarted() {
     if (!this.#engine) {
@@ -102,6 +103,7 @@ export class GameSession {
   constructor(game, logger = noopLogger) {
     this.#game = GameSession.#validateGame(game);
     this.#logger = resolveLogger(logger);
+    this.#finalRoundTriggeredBy = null;
   }
 
   /**
@@ -128,6 +130,7 @@ export class GameSession {
    * }}
    */
   start(playerNames, playerColors = []) {
+    this.#finalRoundTriggeredBy = null;
     const names = GameSession.#validatePlayerNames(
       playerNames,
       this.#game.minPlayers,
@@ -332,10 +335,7 @@ export class GameSession {
       }
     );
     if (result.handCompleted) {
-      this.#appendLog(`${name} revealed all cards.`, {
-        phase: result.phase ?? null,
-        actor: name,
-      });
+      this.#handleHandCompletion(name, index);
     }
 
     return this.#buildActionResponse({
@@ -363,16 +363,47 @@ export class GameSession {
       }
     );
     if (result.handCompleted) {
-      this.#appendLog(`${name} revealed all cards.`, {
-        phase: result.phase ?? null,
-        actor: name,
-      });
+      this.#handleHandCompletion(name, index);
     }
 
     return this.#buildActionResponse({
       ...result,
       playerName: name,
       type: "reveal",
+  #handleHandCompletion(playerName, playerIndex, reason = "replace") {
+    if (this.#finalRoundTriggeredBy) {
+      return;
+    }
+    this.#finalRoundTriggeredBy = playerName;
+    const playerTotal = this.#calculateHandTotal(
+      this.#players[playerIndex]?.hand
+    );
+    if (playerTotal !== null) {
+      this.#appendLog(
+        `${playerName} revealed all cards and triggered the final round with ${playerTotal} points.`,
+        {
+          phase: SkyjoPhases.FINAL_ROUND,
+          actor: playerName,
+        }
+      );
+    }
+  }
+
+  #calculateHandTotal(hand) {
+    if (!hand || typeof hand.cards !== "function") {
+      return null;
+    }
+    const values = hand.cards();
+    if (!Array.isArray(values) || values.length === 0) {
+      return 0;
+    }
+    return values.reduce((total, value) => {
+      if (typeof value === "number" && Number.isFinite(value)) {
+        return total + value;
+      }
+      return total;
+    }, 0);
+  }
     });
   }
 
@@ -634,11 +665,31 @@ export class GameSession {
         topCard: state.discard.topCard ? { ...state.discard.topCard } : null,
       },
       drawnCard: state.drawnCard ? { ...state.drawnCard } : null,
-      finalRound: {
-        inProgress: state.finalRound.inProgress,
-        triggeredBy: state.finalRound.triggeredBy,
-        pendingTurns: [...state.finalRound.pendingTurns],
-      },
+      finalRound: state.finalRound
+        ? {
+            inProgress: Boolean(state.finalRound.inProgress),
+            triggeredBy: state.finalRound.triggeredBy ?? null,
+            pendingTurns: Array.isArray(state.finalRound.pendingTurns)
+              ? [...state.finalRound.pendingTurns]
+              : [],
+            completed: Boolean(state.finalRound.completed),
+            scores: Array.isArray(state.finalRound.scores)
+              ? state.finalRound.scores.map((entry) => ({ ...entry }))
+              : [],
+            doubled:
+              typeof state.finalRound.doubled === "string" &&
+              state.finalRound.doubled.trim().length
+                ? state.finalRound.doubled.trim()
+                : null,
+          }
+        : {
+            inProgress: false,
+            triggeredBy: null,
+            pendingTurns: [],
+            completed: false,
+            scores: [],
+            doubled: null,
+          },
       pendingColumnRemovals: Array.isArray(state.pendingColumnRemovals)
         ? state.pendingColumnRemovals.map((entry) => ({
             playerIndex: entry.playerIndex ?? null,

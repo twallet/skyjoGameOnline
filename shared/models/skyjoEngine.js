@@ -225,10 +225,10 @@ export class SkyjoEngine {
     );
   }
 
-  #notifyStateChange() {
+  #notifyStateChange(details = undefined) {
     this.#pruneColumnRemovalEvents();
     if (typeof this.#stateChangeHandler === "function") {
-      this.#stateChangeHandler();
+      this.#stateChangeHandler(details);
     }
   }
 
@@ -672,10 +672,7 @@ export class SkyjoEngine {
 
   #beginNextFinalRoundTurn() {
     if (this.#finalRoundQueue.length === 0) {
-      this.#phase = SkyjoPhases.FINISHED;
-      this.#activePlayerIndex = null;
-      this.#logger.info("SkyjoEngine: final round completed.");
-      this.#notifyStateChange();
+      this.#completeGame();
       return;
     }
 
@@ -689,10 +686,7 @@ export class SkyjoEngine {
     this.#revealRemainingCards(playerIndex);
 
     if (this.#finalRoundQueue.length === 0) {
-      this.#phase = SkyjoPhases.FINISHED;
-      this.#activePlayerIndex = null;
-      this.#logger.info("SkyjoEngine: final round completed.");
-      this.#notifyStateChange();
+      this.#completeGame();
       return;
     }
 
@@ -700,6 +694,50 @@ export class SkyjoEngine {
     this.#activePlayerIndex = nextIndex;
     this.#turnCursor = this.#turnOrder.indexOf(nextIndex);
     this.#notifyStateChange();
+  }
+
+  #completeGame() {
+    this.#phase = SkyjoPhases.FINISHED;
+    this.#activePlayerIndex = null;
+    this.#logger.info("SkyjoEngine: final round completed.");
+    const scores = this.#players.map((player) => ({
+      name: player.name,
+      total: this.#calculateHandTotal(player.hand) ?? 0,
+    }));
+    scores.sort((a, b) => a.total - b.total);
+    const lowest = scores[0]?.total ?? 0;
+    const winner = scores.find((entry) => entry.total === lowest)?.name ?? null;
+    const triggerEntry = this.#finalRoundTrigger
+      ? scores.find((entry) => entry.name === this.#finalRoundTrigger)
+      : null;
+    if (triggerEntry && triggerEntry.total > lowest) {
+      triggerEntry.total = triggerEntry.total * 2;
+      triggerEntry.doubled = true;
+    }
+
+    scores.sort((a, b) => a.total - b.total);
+
+    this.#notifyStateChange({
+      finalRoundCompleted: true,
+      scores,
+      winner,
+    });
+  }
+
+  #calculateHandTotal(hand) {
+    if (!hand || typeof hand.cards !== "function") {
+      return 0;
+    }
+    const values = hand.cards();
+    if (!Array.isArray(values) || values.length === 0) {
+      return 0;
+    }
+    return values.reduce((total, value) => {
+      if (typeof value === "number" && Number.isFinite(value)) {
+        return total + value;
+      }
+      return total;
+    }, 0);
   }
 
   #revealRemainingCards(playerIndex) {

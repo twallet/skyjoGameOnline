@@ -492,6 +492,12 @@ export function GamePlayView({
     [visibleLogEntries]
   );
 
+  const winnerName =
+    state?.phase === "finished" && state?.finalRound?.scores?.length
+      ? ([...state.finalRound.scores].sort((a, b) => a.total - b.total)[0]
+          ?.name ?? null)
+      : null;
+
   const instructionMessage = useMemo(() => {
     if (isSubmittingAction) {
       return "Processing your action...";
@@ -597,6 +603,9 @@ export function GamePlayView({
     }
 
     if (currentPhase === "finished") {
+      if (winnerName) {
+        return `${winnerName} wins. Review the final scores.`;
+      }
       return "Review the final scores.";
     }
 
@@ -614,6 +623,7 @@ export function GamePlayView({
     canDrawFromDiscard,
     canDrawFromDeck,
     mainActionMode,
+    winnerName,
   ]);
 
   const combinedInstruction = useMemo(() => {
