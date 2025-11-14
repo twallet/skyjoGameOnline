@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
 
-import { generateRoomId } from "../id.js";
+import { generateRoomId } from "../../../shared/generateRoomId.js";
 
 const ROOM_ID_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 

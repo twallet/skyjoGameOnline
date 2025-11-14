@@ -16,5 +16,8 @@ export function generateRoomId(length = DEFAULT_ROOM_ID_LENGTH) {
     const index = Math.floor(Math.random() * ROOM_ID_ALPHABET.length);
     id += ROOM_ID_ALPHABET[index];
   }
+
   return id;
 }
+
+export { DEFAULT_ROOM_ID_LENGTH, ROOM_ID_ALPHABET };

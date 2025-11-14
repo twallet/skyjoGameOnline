@@ -1,6 +1,6 @@
-import { Game } from "../game.js";
-import { GameSession } from "../gameSession.js";
-import { SkyjoPhases } from "../skyjoEngine.js";
+import { Game } from "../../../shared/models/game.js";
+import { GameSession } from "../../../shared/models/gameSession.js";
+import { SkyjoPhases } from "../../../shared/models/skyjoEngine.js";
 
 const skyjo = new Game(
   "Skyjo",

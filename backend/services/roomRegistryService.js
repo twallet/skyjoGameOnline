@@ -1,4 +1,4 @@
-import { GameRoomService } from "../../frontend/services/GameRoomService.js";
+import { GameRoomService } from "../../shared/services/GameRoomService.js";
 
 export function getOrCreateRoom(roomId, game, playerColors, logger) {
   return GameRoomService.getOrCreate(roomId, game, playerColors, logger);

@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
-import { Game } from "../../models/game.js";
-import { GameRoomService } from "../GameRoomService.js";
-import { SkyjoPhases } from "../../models/skyjoEngine.js";
+import { Game } from "../../../shared/models/game.js";
+import { GameRoomService } from "../../../shared/services/GameRoomService.js";
+import { SkyjoPhases } from "../../../shared/models/skyjoEngine.js";
 import { createLoggerMock } from "../../../tests/testUtils.js";
 
 const skyjo = new Game(

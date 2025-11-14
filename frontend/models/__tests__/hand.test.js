@@ -1,5 +1,5 @@
-import { Hand } from "../hand.js";
-import { Card } from "../card.js";
+import { Hand } from "../../../shared/models/hand.js";
+import { Card } from "../../../shared/models/card.js";
 
 const buildGame = (maxValue = 12) => {
   const values = Array.from({ length: maxValue }, (_, index) => index + 1);

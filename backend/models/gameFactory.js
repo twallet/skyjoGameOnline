@@ -1,4 +1,4 @@
-import { Game } from "../../frontend/models/game.js";
+import { Game } from "../../shared/models/game.js";
 
 const SKYJO_CARD_IMAGES = [
   "./assets/images/minus2.jpg",

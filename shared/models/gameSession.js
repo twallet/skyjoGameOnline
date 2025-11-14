@@ -1,4 +1,4 @@
-import { resolveLogger, noopLogger } from "../../shared/logger.js";
+import { resolveLogger, noopLogger } from "../logger.js";
 import { Dealer } from "./dealer.js";
 import { Player } from "./player.js";
 import { SkyjoEngine, SkyjoPhases } from "./skyjoEngine.js";
@@ -629,12 +629,14 @@ export class GameSession {
       },
       pendingColumnRemovals: Array.isArray(state.pendingColumnRemovals)
         ? state.pendingColumnRemovals.map((entry) => ({
-            playerIndex: entry.playerIndex,
-            playerName: entry.playerName,
+            playerIndex: entry.playerIndex ?? null,
+            playerName: entry.playerName ?? null,
             columns: Array.isArray(entry.columns) ? [...entry.columns] : [],
             values: Array.isArray(entry.values) ? [...entry.values] : [],
-            expiresAt: entry.expiresAt ?? null,
-            startedAt: entry.startedAt ?? null,
+            expiresAt:
+              typeof entry.expiresAt === "number" ? entry.expiresAt : null,
+            startedAt:
+              typeof entry.startedAt === "number" ? entry.startedAt : null,
           }))
         : [],
       recentColumnRemovalEvents: Array.isArray(state.recentColumnRemovalEvents)

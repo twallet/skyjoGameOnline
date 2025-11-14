@@ -6,9 +6,9 @@ import React, {
   useState,
 } from "https://esm.sh/react@18?dev";
 
-import { Game } from "../models/game.js";
+import { Game } from "../../shared/models/game.js";
 import { consoleLogger } from "../../shared/logger.js";
-import { generateRoomId } from "../utils/id.js";
+import { generateRoomId } from "../../shared/generateRoomId.js";
 import { RoomApi } from "../services/RoomApi.js";
 import { GamePlayView } from "./GamePlayView.js";
 import { GameSetupView } from "./GameSetupView.js";
