@@ -141,6 +141,12 @@ export class Hand {
     return this.#cards.every((card) => card.value !== "X");
   }
 
+  revealAllCards() {
+    this.#cards.forEach((card) => {
+      card.visible = true;
+    });
+  }
+
   #getCardAt(position) {
     if (!Number.isInteger(position)) {
       throw new TypeError("Hand card position must be an integer");

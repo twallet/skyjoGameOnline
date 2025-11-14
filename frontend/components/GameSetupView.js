@@ -21,6 +21,7 @@ export function GameSetupView({
   isRoomSelectionLocked,
   onCopyRoomId,
   isRoomIdReadOnly,
+  hasExistingRooms = true,
 }) {
   const displayedRoomId =
     typeof roomIdInput === "string" && roomIdInput.trim().length > 0
@@ -35,7 +36,10 @@ export function GameSetupView({
   const createDisabled = isLoading || !isPlayerNameValid;
   const startDisabled = isLoading || !canStartGame || gameStarted;
   const showJoinButton =
-    !hasCreatedRoom && !isRoomSelectionLocked && !isJoiningRoom;
+    hasExistingRooms &&
+    !hasCreatedRoom &&
+    !isRoomSelectionLocked &&
+    !isJoiningRoom;
   const shouldShowRoomInfo =
     !isJoiningRoom && isRoomSelectionLocked && Boolean(roomId);
   const showInlineStart = canStartGame && !isJoiningRoom;

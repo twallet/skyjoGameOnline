@@ -90,6 +90,11 @@ export const RoomApi = {
     return response;
   },
 
+  async listRooms() {
+    const response = await request("/rooms");
+    return response ?? { rooms: [] };
+  },
+
   async getRoom(roomId) {
     const normalized = normalizeRequiredRoomId(roomId);
     return request(`/rooms/${normalized}`);

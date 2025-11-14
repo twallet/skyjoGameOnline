@@ -74,6 +74,7 @@ export function App() {
   const [hasCreatedRoom, setHasCreatedRoom] = useState(false);
   const [isRoomSelectionLocked, setIsRoomSelectionLocked] = useState(false);
   const [isInviteLink, setIsInviteLink] = useState(false);
+  const [hasExistingRooms, setHasExistingRooms] = useState(true);
   const [lanHost, setLanHost] = useState(() => {
     if (typeof window !== "undefined" && window.localStorage) {
       return window.localStorage.getItem("skyjo:lanHost") ?? "";
@@ -161,6 +162,26 @@ export function App() {
 
     loggedEventCountRef.current = logEntries.length;
   }, [logEntries]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchExistingRooms = async () => {
+      try {
+        const payload = await RoomApi.listRooms();
+        if (cancelled) {
+          return;
+        }
+        const rooms = Array.isArray(payload?.rooms) ? payload.rooms : [];
+        setHasExistingRooms(rooms.length > 0);
+      } catch (error) {
+        consoleLogger.warn("Client warning: unable to list rooms", error);
+      }
+    };
+    fetchExistingRooms();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const loadRoomState = useCallback(
     async (
@@ -608,6 +629,7 @@ export function App() {
       setNewPlayerName(trimmedPlayerName);
       setIsJoiningExistingRoom(false);
       setHasCreatedRoom(false);
+      setHasExistingRooms(true);
       setCurrentSnapshot(null);
       setSessionState(null);
       consoleLogger.info(
@@ -667,6 +689,7 @@ export function App() {
       setGameStarted(false);
       setNewPlayerName(trimmedPlayerName);
       setHasCreatedRoom(true);
+      setHasExistingRooms(true);
       let lanHostForCopy = undefined;
       if (
         !lanHostSkipped &&
@@ -808,6 +831,7 @@ export function App() {
     hasCreatedRoom,
     isRoomSelectionLocked,
     isPlayerNameValid,
+    hasExistingRooms,
     playerName: newPlayerName,
     onRoomIdInputChange: handleRoomIdInputChange,
     onCreateRoom: handleCreateRoom,

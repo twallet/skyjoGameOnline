@@ -18,9 +18,12 @@ const playerListResponse = (players = [], overrides = {}) => ({
   ...overrides,
 });
 
+const listRoomsResponse = (rooms = ["TEST01"]) => ({ rooms });
+
 describe("App component room selection flow", () => {
   const originalConsoleError = console.error;
   let consoleErrorSpy;
+  let listRoomsSpy;
 
   const installConsoleErrorSpy = () =>
     (consoleErrorSpy = jest
@@ -53,6 +56,9 @@ describe("App component room selection flow", () => {
   beforeEach(() => {
     navigator.clipboard.writeText = jest.fn().mockResolvedValue(undefined);
     window.history.replaceState(null, "", "/");
+    listRoomsSpy = jest
+      .spyOn(RoomApi, "listRooms")
+      .mockResolvedValue(listRoomsResponse());
   });
 
   afterEach(() => {
@@ -114,6 +120,24 @@ describe("App component room selection flow", () => {
 
     expect(await screen.findByText("TEST01")).toBeInTheDocument();
     expect(screen.getByText("Alice")).toBeInTheDocument();
+  });
+
+  it("hides the existing room button when the server has no rooms", async () => {
+    const user = userEvent.setup();
+    listRoomsSpy.mockResolvedValueOnce(listRoomsResponse([]));
+
+    render(React.createElement(App));
+
+    await waitFor(() => {
+      expect(listRoomsSpy).toHaveBeenCalled();
+    });
+
+    await user.type(screen.getByPlaceholderText(/your name/i), "Alice");
+    await flushPromises();
+
+    expect(
+      screen.queryByRole("button", { name: /existing room/i })
+    ).not.toBeInTheDocument();
   });
 
   it("creates a new room and locks the room selection", async () => {

@@ -611,6 +611,11 @@ export class SkyjoEngine {
   }
 
   #advanceTurnAndCheckCompletion(completedPlayerIndex) {
+    if (this.#phase === SkyjoPhases.FINAL_ROUND) {
+      this.#completeFinalRoundTurn(completedPlayerIndex);
+      return;
+    }
+
     this.#advanceTurn();
     if (
       Number.isInteger(completedPlayerIndex) &&
@@ -636,27 +641,74 @@ export class SkyjoEngine {
     const triggeringPlayer = this.#players[triggeringPlayerIndex];
     this.#finalRoundTrigger =
       triggeringPlayer?.name ?? `Player ${triggeringPlayerIndex + 1}`;
-    const currentOrder = [...this.#turnOrder];
-    const startCursor = this.#turnCursor;
+    this.#finalRoundQueue = this.#buildFinalRoundQueue(triggeringPlayerIndex);
+    this.#beginNextFinalRoundTurn();
+    const triggerName = this.#finalRoundTrigger;
+    this.#logger.info(
+      `SkyjoEngine: final round triggered by '${triggerName}' with ${this.#finalRoundQueue.length} pending turn(s)`
+    );
+  }
+
+  #buildFinalRoundQueue(triggeringPlayerIndex) {
+    if (this.#turnOrder.length <= 1) {
+      return [];
+    }
+
     const queue = [];
-    for (let offset = 0; offset < currentOrder.length; offset += 1) {
-      const cursor = (startCursor + offset) % currentOrder.length;
-      const candidate = currentOrder[cursor];
-      if (
-        candidate === triggeringPlayerIndex ||
-        candidate === this.#activePlayerIndex
-      ) {
-        continue;
-      }
-      if (!queue.includes(candidate)) {
+    const start = this.#turnOrder.indexOf(triggeringPlayerIndex);
+    for (let offset = 1; offset < this.#turnOrder.length; offset += 1) {
+      const cursor = (start + offset) % this.#turnOrder.length;
+      const candidate = this.#turnOrder[cursor];
+      if (candidate !== triggeringPlayerIndex) {
         queue.push(candidate);
       }
     }
-    this.#finalRoundQueue = queue;
-    const triggerName = this.#finalRoundTrigger;
-    this.#logger.info(
-      `SkyjoEngine: final round triggered by '${triggerName}' with ${queue.length} pending turn(s)`
-    );
+    return queue;
+  }
+
+  #beginNextFinalRoundTurn() {
+    if (this.#finalRoundQueue.length === 0) {
+      this.#phase = SkyjoPhases.FINISHED;
+      this.#activePlayerIndex = null;
+      this.#logger.info("SkyjoEngine: final round completed.");
+      this.#notifyStateChange();
+      return;
+    }
+
+    const nextIndex = this.#finalRoundQueue.shift();
+    this.#activePlayerIndex = nextIndex;
+    this.#turnCursor = this.#turnOrder.indexOf(nextIndex);
+    this.#notifyStateChange();
+  }
+
+  #completeFinalRoundTurn(playerIndex) {
+    this.#revealRemainingCards(playerIndex);
+
+    if (this.#finalRoundQueue.length === 0) {
+      this.#phase = SkyjoPhases.FINISHED;
+      this.#activePlayerIndex = null;
+      this.#logger.info("SkyjoEngine: final round completed.");
+      this.#notifyStateChange();
+      return;
+    }
+
+    const nextIndex = this.#finalRoundQueue.shift();
+    this.#activePlayerIndex = nextIndex;
+    this.#turnCursor = this.#turnOrder.indexOf(nextIndex);
+    this.#notifyStateChange();
+  }
+
+  #revealRemainingCards(playerIndex) {
+    if (
+      !Number.isInteger(playerIndex) ||
+      playerIndex < 0 ||
+      playerIndex >= this.#players.length
+    ) {
+      return;
+    }
+
+    const hand = this.#resolvePlayerHand(playerIndex);
+    hand.revealAllCards();
   }
   #peekNextPlayerIndex() {
     if (this.#turnOrder.length === 0) {

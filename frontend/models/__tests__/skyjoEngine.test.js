@@ -249,6 +249,44 @@ describe("SkyjoEngine", () => {
     expect(snapshot.finalRound.pendingTurns).toEqual([]);
   });
 
+  test("final round lets remaining players act once and reveals hidden cards", () => {
+    const players = [
+      buildPlayer("Alice", [9, 8, 3, 4], game),
+      buildPlayer("Bob", [1, 2, 7, 8], game),
+      buildPlayer("Carol", [5, 6, 2, 1], game),
+    ];
+    const deck = new StubDeck([
+      new Card(9, game),
+      new Card(10, game),
+      new Card(11, game),
+      new Card(12, game),
+    ]);
+    const dealer = { deck, players };
+
+    const engine = new SkyjoEngine(game, dealer, players);
+    advanceToMainPhase(engine, players.length);
+
+    players[0].hand.revealCard(2);
+
+    engine.drawFromDeck(0);
+    engine.discardDrawnCardAndReveal(0, 3);
+
+    expect(engine.phase).toBe(SkyjoPhases.FINAL_ROUND);
+    expect(engine.activePlayerIndex).toBe(1);
+    expect(engine.buildStateSnapshot().finalRound.pendingTurns).toEqual([2]);
+
+    engine.drawFromDeck(1);
+    engine.discardDrawnCardAndReveal(1, 2);
+    expect(engine.activePlayerIndex).toBe(2);
+    expect(players[1].hand.cards().every((value) => value !== "X")).toBe(true);
+
+    engine.drawFromDeck(2);
+    engine.discardDrawnCardAndReveal(2, 2);
+    expect(engine.phase).toBe(SkyjoPhases.FINISHED);
+    expect(engine.activePlayerIndex).toBeNull();
+    expect(players[2].hand.cards().every((value) => value !== "X")).toBe(true);
+  });
+
   test("prevents drawing more than once per turn", () => {
     const players = [
       buildPlayer("Alice", [9, 6, 3, 4], game),

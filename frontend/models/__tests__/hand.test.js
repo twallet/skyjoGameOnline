@@ -151,4 +151,20 @@ describe("Hand", () => {
     expect(() => hand.removeColumn(-1)).toThrow("Column index out of bounds");
     expect(() => hand.removeColumn(3)).toThrow("Column index out of bounds");
   });
+
+  test("revealAllCards turns every hidden card face up", () => {
+    const hand = new Hand();
+    const hidden = buildCard(1);
+    const anotherHidden = buildCard(2);
+    const visible = buildCard(3, { visible: true });
+
+    hand.add(hidden);
+    hand.add(anotherHidden);
+    hand.add(visible);
+
+    hand.revealAllCards();
+
+    expect(hand.cards()).toEqual([1, 2, 3]);
+    expect(hand.allCardsVisible()).toBe(true);
+  });
 });
