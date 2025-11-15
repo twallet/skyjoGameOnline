@@ -428,7 +428,7 @@ export class GameSession {
       if (!name) {
         return;
       }
-      const suffix = doubled ? " (sum doubled)" : "";
+      const suffix = doubled ? " (x2)" : "";
       this.#appendLog(`${name}'s cards sum to ${total}${suffix}.`, {
         phase: SkyjoPhases.FINISHED,
         actor: name,

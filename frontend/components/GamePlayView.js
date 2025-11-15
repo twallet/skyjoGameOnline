@@ -709,7 +709,7 @@ export function GamePlayView({
       "div",
       {
         key: "final-scores",
-        className: "final-summary player-entry",
+        className: "final-summary",
         style: {
           gridColumn: `${layout.deck.colStart} / ${layout.deck.colEnd}`,
           gridRow: `${layout.deck.rowStart} / ${layout.deck.rowEnd}`,
@@ -720,13 +720,6 @@ export function GamePlayView({
         { className: "final-summary__title" },
         "Final Scores"
       ),
-      winnerName
-        ? React.createElement(
-            "p",
-            { className: "final-summary__winner" },
-            `${winnerName} wins the game`
-          )
-        : null,
       hasScores
         ? React.createElement(
             "ol",
@@ -743,9 +736,7 @@ export function GamePlayView({
                 React.createElement(
                   "span",
                   { className: "final-summary__total" },
-                  `${entry.total ?? "?"} pts${
-                    entry.doubled ? " (sum doubled)" : ""
-                  }`
+                  `${entry.total ?? "?"} pts${entry.doubled ? " (x2)" : ""}`
                 )
               )
             )
@@ -763,7 +754,7 @@ export function GamePlayView({
           onClick: typeof onPlayAgain === "function" ? onPlayAgain : undefined,
           disabled: typeof onPlayAgain !== "function" || isSubmittingAction,
         },
-        "Play Again"
+        "Play again"
       )
     );
   };

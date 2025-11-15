@@ -223,7 +223,7 @@ describe("GameSession", () => {
     );
   });
 
-  it("logs final scores and winner once the game is Finished", () => {
+  it("logs final scores and winner once the Game is finished", () => {
     const session = new GameSession(skyjo);
     session.start(["Alice", "Bob"]);
 
@@ -262,16 +262,16 @@ describe("GameSession", () => {
     session.discardDrawnCardAndReveal("Alice", aliceFinalIndex);
 
     const nextSnapshot = session.getSnapshot();
-    const nextPlayerName =
-      nextSnapshot?.state?.activePlayer?.name ??
-      session.players[1]?.name ??
-      "Bob";
-    const nextPlayer =
-      session.players.find((player) => player.name === nextPlayerName) ??
-      session.players[1];
-    session.drawCard(nextPlayerName, "deck");
-    const nextRevealIndex = ensureHiddenIndex(nextPlayer.hand);
-    session.discardDrawnCardAndReveal(nextPlayerName, nextRevealIndex);
+    if (nextSnapshot?.state?.phase !== SkyjoPhases.FINISHED) {
+      const activePlayerName = nextSnapshot?.state?.activePlayer?.name ?? null;
+      expect(activePlayerName).toBeTruthy();
+      const nextPlayer =
+        session.players.find((player) => player.name === activePlayerName) ??
+        session.players[1];
+      session.drawCard(activePlayerName, "deck");
+      const nextRevealIndex = ensureHiddenIndex(nextPlayer.hand);
+      session.discardDrawnCardAndReveal(activePlayerName, nextRevealIndex);
+    }
 
     const snapshot = session.getSnapshot();
     expect(snapshot.state.phase).toBe(SkyjoPhases.FINISHED);
