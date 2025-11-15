@@ -517,6 +517,30 @@ export function GamePlayView({
       (finalRoundScores?.length ? (finalRoundScores[0]?.name ?? null) : null))
     : null;
 
+  const orderedFinalRoundScores = useMemo(() => {
+    if (!Array.isArray(finalRoundScores) || finalRoundScores.length === 0) {
+      return [];
+    }
+    if (!winnerName) {
+      return finalRoundScores;
+    }
+    const normalizedWinner = winnerName.trim().toLowerCase();
+    const winnerIndex = finalRoundScores.findIndex((entry) => {
+      if (typeof entry?.name !== "string") {
+        return false;
+      }
+      return entry.name.trim().toLowerCase() === normalizedWinner;
+    });
+    if (winnerIndex <= 0) {
+      return finalRoundScores;
+    }
+    const winnerEntry = finalRoundScores[winnerIndex];
+    const remainingEntries = finalRoundScores.filter(
+      (_entry, index) => index !== winnerIndex
+    );
+    return [winnerEntry, ...remainingEntries];
+  }, [finalRoundScores, winnerName]);
+
   const instructionMessage = useMemo(() => {
     if (isSubmittingAction) {
       return "Processing your action...";
@@ -704,7 +728,8 @@ export function GamePlayView({
 
   const renderFinalScoresPanel = () => {
     const hasScores =
-      Array.isArray(finalRoundScores) && finalRoundScores.length > 0;
+      Array.isArray(orderedFinalRoundScores) &&
+      orderedFinalRoundScores.length > 0;
     return React.createElement(
       "div",
       {
@@ -724,19 +749,21 @@ export function GamePlayView({
         ? React.createElement(
             "ol",
             { className: "final-summary__list", "aria-label": "Final scores" },
-            finalRoundScores.map((entry, index) =>
+            orderedFinalRoundScores.map((entry, index) =>
               React.createElement(
                 "li",
                 { key: `${entry.name ?? index}-${entry.total}` },
                 React.createElement(
                   "span",
                   { className: "final-summary__player" },
-                  entry.name ?? `Player ${index + 1}`
+                  `${entry.name ?? `Player ${index + 1}`}${
+                    entry.doubled ? " (x2)" : ""
+                  }`
                 ),
                 React.createElement(
                   "span",
                   { className: "final-summary__total" },
-                  `${entry.total ?? "?"} pts${entry.doubled ? " (x2)" : ""}`
+                  `${entry.total ?? "?"} pts`
                 )
               )
             )

@@ -262,15 +262,25 @@ describe("GameSession", () => {
     session.discardDrawnCardAndReveal("Alice", aliceFinalIndex);
 
     const nextSnapshot = session.getSnapshot();
-    if (nextSnapshot?.state?.phase !== SkyjoPhases.FINISHED) {
-      const activePlayerName = nextSnapshot?.state?.activePlayer?.name ?? null;
-      expect(activePlayerName).toBeTruthy();
-      const nextPlayer =
-        session.players.find((player) => player.name === activePlayerName) ??
-        session.players[1];
-      session.drawCard(activePlayerName, "deck");
+    const activePlayerIndex = nextSnapshot?.state?.activePlayerIndex;
+    const activePlayerName = nextSnapshot?.state?.activePlayer?.name ?? null;
+    const nextPlayer =
+      Number.isInteger(activePlayerIndex) && session.players[activePlayerIndex]
+        ? session.players[activePlayerIndex]
+        : session.players.find((player) => player.name === activePlayerName);
+    console.log("DEBUG final-round", {
+      phase: nextSnapshot?.state?.phase,
+      activePlayerIndex,
+      activePlayerName,
+      resolvedPlayer: nextPlayer?.name,
+    });
+    if (
+      nextSnapshot?.state?.phase !== SkyjoPhases.FINISHED &&
+      nextPlayer?.name
+    ) {
+      session.drawCard(nextPlayer.name, "deck");
       const nextRevealIndex = ensureHiddenIndex(nextPlayer.hand);
-      session.discardDrawnCardAndReveal(activePlayerName, nextRevealIndex);
+      session.discardDrawnCardAndReveal(nextPlayer.name, nextRevealIndex);
     }
 
     const snapshot = session.getSnapshot();

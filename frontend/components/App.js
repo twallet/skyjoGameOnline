@@ -495,24 +495,52 @@ export function App() {
     if (!roomId) {
       return;
     }
+    const preservedNames = playerNames
+      .map((name) => (typeof name === "string" ? name.trim() : ""))
+      .filter((name) => name.length > 0);
+    if (preservedNames.length === 0) {
+      setErrorMessage("Cannot restart without players in the room.");
+      return;
+    }
+
     setIsSubmittingAction(true);
     try {
-      await RoomApi.resetRoom(roomId);
-      setGameStarted(false);
-      setSessionState(null);
-      setCurrentSnapshot(null);
-      setActivePlayers([]);
-      setDeckView(null);
-      setLogEntries([]);
-      setRoomState({
-        players: [],
-        canAddPlayer: true,
-        canStartGame: false,
+      try {
+        await RoomApi.resetRoom(roomId);
+      } catch (resetError) {
+        consoleLogger.warn(
+          "Client warning: unable to reset room before rematch",
+          resetError
+        );
+      }
+      await RoomApi.createRoom(roomId);
+      let latestPlayers = preservedNames;
+      for (const name of preservedNames) {
+        const { players: updatedNames = [] } = await RoomApi.joinRoom(
+          roomId,
+          name
+        );
+        if (updatedNames.length > 0) {
+          latestPlayers = updatedNames;
+        }
+      }
+      setPlayerNames(latestPlayers);
+      setRoomState((prev) => ({
+        ...prev,
+        players: latestPlayers,
+        canAddPlayer: latestPlayers.length < skyjo.maxPlayers,
+        canStartGame: latestPlayers.length >= skyjo.minPlayers,
         gameStarted: false,
-      });
-      setPlayerNames([]);
+      }));
+      await handleStartGame();
+      setErrorMessage("");
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : String(error));
+      consoleLogger.error("Unable to restart game automatically", error);
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to restart the game automatically."
+      );
     } finally {
       setIsSubmittingAction(false);
     }
