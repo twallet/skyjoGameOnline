@@ -223,7 +223,7 @@ describe("GameSession", () => {
     );
   });
 
-  it("logs final scores and winner once the game is finished", () => {
+  it("logs final scores and winner once the game is Finished", () => {
     const session = new GameSession(skyjo);
     session.start(["Alice", "Bob"]);
 
