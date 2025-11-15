@@ -70,6 +70,13 @@ function serializeState(state) {
       inProgress: state.finalRound.inProgress,
       triggeredBy: state.finalRound.triggeredBy,
       pendingTurns: [...state.finalRound.pendingTurns],
+      scores: Array.isArray(state.finalRound.scores)
+        ? state.finalRound.scores.map((entry) => ({ ...entry }))
+        : [],
+      winner:
+        typeof state.finalRound.winner === "string"
+          ? state.finalRound.winner
+          : null,
     },
     pendingColumnRemovals: Array.isArray(state.pendingColumnRemovals)
       ? state.pendingColumnRemovals.map((entry) => ({
