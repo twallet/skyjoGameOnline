@@ -491,6 +491,33 @@ export function App() {
     }
   };
 
+  const handlePlayAgain = async () => {
+    if (!roomId) {
+      return;
+    }
+    setIsSubmittingAction(true);
+    try {
+      await RoomApi.resetRoom(roomId);
+      setGameStarted(false);
+      setSessionState(null);
+      setCurrentSnapshot(null);
+      setActivePlayers([]);
+      setDeckView(null);
+      setLogEntries([]);
+      setRoomState({
+        players: [],
+        canAddPlayer: true,
+        canStartGame: false,
+        gameStarted: false,
+      });
+      setPlayerNames([]);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsSubmittingAction(false);
+    }
+  };
+
   const handleReplaceWithDrawnCard = async (playerName, position) => {
     if (!roomId) {
       return;
@@ -817,6 +844,7 @@ export function App() {
       onDrawCard: handleDrawCard,
       onReplaceCard: handleReplaceWithDrawnCard,
       onRevealCard: handleRevealAfterDiscard,
+      onPlayAgain: handlePlayAgain,
       localPlayerName,
       isSubmittingAction,
     });

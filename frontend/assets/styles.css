@@ -862,6 +862,67 @@ body {
   letter-spacing: 0.04em;
 }
 
+.final-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 0 0 1px rgba(54, 118, 203, 0.15);
+}
+
+.final-summary__title {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1b3f73;
+}
+
+.final-summary__winner {
+  margin: 0;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.final-summary__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.final-summary__list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.08);
+  font-weight: 600;
+}
+
+.final-summary__player {
+  color: #1f2933;
+}
+
+.final-summary__total {
+  color: #0f172a;
+}
+
+.final-summary__empty {
+  margin: 0.5rem 0;
+  color: #475569;
+}
+
+.final-summary__action {
+  margin-top: 0.35rem;
+  min-width: 160px;
+}
+
 
 .hero {
   width: 100%;

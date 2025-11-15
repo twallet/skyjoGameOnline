@@ -16,6 +16,7 @@ export function GamePlayView({
   onDrawCard = null,
   onReplaceCard = null,
   onRevealCard = null,
+  onPlayAgain = null,
   isSubmittingAction = false,
 }) {
   const players = Array.isArray(activePlayers) ? activePlayers : [];
@@ -492,14 +493,29 @@ export function GamePlayView({
     [visibleLogEntries]
   );
 
-  const winnerName =
-    state?.phase === "finished"
-      ? (state?.finalRound?.winner ??
-        (state?.finalRound?.scores?.length
-          ? ([...state.finalRound.scores].sort((a, b) => a.total - b.total)[0]
-              ?.name ?? null)
-          : null))
-      : null;
+  const isFinishedPhase = state?.phase === "finished";
+  const finalRoundScores = useMemo(() => {
+    if (!Array.isArray(state?.finalRound?.scores)) {
+      return null;
+    }
+    return [...state.finalRound.scores].sort((a, b) => {
+      const totalA = Number.isFinite(a?.total)
+        ? a.total
+        : Number.POSITIVE_INFINITY;
+      const totalB = Number.isFinite(b?.total)
+        ? b.total
+        : Number.POSITIVE_INFINITY;
+      if (totalA === totalB) {
+        return String(a?.name ?? "").localeCompare(String(b?.name ?? ""));
+      }
+      return totalA - totalB;
+    });
+  }, [state?.finalRound?.scores]);
+
+  const winnerName = isFinishedPhase
+    ? (state?.finalRound?.winner ??
+      (finalRoundScores?.length ? (finalRoundScores[0]?.name ?? null) : null))
+    : null;
 
   const instructionMessage = useMemo(() => {
     if (isSubmittingAction) {
@@ -686,7 +702,73 @@ export function GamePlayView({
 
   const playerEntries = [];
 
-  if (deck) {
+  const renderFinalScoresPanel = () => {
+    const hasScores =
+      Array.isArray(finalRoundScores) && finalRoundScores.length > 0;
+    return React.createElement(
+      "div",
+      {
+        key: "final-scores",
+        className: "final-summary player-entry",
+        style: {
+          gridColumn: `${layout.deck.colStart} / ${layout.deck.colEnd}`,
+          gridRow: `${layout.deck.rowStart} / ${layout.deck.rowEnd}`,
+        },
+      },
+      React.createElement(
+        "h3",
+        { className: "final-summary__title" },
+        "Final Scores"
+      ),
+      winnerName
+        ? React.createElement(
+            "p",
+            { className: "final-summary__winner" },
+            `${winnerName} wins the game`
+          )
+        : null,
+      hasScores
+        ? React.createElement(
+            "ol",
+            { className: "final-summary__list", "aria-label": "Final scores" },
+            finalRoundScores.map((entry, index) =>
+              React.createElement(
+                "li",
+                { key: `${entry.name ?? index}-${entry.total}` },
+                React.createElement(
+                  "span",
+                  { className: "final-summary__player" },
+                  entry.name ?? `Player ${index + 1}`
+                ),
+                React.createElement(
+                  "span",
+                  { className: "final-summary__total" },
+                  `${entry.total ?? "?"} pts${
+                    entry.doubled ? " (sum doubled)" : ""
+                  }`
+                )
+              )
+            )
+          )
+        : React.createElement(
+            "p",
+            { className: "final-summary__empty" },
+            "No final scores reported."
+          ),
+      React.createElement(
+        "button",
+        {
+          type: "button",
+          className: "final-summary__action",
+          onClick: typeof onPlayAgain === "function" ? onPlayAgain : undefined,
+          disabled: typeof onPlayAgain !== "function" || isSubmittingAction,
+        },
+        "Play Again"
+      )
+    );
+  };
+
+  if (deck && !isFinishedPhase) {
     const handleDrawFromDeck = () => {
       if (!normalizedLocalName || !canDrawFromDeck) {
         return;
@@ -807,6 +889,8 @@ export function GamePlayView({
         )
       )
     );
+  } else if (isFinishedPhase) {
+    playerEntries.push(renderFinalScoresPanel());
   }
 
   players.forEach((player, index) => {
@@ -1087,9 +1171,7 @@ export function GamePlayView({
             "aria-expanded": isLogExpanded,
             "aria-controls": "game-log-panel",
           },
-          isLogExpanded
-            ? "Hide Log"
-            : `Show Log${logEntryCount ? ` (${logEntryCount})` : ""}`
+          isLogExpanded ? "Hide log" : "Show log"
         )
       ),
       isLogExpanded

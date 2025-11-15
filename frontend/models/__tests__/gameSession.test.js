@@ -232,7 +232,7 @@ describe("GameSession", () => {
       session.revealInitialCard(name, 1);
     });
 
-    const [alice, bob] = session.players;
+    const [alice] = session.players;
     const revealAllButLast = (hand) => {
       const lastIndex = hand.size - 1;
       for (let index = 0; index < hand.size; index += 1) {
@@ -261,9 +261,17 @@ describe("GameSession", () => {
     session.drawCard("Alice", "deck");
     session.discardDrawnCardAndReveal("Alice", aliceFinalIndex);
 
-    session.drawCard("Bob", "deck");
-    const bobRevealIndex = ensureHiddenIndex(bob.hand);
-    session.discardDrawnCardAndReveal("Bob", bobRevealIndex);
+    const nextSnapshot = session.getSnapshot();
+    const nextPlayerName =
+      nextSnapshot?.state?.activePlayer?.name ??
+      session.players[1]?.name ??
+      "Bob";
+    const nextPlayer =
+      session.players.find((player) => player.name === nextPlayerName) ??
+      session.players[1];
+    session.drawCard(nextPlayerName, "deck");
+    const nextRevealIndex = ensureHiddenIndex(nextPlayer.hand);
+    session.discardDrawnCardAndReveal(nextPlayerName, nextRevealIndex);
 
     const snapshot = session.getSnapshot();
     expect(snapshot.state.phase).toBe(SkyjoPhases.FINISHED);

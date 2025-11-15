@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 import React, { act } from "react";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -185,7 +186,7 @@ describe("GamePlayView information section", () => {
     expect(items[0]).toHaveTextContent("Alice drew 3");
   });
 
-  it("announces the winner and auto-expands the log in the finished phase", async () => {
+  it("announces the winner, shows final scores, and auto-expands the log in the finished phase", async () => {
     const snapshot = createSnapshot(
       {
         phase: "finished",
@@ -214,6 +215,7 @@ describe("GamePlayView information section", () => {
         },
       ]
     );
+    const playAgain = jest.fn();
     render(
       React.createElement(GamePlayView, {
         activePlayers: [createPlayer("Alice"), createPlayer("Bob")],
@@ -222,9 +224,24 @@ describe("GamePlayView information section", () => {
         sessionState: snapshot.state,
         localPlayerName: "Alice",
         logEntries: snapshot.logEntries,
+        onPlayAgain: playAgain,
       })
     );
-    expect(await screen.findByText(/Alice wins the game/i)).toBeInTheDocument();
+    const winnerLabels = await screen.findAllByText(/Alice wins the game/i);
+    expect(winnerLabels.length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("heading", { name: /final scores/i })
+    ).toBeInTheDocument();
+    const scoreList = screen.getByRole("list", { name: /final scores/i });
+    const scoreItems = within(scoreList).getAllByRole("listitem");
+    expect(scoreItems[0]).toHaveTextContent(/Alice/);
+    expect(scoreItems[0]).toHaveTextContent(/10 pts/);
+    const playAgainButton = screen.getByRole("button", { name: /play again/i });
+    expect(playAgainButton).toBeEnabled();
+    await act(async () => {
+      await userEvent.click(playAgainButton);
+    });
+    expect(playAgain).toHaveBeenCalled();
     const log = await screen.findByRole("list", { name: /game log entries/i });
     const items = within(log).getAllByRole("listitem");
     expect(items[0]).toHaveTextContent("Alice wins with 10 points");
