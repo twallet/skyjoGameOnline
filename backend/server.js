@@ -4,7 +4,7 @@ import { staticRoot, sharedRoot } from "./config/paths.js";
 import { PORT, isTestEnvironment } from "./config/environment.js";
 import { consoleLogger, resolveLogger } from "../shared/logger.js";
 import { createSkyjoGame } from "./models/gameFactory.js";
-import { buildPlayerColors } from "./models/playerColors.js";
+import { buildPlayerColors } from "./utils/playerColors.js";
 import { createRoomController } from "./controllers/roomController.js";
 import { createRoomsRouter } from "./routes/rooms.js";
 import { createErrorHandler } from "./middleware/errorHandler.js";
