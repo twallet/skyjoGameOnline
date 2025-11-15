@@ -607,9 +607,9 @@ export function GamePlayView({
 
     if (currentPhase === "finished") {
       if (winnerName) {
-        return `${winnerName} wins. Review the final scores.`;
+        return `${winnerName} wins the game.`;
       }
-      return "Review the final scores.";
+      return "Game over. Final scores are available in the log.";
     }
 
     return "Waiting for the latest game state...";
@@ -667,6 +667,12 @@ export function GamePlayView({
     drawnCard?.playerName,
     drawnCard?.value,
   ]);
+
+  useEffect(() => {
+    if (state?.phase === "finished") {
+      setIsLogExpanded(true);
+    }
+  }, [state?.phase]);
 
   const gridListStyle = {
     display: "grid",

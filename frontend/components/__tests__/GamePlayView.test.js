@@ -184,4 +184,49 @@ describe("GamePlayView information section", () => {
     const items = within(log).getAllByRole("listitem");
     expect(items[0]).toHaveTextContent("Alice drew 3");
   });
+
+  it("announces the winner and auto-expands the log in the finished phase", async () => {
+    const snapshot = createSnapshot(
+      {
+        phase: "finished",
+        finalRound: {
+          inProgress: false,
+          triggeredBy: "Alice",
+          pendingTurns: [],
+          scores: [
+            { name: "Alice", total: 10 },
+            { name: "Bob", total: 14 },
+          ],
+          winner: "Alice",
+        },
+      },
+      [
+        {
+          message: "Alice's cards sum to 10.",
+          phase: "finished",
+          actor: "Alice",
+        },
+        { message: "Bob's cards sum to 14.", phase: "finished", actor: "Bob" },
+        {
+          message: "Alice wins with 10 points.",
+          phase: "finished",
+          actor: "Alice",
+        },
+      ]
+    );
+    render(
+      React.createElement(GamePlayView, {
+        activePlayers: [createPlayer("Alice"), createPlayer("Bob")],
+        deck: { baseImage: "back.jpg", firstCard: null },
+        snapshot,
+        sessionState: snapshot.state,
+        localPlayerName: "Alice",
+        logEntries: snapshot.logEntries,
+      })
+    );
+    expect(await screen.findByText(/Alice wins the game/i)).toBeInTheDocument();
+    const log = await screen.findByRole("list", { name: /game log entries/i });
+    const items = within(log).getAllByRole("listitem");
+    expect(items[0]).toHaveTextContent("Alice wins with 10 points");
+  });
 });
