@@ -451,6 +451,8 @@ export class GameSession {
         actor: winnerName,
       });
     }
+    // TEMPORARY
+    this.#logger.info("Final logs", finalRound.scores);
   }
 
   reset() {

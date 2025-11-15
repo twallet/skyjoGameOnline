@@ -1,6 +1,7 @@
 import { Game } from "../../../shared/models/game.js";
 import { GameSession } from "../../../shared/models/gameSession.js";
 import { SkyjoPhases } from "../../../shared/models/skyjoEngine.js";
+import { Card } from "../../../shared/models/card.js";
 
 const skyjo = new Game(
   "Skyjo",
@@ -220,6 +221,61 @@ describe("GameSession", () => {
         phase: "final-round",
       })
     );
+  });
+
+  it("logs final scores and winner once the game is finished", () => {
+    const session = new GameSession(skyjo);
+    session.start(["Alice", "Bob"]);
+
+    ["Alice", "Bob"].forEach((name) => {
+      session.revealInitialCard(name, 0);
+      session.revealInitialCard(name, 1);
+    });
+
+    const [alice, bob] = session.players;
+    const revealAllButLast = (hand) => {
+      const lastIndex = hand.size - 1;
+      for (let index = 0; index < hand.size; index += 1) {
+        if (index === lastIndex || hand.isCardVisible(index)) {
+          continue;
+        }
+        hand.revealCard(index);
+      }
+      return lastIndex;
+    };
+    const aliceFinalIndex = revealAllButLast(alice.hand);
+
+    const ensureHiddenIndex = (hand) => {
+      for (let index = 0; index < hand.size; index += 1) {
+        if (!hand.isCardVisible(index)) {
+          return index;
+        }
+      }
+      return 0;
+    };
+
+    const deck = session.dealer.deck;
+    deck.add(new Card(4, skyjo)); // Reserved for Bob
+    deck.add(new Card(3, skyjo)); // Alice draws this card first
+
+    session.drawCard("Alice", "deck");
+    session.discardDrawnCardAndReveal("Alice", aliceFinalIndex);
+
+    session.drawCard("Bob", "deck");
+    const bobRevealIndex = ensureHiddenIndex(bob.hand);
+    session.discardDrawnCardAndReveal("Bob", bobRevealIndex);
+
+    const snapshot = session.getSnapshot();
+    expect(snapshot.state.phase).toBe(SkyjoPhases.FINISHED);
+
+    const finishedLogs = session.logEntries.filter(
+      (entry) => entry.phase === SkyjoPhases.FINISHED
+    );
+    expect(
+      finishedLogs.filter((entry) => /cards sum to/i.test(entry.message))
+    ).toHaveLength(2);
+    const winnerLog = finishedLogs.at(-1);
+    expect(winnerLog.message).toMatch(/wins/i);
   });
 
   describe("reset", () => {
