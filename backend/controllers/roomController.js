@@ -1,11 +1,5 @@
 import { generateRoomId } from "../../shared/generateRoomId.js";
-import {
-  getOrCreateRoom,
-  listRoomIds,
-  logRooms,
-  peekRoom,
-  removeRoom,
-} from "../services/roomRegistryService.js";
+import { gameRoomService } from "../services/gameRoomService.js";
 import { serializeSnapshot } from "../models/roomSerializers.js";
 
 // declaring the factory function createRoomController({ game, playerColors, logger }),
@@ -16,7 +10,12 @@ export function createRoomController({ game, playerColors, logger }) {
 
   // Retrieve an existing room or create a new one if it does not exist yet.
   function ensureRoom(roomId) {
-    return getOrCreateRoom(roomId, game, playerColors, resolvedLogger);
+    return gameRoomService.getOrCreate(
+      roomId,
+      game,
+      playerColors,
+      resolvedLogger
+    );
   }
 
   // Normalize the action result into a consistent response payload for clients.
@@ -42,8 +41,8 @@ export function createRoomController({ game, playerColors, logger }) {
     // Returns the list of room identifiers currently stored in memory.
     listRooms(_req, res) {
       // List all room identifiers currently registered in memory.
-      const rooms = listRoomIds();
-      logRooms(resolvedLogger);
+      const rooms = gameRoomService.listRoomIds();
+      gameRoomService.logRooms(resolvedLogger);
       res.status(200).json({ rooms });
     },
 
@@ -71,7 +70,7 @@ export function createRoomController({ game, playerColors, logger }) {
       }
 
       try {
-        const room = peekRoom(roomId);
+        const room = gameRoomService.peek(roomId);
         if (!room) {
           res.status(404).json({ error: "Room not found." });
           return;
@@ -246,7 +245,7 @@ export function createRoomController({ game, playerColors, logger }) {
     // Removes the room and its state from memory, returning 204 if it existed.
     resetRoom(req, res) {
       const { roomId } = req.params;
-      if (removeRoom(roomId)) {
+      if (gameRoomService.remove(roomId)) {
         // Removing the room clears its state; respond with a no-content status.
         res.status(204).end();
         return;
@@ -257,7 +256,7 @@ export function createRoomController({ game, playerColors, logger }) {
     // Returns the current status and serialized snapshot (if present) for a room.
     getRoom(req, res) {
       const { roomId } = req.params;
-      const room = peekRoom(roomId);
+      const room = gameRoomService.peek(roomId);
       if (!room) {
         res.status(404).json({ error: "Room not found." });
         return;

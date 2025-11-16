@@ -5,7 +5,7 @@
 import request from "supertest";
 
 import { createSkyjoServer } from "../../server.js";
-import { clearRooms } from "../../services/roomRegistryService.js";
+import { gameRoomService } from "../../services/gameRoomService.js";
 import { createLoggerMock } from "../../../tests/testUtils.js";
 
 describe("Skyjo server endpoints", () => {
@@ -13,13 +13,13 @@ describe("Skyjo server endpoints", () => {
   let logger;
 
   beforeEach(() => {
-    clearRooms();
+    gameRoomService.clearRegistry();
     logger = createLoggerMock();
     app = createSkyjoServer({ logger });
   });
 
   afterEach(() => {
-    clearRooms();
+    gameRoomService.clearRegistry();
   });
 
   it("exposes a health check endpoint", async () => {
