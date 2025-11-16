@@ -1,3 +1,4 @@
+// Service that manages game rooms and their lifecycle, wrapping GameSession instances.
 import { GameSession } from "../../shared/models/gameSession.js";
 import {
   consoleLogger,
@@ -7,9 +8,13 @@ import {
 
 /**
  * Provides a facade between the UI layer and the core GameSession.
+ * Manages a singleton registry of active game rooms in memory.
  */
 export class GameRoomService {
+  // In-memory registry mapping room IDs to service instances.
   static #registry = new Map();
+
+  // Read-only lookup of a room by ID without creating it.
   static peek(roomId) {
     if (typeof roomId !== "string") {
       return null;
@@ -113,13 +118,20 @@ export class GameRoomService {
     GameRoomService.#registry.clear();
   }
 
+  // Core game session that handles all game logic.
   #session;
+  // List of player names that have joined this room.
   #playerNames = [];
+  // Color palette assigned to players (one per player index).
   #playerColors;
+  // Unique identifier for this room.
   #roomId;
+  // Logger instance for this room's events.
   #logger;
+  // Cached snapshot of the game state (null until game starts).
   #lastSnapshot = null;
 
+  // Initializes a new room service with game configuration and dependencies.
   constructor(game, playerColors = [], roomId = null, logger = noopLogger) {
     this.#logger = resolveLogger(logger);
     this.#session = new GameSession(game, this.#logger);
@@ -131,10 +143,12 @@ export class GameRoomService {
     );
   }
 
+  // Returns the room's unique identifier.
   get roomId() {
     return this.#roomId;
   }
 
+  // Returns a copy of the current player names list.
   get playerNames() {
     return [...this.#playerNames];
   }
@@ -157,6 +171,7 @@ export class GameRoomService {
     return this.playerNames;
   }
 
+  // Checks if another player can be added (game not started and under max limit).
   canAddPlayer() {
     if (this.#lastSnapshot) {
       return false;
@@ -164,6 +179,7 @@ export class GameRoomService {
     return this.#session.canAddPlayer(this.#playerNames.length);
   }
 
+  // Checks if the game can be started (enough players and game not already started).
   canStartGame() {
     if (this.#lastSnapshot) {
       return false;
@@ -188,6 +204,7 @@ export class GameRoomService {
     return snapshot;
   }
 
+  // Returns the current game state snapshot, or null if the game hasn't started.
   getSnapshot() {
     if (!this.#lastSnapshot) {
       return null;
@@ -195,6 +212,7 @@ export class GameRoomService {
     return this.#session.getSnapshot();
   }
 
+  // Reveals a card during the initial flip phase before main gameplay begins.
   revealInitialCard(playerName, position) {
     if (!this.#lastSnapshot) {
       throw new Error("Game has not started in this room.");
@@ -208,6 +226,7 @@ export class GameRoomService {
     return result;
   }
 
+  // Draws a card from the deck or discard pile during main gameplay.
   drawCard(playerName, source) {
     if (!this.#lastSnapshot) {
       throw new Error("Game has not started in this room.");
@@ -218,6 +237,7 @@ export class GameRoomService {
     return result;
   }
 
+  // Replaces a card in the player's hand with the previously drawn card.
   replaceWithDrawnCard(playerName, position) {
     if (!this.#lastSnapshot) {
       throw new Error("Game has not started in this room.");
@@ -231,6 +251,7 @@ export class GameRoomService {
     return result;
   }
 
+  // Discards the drawn card and reveals a card from the player's hand instead.
   discardDrawnCardAndReveal(playerName, position) {
     if (!this.#lastSnapshot) {
       throw new Error("Game has not started in this room.");
@@ -244,6 +265,7 @@ export class GameRoomService {
     return result;
   }
 
+  // Resets the room to its initial state, clearing players and game state.
   resetRoom() {
     this.#session.reset();
     this.#playerNames = [];
