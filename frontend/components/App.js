@@ -9,6 +9,7 @@ import React, {
 import { Game } from "../../shared/models/game.js";
 import { consoleLogger } from "../../shared/logger.js";
 import { generateRoomId } from "../../shared/generateRoomId.js";
+import { buildPlayerColors } from "../../shared/utils/playerColors.js";
 import { RoomApi } from "../services/RoomApi.js";
 import { GamePlayView } from "./GamePlayView.js";
 import { GameSetupView } from "./GameSetupView.js";
@@ -43,12 +44,7 @@ const skyjo = new Game(
 );
 
 export function App() {
-  const playerColors = useMemo(() => {
-    return Array.from({ length: skyjo.maxPlayers }, (_, index) => {
-      const hue = Math.round((index * 360) / skyjo.maxPlayers);
-      return `hsl(${hue}, 70%, 85%)`;
-    });
-  }, []);
+  const playerColors = useMemo(() => buildPlayerColors(skyjo.maxPlayers), []);
   const [roomId, setRoomId] = useState("");
   const [roomIdInput, setRoomIdInput] = useState("");
   const [roomState, setRoomState] = useState({

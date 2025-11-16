@@ -1,3 +1,4 @@
+// Exposes the full room/game snapshot as JSON-safe data for clients.
 export function serializeSnapshot(snapshot) {
   return {
     players: snapshot.players.map(serializePlayerForClient),
@@ -7,6 +8,7 @@ export function serializeSnapshot(snapshot) {
   };
 }
 
+// Normalizes a player payload so the frontend can render the hand matrix.
 function serializePlayerForClient(player) {
   const matrix = Array.isArray(player.hand?.matrix)
     ? cloneMatrix(player.hand.matrix)
@@ -25,6 +27,7 @@ function serializePlayerForClient(player) {
   };
 }
 
+// Safely captures deck metadata while omitting live references.
 function serializeDeck(deckSnapshot) {
   if (!deckSnapshot) {
     return { size: 0, topCard: null, discardSize: 0 };
@@ -45,6 +48,7 @@ function serializeDeck(deckSnapshot) {
   };
 }
 
+// Converts the complex state tree into immutable structures.
 function serializeState(state) {
   return {
     phase: state.phase,
@@ -93,6 +97,7 @@ function serializeState(state) {
   };
 }
 
+// Deeply clones card matrices to avoid leaking live objects.
 function cloneMatrix(matrix) {
   return matrix.map((row) =>
     row.map((card) => (card && typeof card === "object" ? { ...card } : card))

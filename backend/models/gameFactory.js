@@ -1,5 +1,7 @@
+// Provides a factory for the shared Skyjo Game model with default assets.
 import { Game } from "../../shared/models/game.js";
 
+// Ordered list of card face images, aligned with the value array.
 const SKYJO_CARD_IMAGES = [
   "./assets/images/minus2.jpg",
   "./assets/images/minus1.jpg",
@@ -18,6 +20,7 @@ const SKYJO_CARD_IMAGES = [
   "./assets/images/12.jpg",
 ];
 
+// Core configuration used to seed every Skyjo game instance.
 const SKYJO_CONFIGURATION = {
   name: "Skyjo",
   values: [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
@@ -29,6 +32,7 @@ const SKYJO_CONFIGURATION = {
   maxPlayers: 8,
 };
 
+// Instantiates a ready-to-use Skyjo Game with the above defaults.
 export function createSkyjoGame() {
   return new Game(
     SKYJO_CONFIGURATION.name,
