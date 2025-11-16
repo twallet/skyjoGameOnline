@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
 import { Game } from "../../../shared/models/game.js";
-import { GameRoomService } from "../gameRoomService.js";
+import { GameRoomService } from "../GameRoomService.js";
 import { SkyjoPhases } from "../../../shared/models/skyjoEngine.js";
 import { createLoggerMock } from "../../../tests/testUtils.js";
 
@@ -187,4 +187,3 @@ describe("GameRoomService", () => {
     ).toEqual([0]);
   });
 });
-

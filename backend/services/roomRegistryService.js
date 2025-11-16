@@ -1,5 +1,5 @@
 // Backend-facing facade over the shared room registry singleton.
-import { GameRoomService } from "./gameRoomService.js";
+import { GameRoomService } from "./GameRoomService.js";
 
 // Fetches an existing room or creates a new one with runtime dependencies.
 export function getOrCreateRoom(roomId, game, playerColors, logger) {

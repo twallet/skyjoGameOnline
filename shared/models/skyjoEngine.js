@@ -720,22 +720,6 @@ export class SkyjoEngine {
     });
   }
 
-  #calculateHandTotal(hand) {
-    if (!hand || typeof hand.cards !== "function") {
-      return 0;
-    }
-    const values = hand.cards();
-    if (!Array.isArray(values) || values.length === 0) {
-      return 0;
-    }
-    return values.reduce((total, value) => {
-      if (typeof value === "number" && Number.isFinite(value)) {
-        return total + value;
-      }
-      return total;
-    }, 0);
-  }
-
   #revealRemainingCards(playerIndex) {
     if (
       !Number.isInteger(playerIndex) ||
