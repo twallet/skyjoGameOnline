@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
 import { Game } from "../../../shared/models/game.js";
-import { GameRoomService } from "../GameRoomService.js";
+import { gameRoomService } from "../gameRoomService.js";
 import { SkyjoPhases } from "../../../shared/models/skyjoEngine.js";
 import { createLoggerMock } from "../../../tests/testUtils.js";
 
@@ -32,15 +32,15 @@ const skyjo = new Game(
   8
 );
 
-describe("GameRoomService", () => {
+describe("gameRoomService", () => {
   beforeEach(() => {
-    GameRoomService.clearRegistry();
+    gameRoomService.clearRegistry();
   });
 
   it("adds players and exposes current names", () => {
     const colors = ["#ffaaaa", "#aaffaa"];
     const logger = createLoggerMock();
-    const service = GameRoomService.getOrCreate(
+    const service = gameRoomService.getOrCreate(
       "room-1",
       skyjo,
       colors,
@@ -56,7 +56,7 @@ describe("GameRoomService", () => {
     expect(service.playerNames).toEqual(["Alice", "Bob"]);
     expect(service.canStartGame()).toBe(true);
     expect(service.roomId).toBe("room-1");
-    expect(GameRoomService.getOrCreate("room-1", skyjo, colors, logger)).toBe(
+    expect(gameRoomService.getOrCreate("room-1", skyjo, colors, logger)).toBe(
       service
     );
     expect(logger.info).toHaveBeenCalled();
@@ -64,7 +64,7 @@ describe("GameRoomService", () => {
 
   it("refuses to start when not enough players", () => {
     const logger = createLoggerMock();
-    const service = GameRoomService.getOrCreate("room-2", skyjo, [], logger);
+    const service = gameRoomService.getOrCreate("room-2", skyjo, [], logger);
     service.addPlayer("Alice");
 
     expect(service.canStartGame()).toBe(false);
@@ -74,7 +74,7 @@ describe("GameRoomService", () => {
 
   it("starts a game and resets correctly", () => {
     const logger = createLoggerMock();
-    const service = GameRoomService.getOrCreate("room-3", skyjo, [], logger);
+    const service = gameRoomService.getOrCreate("room-3", skyjo, [], logger);
     service.addPlayer("Alice");
     service.addPlayer("Bob");
 
@@ -97,14 +97,14 @@ describe("GameRoomService", () => {
     expect(service.canStartGame()).toBe(false);
     expect(service.canAddPlayer()).toBe(true);
     expect(service.getSnapshot()).toBe(null);
-    expect(GameRoomService.remove("room-3")).toBe(true);
-    expect(GameRoomService.remove("room-3")).toBe(false);
+    expect(gameRoomService.remove("room-3")).toBe(true);
+    expect(gameRoomService.remove("room-3")).toBe(false);
     expect(logger.info).toHaveBeenCalled();
   });
 
   it("prevents adding players once the game has started", () => {
     const logger = createLoggerMock();
-    const service = GameRoomService.getOrCreate("room-4", skyjo, [], logger);
+    const service = gameRoomService.getOrCreate("room-4", skyjo, [], logger);
     service.addPlayer("Alice");
     service.addPlayer("Bob");
 
@@ -119,44 +119,44 @@ describe("GameRoomService", () => {
   });
 
   it("rejects empty or non-string room identifiers", () => {
-    expect(() => GameRoomService.getOrCreate("", skyjo)).toThrow(TypeError);
-    expect(() => GameRoomService.getOrCreate("   ", skyjo)).toThrow(TypeError);
-    expect(() => GameRoomService.getOrCreate(null, skyjo)).toThrow(TypeError);
+    expect(() => gameRoomService.getOrCreate("", skyjo)).toThrow(TypeError);
+    expect(() => gameRoomService.getOrCreate("   ", skyjo)).toThrow(TypeError);
+    expect(() => gameRoomService.getOrCreate(null, skyjo)).toThrow(TypeError);
   });
 
   it("reuses existing rooms and logs reuse events", () => {
     const logger = createLoggerMock();
     const colors = ["#ffaaaa", "#aaffaa"];
-    const first = GameRoomService.getOrCreate("room-5", skyjo, colors, logger);
-    const second = GameRoomService.getOrCreate("room-5", skyjo, colors, logger);
+    const first = gameRoomService.getOrCreate("room-5", skyjo, colors, logger);
+    const second = gameRoomService.getOrCreate("room-5", skyjo, colors, logger);
 
     expect(second).toBe(first);
     expect(logger.info).toHaveBeenCalledWith(
-      "GameRoomService: created room 'room-5' with game Skyjo"
+      "gameRoomService: created room 'room-5' with game Skyjo"
     );
   });
 
   it("peek returns existing rooms and list/log reflects registry state", () => {
     const logger = createLoggerMock();
-    expect(GameRoomService.peek("missing")).toBeNull();
-    expect(GameRoomService.listRoomIds()).toEqual([]);
-    expect(GameRoomService.logRooms(logger)).toEqual([]);
+    expect(gameRoomService.peek("missing")).toBeNull();
+    expect(gameRoomService.listRoomIds()).toEqual([]);
+    expect(gameRoomService.logRooms(logger)).toEqual([]);
     expect(logger.info).toHaveBeenCalledWith(
-      "GameRoomService: no active rooms."
+      "gameRoomService: no active rooms."
     );
 
-    GameRoomService.getOrCreate("room-6", skyjo, [], logger);
-    GameRoomService.getOrCreate("room-7", skyjo, [], logger);
+    gameRoomService.getOrCreate("room-6", skyjo, [], logger);
+    gameRoomService.getOrCreate("room-7", skyjo, [], logger);
 
-    const ids = GameRoomService.listRoomIds();
+    const ids = gameRoomService.listRoomIds();
     expect(ids).toEqual(["room-6", "room-7"]);
-    expect(GameRoomService.peek("room-6")).not.toBeNull();
-    expect(GameRoomService.logRooms(logger)).toEqual(ids);
+    expect(gameRoomService.peek("room-6")).not.toBeNull();
+    expect(gameRoomService.logRooms(logger)).toEqual(ids);
   });
 
   it("stops allowing additional players when max players reached", () => {
     const logger = createLoggerMock();
-    const service = GameRoomService.getOrCreate("room-8", skyjo, [], logger);
+    const service = gameRoomService.getOrCreate("room-8", skyjo, [], logger);
     for (let i = 0; i < skyjo.maxPlayers; i++) {
       service.addPlayer(`Player ${i + 1}`);
     }
@@ -167,7 +167,7 @@ describe("GameRoomService", () => {
 
   it("reveals cards during the initial flip phase", () => {
     const logger = createLoggerMock();
-    const service = GameRoomService.getOrCreate("room-9", skyjo, [], logger);
+    const service = gameRoomService.getOrCreate("room-9", skyjo, [], logger);
     service.addPlayer("Alice");
     service.addPlayer("Bob");
 

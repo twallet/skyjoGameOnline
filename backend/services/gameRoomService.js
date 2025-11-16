@@ -10,7 +10,7 @@ import {
  * Provides a facade between the UI layer and the core GameSession.
  * Manages a singleton registry of active game rooms in memory.
  */
-export class GameRoomService {
+export class gameRoomService {
   // In-memory registry mapping room IDs to service instances.
   static #registry = new Map();
 
@@ -25,7 +25,7 @@ export class GameRoomService {
       return null;
     }
 
-    return GameRoomService.#registry.get(trimmed) ?? null;
+    return gameRoomService.#registry.get(trimmed) ?? null;
   }
 
   /**
@@ -33,7 +33,7 @@ export class GameRoomService {
    * @param {string} roomId
    * @param {Game} game
    * @param {string[]} [playerColors]
-   * @returns {GameRoomService}
+   * @returns {gameRoomService}
    */
   static getOrCreate(roomId, game, playerColors = [], logger = consoleLogger) {
     if (typeof roomId !== "string" || roomId.trim() === "") {
@@ -41,25 +41,25 @@ export class GameRoomService {
     }
 
     const trimmedId = roomId.trim();
-    if (!GameRoomService.#registry.has(trimmedId)) {
-      const service = new GameRoomService(
+    if (!gameRoomService.#registry.has(trimmedId)) {
+      const service = new gameRoomService(
         game,
         playerColors,
         trimmedId,
         logger
       );
-      GameRoomService.#registry.set(trimmedId, service);
+      gameRoomService.#registry.set(trimmedId, service);
       service.#logger.info(
-        `GameRoomService: created room '${trimmedId}' with game ${game.name}`
+        `gameRoomService: created room '${trimmedId}' with game ${game.name}`
       );
     } else {
-      const existing = GameRoomService.#registry.get(trimmedId);
+      const existing = gameRoomService.#registry.get(trimmedId);
       existing.#logger.info(
-        `GameRoomService: reusing existing room '${trimmedId}'`
+        `gameRoomService: reusing existing room '${trimmedId}'`
       );
     }
 
-    return GameRoomService.#registry.get(trimmedId);
+    return gameRoomService.#registry.get(trimmedId);
   }
 
   /**
@@ -67,7 +67,7 @@ export class GameRoomService {
    * @returns {string[]}
    */
   static listRoomIds() {
-    return Array.from(GameRoomService.#registry.keys());
+    return Array.from(gameRoomService.#registry.keys());
   }
 
   /**
@@ -77,12 +77,12 @@ export class GameRoomService {
    */
   static logRooms(logger = consoleLogger) {
     const resolvedLogger = resolveLogger(logger);
-    const roomIds = GameRoomService.listRoomIds();
+    const roomIds = gameRoomService.listRoomIds();
     if (roomIds.length === 0) {
-      resolvedLogger.info("GameRoomService: no active rooms.");
+      resolvedLogger.info("gameRoomService: no active rooms.");
     } else {
       resolvedLogger.info(
-        `GameRoomService: active rooms (${roomIds.length}): ${roomIds.join(
+        `gameRoomService: active rooms (${roomIds.length}): ${roomIds.join(
           ", "
         )}`
       );
@@ -101,13 +101,13 @@ export class GameRoomService {
     }
 
     const trimmed = roomId.trim();
-    const existing = GameRoomService.#registry.get(trimmed);
+    const existing = gameRoomService.#registry.get(trimmed);
     if (!existing) {
       return false;
     }
 
-    GameRoomService.#registry.delete(trimmed);
-    existing.#logger.info(`GameRoomService: removed room '${trimmed}'`);
+    gameRoomService.#registry.delete(trimmed);
+    existing.#logger.info(`gameRoomService: removed room '${trimmed}'`);
     return true;
   }
 
@@ -115,7 +115,7 @@ export class GameRoomService {
    * Clear all rooms (useful for tests).
    */
   static clearRegistry() {
-    GameRoomService.#registry.clear();
+    gameRoomService.#registry.clear();
   }
 
   // Core game session that handles all game logic.
@@ -139,7 +139,7 @@ export class GameRoomService {
     this.#roomId = roomId ?? null;
     this.#lastSnapshot = null;
     this.#logger.info(
-      `GameRoomService: initialized room '${this.#roomId ?? "unknown"}'`
+      `gameRoomService: initialized room '${this.#roomId ?? "unknown"}'`
     );
   }
 
@@ -166,7 +166,7 @@ export class GameRoomService {
     this.#playerNames = this.#session.addPlayer(this.#playerNames, rawName);
     const latestName = this.#playerNames[this.#playerNames.length - 1];
     this.#logger.info(
-      `GameRoomService: player '${latestName}' joined room '${this.#roomId}'`
+      `gameRoomService: player '${latestName}' joined room '${this.#roomId}'`
     );
     return this.playerNames;
   }
@@ -197,7 +197,7 @@ export class GameRoomService {
     }
 
     this.#logger.info(
-      `GameRoomService: starting game for room '${this.#roomId}'`
+      `gameRoomService: starting game for room '${this.#roomId}'`
     );
     const snapshot = this.#session.start(this.#playerNames, this.#playerColors);
     this.#lastSnapshot = snapshot;
@@ -270,6 +270,6 @@ export class GameRoomService {
     this.#session.reset();
     this.#playerNames = [];
     this.#lastSnapshot = null;
-    this.#logger.info(`GameRoomService: room '${this.#roomId}' reset`);
+    this.#logger.info(`gameRoomService: room '${this.#roomId}' reset`);
   }
 }
