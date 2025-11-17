@@ -8,4 +8,7 @@ export default {
     "^https://esm\\.sh/react-dom@18/client$": "react-dom/client",
   },
   setupFilesAfterEnv: ["<rootDir>/tests/setupTests.js"],
+  testMatch: ["**/__tests__/**/*.test.js"],
+  roots: ["<rootDir>"],
+  testPathIgnorePatterns: ["/node_modules/", "/.vscode/", "/voxelize/"],
 };
