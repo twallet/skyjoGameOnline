@@ -229,7 +229,11 @@ export class GameSession {
 
   get deckSnapshot() {
     if (!this.#deckSnapshot) {
-      return { size: 0, topCard: null };
+      return {
+        size: 0,
+        topCard: null,
+        backImage: this.#game?.backImage ?? null,
+      };
     }
     return {
       size: this.#deckSnapshot.size,
@@ -237,6 +241,7 @@ export class GameSession {
         ? { ...this.#deckSnapshot.topCard }
         : null,
       discardSize: this.#deckSnapshot.discardSize ?? 0,
+      backImage: this.#deckSnapshot.backImage ?? this.#game?.backImage ?? null,
     };
   }
 
@@ -621,9 +626,14 @@ export class GameSession {
     ];
   }
 
-  static #buildDeckSnapshot(deck) {
+  static #buildDeckSnapshot(deck, game) {
     if (!deck) {
-      return { size: 0, topCard: null, discardSize: 0 };
+      return {
+        size: 0,
+        topCard: null,
+        discardSize: 0,
+        backImage: game?.backImage ?? null,
+      };
     }
 
     const cards = deck.cardsDeck;
@@ -639,6 +649,7 @@ export class GameSession {
           }
         : null,
       discardSize: 0,
+      backImage: game?.backImage ?? null,
     };
   }
 
@@ -657,7 +668,7 @@ export class GameSession {
 
     const deck = this.#engine
       ? this.#engine.buildDeckSnapshot()
-      : GameSession.#buildDeckSnapshot(this.#dealer?.deck ?? null);
+      : GameSession.#buildDeckSnapshot(this.#dealer?.deck ?? null, this.#game);
 
     const state = this.#engine ? this.#engine.buildStateSnapshot() : null;
 

@@ -4,8 +4,6 @@
  * from the game engine to ensure safe rendering in the UI.
  */
 
-const DECK_BASE_IMAGE = "../assets/images/back.jpg";
-
 /**
  * Transforms a deck snapshot into a view model for rendering.
  * Creates a normalized representation of the deck with size, base image,
@@ -14,7 +12,7 @@ const DECK_BASE_IMAGE = "../assets/images/back.jpg";
  * @param {Object|null|undefined} deckSnapshot - The deck snapshot from the game state
  * @returns {Object|null} View model with:
  *   - size: number of cards remaining in deck (defaults to 0)
- *   - baseImage: path to the deck back image
+ *   - baseImage: path to the deck back image (from snapshot.backImage)
  *   - firstCard: object with image, visible flag, and alt text, or null if no top card
  */
 export function buildDeckView(deckSnapshot) {
@@ -25,7 +23,7 @@ export function buildDeckView(deckSnapshot) {
   const topCard = deckSnapshot.topCard ?? null;
   return {
     size: deckSnapshot.size ?? 0,
-    baseImage: DECK_BASE_IMAGE,
+    baseImage: deckSnapshot.backImage ?? null,
     firstCard: topCard
       ? {
           image: topCard.image,
@@ -65,4 +63,3 @@ export function normalizePlayerSnapshots(players) {
         : null,
   }));
 }
-

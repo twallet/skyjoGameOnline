@@ -305,7 +305,11 @@ describe("GameSession", () => {
 
       expect(session.players).toEqual([]);
       expect(session.logEntries).toEqual([]);
-      expect(session.deckSnapshot).toEqual({ size: 0, topCard: null });
+      expect(session.deckSnapshot).toEqual({
+        size: 0,
+        topCard: null,
+        backImage: "./assets/images/back.jpg",
+      });
       expect(session.dealer).toBeNull();
       expect(session.getSnapshot()).toBeNull();
     });

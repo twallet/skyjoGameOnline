@@ -520,6 +520,7 @@ export class SkyjoEngine {
       size: this.#dealer.deck.size(),
       topCard: this.discardTopCard(),
       discardSize: this.#discardPile.length,
+      backImage: this.#game.backImage,
     };
   }
 

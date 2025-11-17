@@ -15,13 +15,14 @@ describe("app helpers", () => {
           value: 5,
           visible: false,
         },
+        backImage: "./assets/images/back.jpg",
       };
 
       const view = buildDeckView(deck);
 
       expect(view).toEqual({
         size: 42,
-        baseImage: "../assets/images/back.jpg",
+        baseImage: "./assets/images/back.jpg",
         firstCard: {
           image: "top.png",
           visible: false,
@@ -38,11 +39,27 @@ describe("app helpers", () => {
           value: "A",
           visible: true,
         },
+        backImage: "./assets/images/back.jpg",
       };
 
       const view = buildDeckView(deck);
 
       expect(view.firstCard.alt).toBe("Top card A");
+    });
+
+    it("handles missing backImage gracefully", () => {
+      const deck = {
+        size: 5,
+        topCard: null,
+      };
+
+      const view = buildDeckView(deck);
+
+      expect(view).toEqual({
+        size: 5,
+        baseImage: null,
+        firstCard: null,
+      });
     });
   });
 
@@ -76,4 +93,3 @@ describe("app helpers", () => {
     });
   });
 });
-

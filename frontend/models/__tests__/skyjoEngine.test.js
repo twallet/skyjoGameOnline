@@ -96,6 +96,7 @@ describe("SkyjoEngine", () => {
 
     const deckSnapshot = engine.buildDeckSnapshot();
     expect(deckSnapshot.size).toBe(1);
+    expect(deckSnapshot.backImage).toBe("./assets/images/back.jpg");
     expect(deckSnapshot.topCard).toEqual(
       expect.objectContaining({
         visible: true,
