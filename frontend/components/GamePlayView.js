@@ -877,7 +877,7 @@ export function GamePlayView({
             },
             React.createElement("img", {
               className: baseImageClasses.join(" "),
-              src: deck.backImage ?? deck.baseImage,
+              src: deck.baseImage,
               alt: "Deck of cards",
               title: deckTitle,
               onClick: canDrawFromDeck ? handleDrawFromDeck : undefined,
