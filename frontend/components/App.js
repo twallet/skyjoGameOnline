@@ -755,7 +755,7 @@ export function App() {
       return;
     }
 
-    setIsLoading(true);
+    setIsProcessing(true);
     try {
       consoleLogger.info(
         `Client action: attempting to join room '${normalizedRoomId}' as '${trimmedPlayerName}'`
@@ -815,7 +815,7 @@ export function App() {
     }
     setIsJoiningExistingRoom(false);
     setIsRoomSelectionLocked(true);
-    setIsLoading(true);
+    setIsProcessing(true);
     try {
       consoleLogger.info(
         `Client action: creating new room as '${trimmedPlayerName}'`
