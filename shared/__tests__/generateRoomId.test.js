@@ -1,14 +1,23 @@
 import { jest } from "@jest/globals";
 
-import { generateRoomId } from "../../../shared/generateRoomId.js";
+import { generateRoomId, ROOM_ID_ALPHABET } from "../generateRoomId.js";
 
-const ROOM_ID_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
+/**
+ * Test suite for the generateRoomId function.
+ * Verifies room identifier generation, length customization, and input validation.
+ */
 describe("generateRoomId", () => {
+  /**
+   * Restore all mocks after each test to ensure test isolation.
+   */
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
+  /**
+   * Verifies that generateRoomId creates identifiers with the default length of 6 characters.
+   * Uses a controlled sequence of random values to ensure deterministic test results.
+   */
   it("creates room identifiers with the default length", () => {
     const sequence = [0.01, 0.2, 0.4, 0.6, 0.8, 0.99];
     let call = 0;
@@ -25,6 +34,10 @@ describe("generateRoomId", () => {
     expect(id).toBe(expected);
   });
 
+  /**
+   * Verifies that generateRoomId supports custom length parameters.
+   * Ensures all generated characters are valid alphabet characters.
+   */
   it("supports custom lengths", () => {
     jest.spyOn(Math, "random").mockReturnValue(0.5);
 
@@ -36,11 +49,19 @@ describe("generateRoomId", () => {
     }
   });
 
+  /**
+   * Verifies that generateRoomId rejects non-positive length values.
+   * Tests zero and negative values to ensure proper error handling.
+   */
   it("rejects non-positive lengths", () => {
     expect(() => generateRoomId(0)).toThrow(TypeError);
     expect(() => generateRoomId(-3)).toThrow("positive integer");
   });
 
+  /**
+   * Verifies that generateRoomId rejects non-integer length values.
+   * Tests decimal numbers and NaN to ensure type validation works correctly.
+   */
   it("rejects non-integer lengths", () => {
     expect(() => generateRoomId(3.5)).toThrow(TypeError);
     expect(() => generateRoomId(NaN)).toThrow(TypeError);
