@@ -53,6 +53,9 @@ describe("App component room selection flow", () => {
   beforeEach(() => {
     navigator.clipboard.writeText = jest.fn().mockResolvedValue(undefined);
     window.history.replaceState(null, "", "/");
+    // Default mock for RoomApi.getRoom to prevent fetch errors when component mounts
+    // Individual tests can override this with their own mocks
+    jest.spyOn(RoomApi, "getRoom").mockResolvedValue({});
   });
 
   afterEach(() => {
@@ -180,7 +183,7 @@ describe("App component room selection flow", () => {
     await flushPromises();
 
     await screen.findByText("TEST01");
-    
+
     await waitFor(() => {
       expect(screen.getByTitle(/copy join link/i)).toBeInTheDocument();
     });
@@ -218,7 +221,7 @@ describe("App component room selection flow", () => {
     await flushPromises();
 
     await screen.findByText("TEST01");
-    
+
     await waitFor(() => {
       expect(screen.getByTitle(/copy join link/i)).toBeInTheDocument();
     });
