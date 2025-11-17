@@ -15,8 +15,9 @@ if (typeof globalThis.fetch === "undefined") {
 }
 
 // Suppress console.info messages during tests to reduce noise
-// Tests can still access console.info if needed by using jest.spyOn
+// Tests can restore the original console.info if needed by accessing global.originalConsoleInfo
 const originalConsoleInfo = console.info;
+global.originalConsoleInfo = originalConsoleInfo;
 console.info = () => {
   // Silently ignore console.info calls during tests
 };
