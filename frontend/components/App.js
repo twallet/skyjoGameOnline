@@ -180,7 +180,7 @@ export function App() {
       return;
     }
 
-    const startIndex = Math.max(0, loggedEventCountRef.current);
+    const startIndex = loggedEventCountRef.current;
     const newEntries = logEntries.slice(startIndex);
 
     newEntries.forEach((entry) => {
