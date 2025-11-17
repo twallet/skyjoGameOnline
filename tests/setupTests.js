@@ -5,7 +5,7 @@ import "@testing-library/jest-dom";
 if (typeof globalThis.fetch === "undefined") {
   // Provide a basic fetch implementation that can be mocked in tests
   // This prevents "fetch is not defined" errors when RoomApi methods are called
-  globalThis.fetch = async (url, options) => {
+  globalThis.fetch = async (url, _options) => {
     // This will be mocked in individual tests via RoomApi mocks
     // If it's called without a mock, throw a helpful error
     throw new Error(
