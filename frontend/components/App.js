@@ -97,7 +97,6 @@ export function App() {
   const [hasCreatedRoom, setHasCreatedRoom] = useState(false);
   const [isRoomSelectionLocked, setIsRoomSelectionLocked] = useState(false);
   const [isInviteLink, setIsInviteLink] = useState(false);
-  const [hasExistingRooms, setHasExistingRooms] = useState(true);
 
   // LAN host configuration for local network sharing
   const [lanHost, setLanHost] = useState(() => {
@@ -110,13 +109,7 @@ export function App() {
 
   // Refs for tracking state across renders
   const loggedEventCountRef = useRef(0);
-  const activeRoomIdRef = useRef(roomId);
   const isFetchingRoomRef = useRef(false);
-
-  // Keep ref in sync with roomId for async operations
-  useEffect(() => {
-    activeRoomIdRef.current = roomId;
-  }, [roomId]);
 
   // Parse URL parameters on mount to support invite links
   useEffect(() => {
@@ -126,7 +119,7 @@ export function App() {
 
     try {
       const params = new URLSearchParams(window.location.search);
-      const urlRoomId = params.get("roomId") ?? params.get("room");
+      const urlRoomId = params.get("roomId");
       const urlName = params.get("name");
 
       if (urlRoomId) {
@@ -194,27 +187,6 @@ export function App() {
     loggedEventCountRef.current = logEntries.length;
   }, [logEntries]);
 
-  // Check for existing rooms on mount to show/hide join button
-  useEffect(() => {
-    let cancelled = false;
-    const fetchExistingRooms = async () => {
-      try {
-        const payload = await RoomApi.listRooms();
-        if (cancelled) {
-          return;
-        }
-        const rooms = Array.isArray(payload?.rooms) ? payload.rooms : [];
-        setHasExistingRooms(rooms.length > 0);
-      } catch (error) {
-        consoleLogger.warn("Client warning: unable to list rooms", error);
-      }
-    };
-    fetchExistingRooms();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   /**
    * Loads room state from the server and updates local state.
    * @param {string} [targetRoomId=roomId] - The room ID to load
@@ -245,9 +217,6 @@ export function App() {
 
       try {
         const data = await RoomApi.getRoom(normalizedRoomId);
-        if (activeRoomIdRef.current !== normalizedRoomId) {
-          return;
-        }
 
         setRoomState(
           createRoomState(data.players ?? [], skyjo, Boolean(data.gameStarted))
@@ -291,10 +260,6 @@ export function App() {
           );
         }
       } catch (error) {
-        if (activeRoomIdRef.current !== normalizedRoomId) {
-          return;
-        }
-
         consoleLogger.error("Failed to load room state", error);
         if (!silent) {
           setErrorMessage(getErrorMessage(error));
@@ -310,7 +275,7 @@ export function App() {
           );
         }
       } finally {
-        if (activeRoomIdRef.current === normalizedRoomId && !silent) {
+        if (!silent) {
           setIsLoading(false);
         }
         isFetchingRoomRef.current = false;
@@ -703,7 +668,7 @@ export function App() {
   ]);
 
   /**
-   * Handles joining an existing room or initiating the join flow.
+   * Handles joining an existing room from URL invite link.
    */
   const handleJoinRoom = async () => {
     if (!ensureValidPlayerName()) {
@@ -711,10 +676,7 @@ export function App() {
     }
 
     if (!isJoiningExistingRoom) {
-      setIsJoiningExistingRoom(true);
-      setIsRoomSelectionLocked(true);
-      setErrorMessage("");
-      setHasCreatedRoom(false);
+      // Should only be called when joining from URL
       return;
     }
 
@@ -750,7 +712,6 @@ export function App() {
       setNewPlayerName(trimmedPlayerName);
       setIsJoiningExistingRoom(false);
       setHasCreatedRoom(false);
-      setHasExistingRooms(true);
       setCurrentSnapshot(null);
       setSessionState(null);
       consoleLogger.info(
@@ -819,7 +780,6 @@ export function App() {
       );
       setNewPlayerName(trimmedPlayerName);
       setHasCreatedRoom(true);
-      setHasExistingRooms(true);
       let lanHostForCopy = undefined;
       if (
         !lanHostSkipped &&
@@ -969,7 +929,6 @@ export function App() {
     hasCreatedRoom,
     isRoomSelectionLocked,
     isPlayerNameValid,
-    hasExistingRooms,
     playerName: newPlayerName,
     onRoomIdInputChange: handleRoomIdInputChange,
     onCreateRoom: handleCreateRoom,

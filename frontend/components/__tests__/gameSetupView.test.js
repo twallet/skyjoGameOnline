@@ -27,7 +27,6 @@ describe("GameSetupView component", () => {
     isRoomSelectionLocked: false,
     onCopyRoomId: jest.fn(),
     isRoomIdReadOnly: false,
-    hasExistingRooms: true,
   };
 
   beforeEach(() => {
@@ -49,7 +48,7 @@ describe("GameSetupView component", () => {
     expect(screen.queryByPlaceholderText(/your name/i)).not.toBeInTheDocument();
   });
 
-  it("hides create and join buttons when player name is invalid", () => {
+  it("hides create button when player name is invalid", () => {
     render(
       React.createElement(GameSetupView, {
         ...defaultProps,
@@ -58,9 +57,6 @@ describe("GameSetupView component", () => {
     );
     expect(
       screen.queryByRole("button", { name: /new room/i })
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /existing room/i })
     ).not.toBeInTheDocument();
   });
 
@@ -73,32 +69,6 @@ describe("GameSetupView component", () => {
     );
     const createButton = screen.getByRole("button", { name: /new room/i });
     expect(createButton).toBeEnabled();
-  });
-
-  it("shows join button when existing rooms are available", () => {
-    render(
-      React.createElement(GameSetupView, {
-        ...defaultProps,
-        isPlayerNameValid: true,
-        hasExistingRooms: true,
-      })
-    );
-    expect(
-      screen.getByRole("button", { name: /existing room/i })
-    ).toBeInTheDocument();
-  });
-
-  it("hides join button when no existing rooms are available", () => {
-    render(
-      React.createElement(GameSetupView, {
-        ...defaultProps,
-        isPlayerNameValid: true,
-        hasExistingRooms: false,
-      })
-    );
-    expect(
-      screen.queryByRole("button", { name: /existing room/i })
-    ).not.toBeInTheDocument();
   });
 
   it("shows room input and join button when joining room", () => {

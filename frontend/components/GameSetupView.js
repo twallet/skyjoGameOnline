@@ -26,7 +26,6 @@ import { GameSession } from "../../shared/models/gameSession.js";
  * @param {boolean} props.isRoomSelectionLocked - Whether room selection is locked
  * @param {Function} props.onCopyRoomId - Callback to copy the room ID
  * @param {boolean} props.isRoomIdReadOnly - Whether the room ID input should be read-only
- * @param {boolean} [props.hasExistingRooms=true] - Whether there are existing rooms to join
  * @returns {React.ReactElement} The rendered setup view component
  */
 export function GameSetupView({
@@ -50,7 +49,6 @@ export function GameSetupView({
   isRoomSelectionLocked,
   onCopyRoomId,
   isRoomIdReadOnly,
-  hasExistingRooms = true,
 }) {
   // Determine which room ID to display (prefer user input if provided, otherwise use current room ID)
   const displayedRoomId =
@@ -74,13 +72,6 @@ export function GameSetupView({
   // Determine if start button should be disabled
   const startDisabled = isLoading || !canStartGame || gameStarted;
 
-  // Show "Existing room" button when there are existing rooms and user hasn't created/joined yet
-  const showJoinButton =
-    hasExistingRooms &&
-    !hasCreatedRoom &&
-    !isRoomSelectionLocked &&
-    !isJoiningRoom;
-
   // Show room info banner when room is selected and locked (not in joining flow)
   const shouldShowRoomInfo =
     !isJoiningRoom && isRoomSelectionLocked && Boolean(roomId);
@@ -94,7 +85,7 @@ export function GameSetupView({
   // Show join actions (room input + join button) when in joining flow
   const showJoinActions = isJoiningRoom;
 
-  // Show create actions (new room + existing room buttons) when appropriate
+  // Show create actions (new room button) when appropriate
   const showCreateActions =
     !isJoiningRoom &&
     !isRoomSelectionLocked &&
@@ -195,7 +186,7 @@ export function GameSetupView({
               "Join"
             )
           )
-        : // Create actions: new room + existing room buttons (shown when not joining and room not locked)
+        : // Create actions: new room button (shown when not joining and room not locked)
           showCreateActions
           ? React.createElement(
               "div",
@@ -210,20 +201,7 @@ export function GameSetupView({
                   disabled: createDisabled,
                 },
                 "New room"
-              ),
-              // Existing room button (conditional)
-              showJoinButton
-                ? React.createElement(
-                    "button",
-                    {
-                      type: "button",
-                      className: "setup__button-join-room",
-                      onClick: onJoinRoom,
-                      disabled: joinDisabled,
-                    },
-                    "Existing room"
-                  )
-                : null
+              )
             )
           : null,
       // Room info banner (shown when room is selected and locked)
