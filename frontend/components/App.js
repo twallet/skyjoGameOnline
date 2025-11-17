@@ -11,8 +11,8 @@ import { consoleLogger } from "../../shared/logger.js";
 import { generateRoomId } from "../../shared/generateRoomId.js";
 import { buildPlayerColors } from "../../shared/utils/playerColors.js";
 import { RoomApi } from "../services/RoomApi.js";
-import { gamePlayView } from "./gamePlayView.js";
-import { gameSetupView } from "./gameSetupView.js";
+import { GamePlayView } from "./GamePlayView.js";
+import { GameSetupView } from "./GameSetupView.js";
 import {
   buildDeckView,
   normalizePlayerSnapshots,
@@ -995,7 +995,7 @@ export function App() {
   };
 
   if (gameStarted) {
-    return React.createElement(gamePlayView, {
+    return React.createElement(GamePlayView, {
       activePlayers,
       deck: deckView,
       snapshot: currentSnapshot,
@@ -1011,7 +1011,7 @@ export function App() {
     });
   }
 
-  return React.createElement(gameSetupView, {
+  return React.createElement(GameSetupView, {
     isLoading,
     roomId,
     roomIdInput,

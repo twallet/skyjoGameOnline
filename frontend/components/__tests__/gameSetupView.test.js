@@ -3,9 +3,9 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { gameSetupView } from "../gameSetupView.js";
+import { GameSetupView } from "../GameSetupView.js";
 
-describe("gameSetupView component", () => {
+describe("GameSetupView component", () => {
   const defaultProps = {
     isLoading: false,
     roomId: "",
@@ -35,13 +35,13 @@ describe("gameSetupView component", () => {
   });
 
   it("renders the player name input when not in room selection locked state", () => {
-    render(React.createElement(gameSetupView, defaultProps));
+    render(React.createElement(GameSetupView, defaultProps));
     expect(screen.getByPlaceholderText(/your name/i)).toBeInTheDocument();
   });
 
   it("hides the player name input when room has been created", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         hasCreatedRoom: true,
       })
@@ -51,7 +51,7 @@ describe("gameSetupView component", () => {
 
   it("hides create and join buttons when player name is invalid", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         isPlayerNameValid: false,
       })
@@ -66,7 +66,7 @@ describe("gameSetupView component", () => {
 
   it("enables create button when player name is valid", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         isPlayerNameValid: true,
       })
@@ -77,7 +77,7 @@ describe("gameSetupView component", () => {
 
   it("shows join button when existing rooms are available", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         isPlayerNameValid: true,
         hasExistingRooms: true,
@@ -90,7 +90,7 @@ describe("gameSetupView component", () => {
 
   it("hides join button when no existing rooms are available", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         isPlayerNameValid: true,
         hasExistingRooms: false,
@@ -103,7 +103,7 @@ describe("gameSetupView component", () => {
 
   it("shows room input and join button when joining room", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         isJoiningRoom: true,
         isPlayerNameValid: true,
@@ -115,7 +115,7 @@ describe("gameSetupView component", () => {
 
   it("disables join button when room id is empty during join flow", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         isJoiningRoom: true,
         isPlayerNameValid: true,
@@ -128,7 +128,7 @@ describe("gameSetupView component", () => {
 
   it("enables join button when room id is provided during join flow", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         isJoiningRoom: true,
         isPlayerNameValid: true,
@@ -141,7 +141,7 @@ describe("gameSetupView component", () => {
 
   it("shows room banner when room is selected and locked", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         roomId: "TEST01",
         isRoomSelectionLocked: true,
@@ -154,7 +154,7 @@ describe("gameSetupView component", () => {
 
   it("shows copy button in room banner when not joining", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         roomId: "TEST01",
         isRoomSelectionLocked: true,
@@ -166,7 +166,7 @@ describe("gameSetupView component", () => {
 
   it("disables copy button when loading or room id is missing", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         roomId: "",
         isRoomSelectionLocked: true,
@@ -181,7 +181,7 @@ describe("gameSetupView component", () => {
 
   it("displays player names when provided", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         playerNames: ["Alice", "Bob"],
       })
@@ -193,7 +193,7 @@ describe("gameSetupView component", () => {
 
   it("shows inline start button when game can start and not joining", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         playerNames: ["Alice", "Bob"],
         canStartGame: true,
@@ -205,7 +205,7 @@ describe("gameSetupView component", () => {
 
   it("disables start button when loading", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         playerNames: ["Alice", "Bob"],
         canStartGame: true,
@@ -218,7 +218,7 @@ describe("gameSetupView component", () => {
 
   it("hides start button when game cannot start", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         playerNames: ["Alice", "Bob"],
         canStartGame: false,
@@ -232,7 +232,7 @@ describe("gameSetupView component", () => {
 
   it("disables start button when game has started", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         playerNames: ["Alice", "Bob"],
         canStartGame: true,
@@ -245,7 +245,7 @@ describe("gameSetupView component", () => {
 
   it("displays error message when provided", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         errorMessage: "Test error message",
       })
@@ -255,7 +255,7 @@ describe("gameSetupView component", () => {
 
   it("does not display error message when empty", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         errorMessage: "",
       })
@@ -267,7 +267,7 @@ describe("gameSetupView component", () => {
     const user = userEvent.setup();
     const onPlayerNameChange = jest.fn();
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         onPlayerNameChange,
       })
@@ -281,7 +281,7 @@ describe("gameSetupView component", () => {
     const user = userEvent.setup();
     const onRoomIdInputChange = jest.fn();
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         isJoiningRoom: true,
         onRoomIdInputChange,
@@ -296,7 +296,7 @@ describe("gameSetupView component", () => {
     const user = userEvent.setup();
     const onCreateRoom = jest.fn();
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         isPlayerNameValid: true,
         onCreateRoom,
@@ -311,7 +311,7 @@ describe("gameSetupView component", () => {
     const user = userEvent.setup();
     const onJoinRoom = jest.fn();
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         isJoiningRoom: true,
         isPlayerNameValid: true,
@@ -328,7 +328,7 @@ describe("gameSetupView component", () => {
     const user = userEvent.setup();
     const onStartGame = jest.fn();
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         playerNames: ["Alice", "Bob"],
         canStartGame: true,
@@ -344,7 +344,7 @@ describe("gameSetupView component", () => {
     const user = userEvent.setup();
     const onCopyRoomId = jest.fn();
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         roomId: "TEST01",
         isRoomSelectionLocked: true,
@@ -358,7 +358,7 @@ describe("gameSetupView component", () => {
 
   it("shows read-only room banner when isRoomIdReadOnly is true", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         isJoiningRoom: true,
         isRoomIdReadOnly: true,
@@ -374,7 +374,7 @@ describe("gameSetupView component", () => {
 
   it("displays room id from roomIdInput when provided", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         isJoiningRoom: true,
         isRoomIdReadOnly: true,
@@ -387,7 +387,7 @@ describe("gameSetupView component", () => {
 
   it("displays room id from roomId when roomIdInput is empty", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         isJoiningRoom: true,
         isRoomIdReadOnly: true,
@@ -401,7 +401,7 @@ describe("gameSetupView component", () => {
   it("applies player colors to player list items", () => {
     const playerColors = ["#ff0000", "#00ff00", "#0000ff"];
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         playerNames: ["Alice", "Bob", "Charlie"],
         playerColors,
@@ -418,7 +418,7 @@ describe("gameSetupView component", () => {
   it("cycles through player colors when there are more players than colors", () => {
     const playerColors = ["#ff0000", "#00ff00"];
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         playerNames: ["Alice", "Bob", "Charlie"],
         playerColors,
@@ -434,7 +434,7 @@ describe("gameSetupView component", () => {
 
   it("disables all inputs when loading", () => {
     render(
-      React.createElement(gameSetupView, {
+      React.createElement(GameSetupView, {
         ...defaultProps,
         isLoading: true,
       })

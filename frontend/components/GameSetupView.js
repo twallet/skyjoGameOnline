@@ -28,7 +28,7 @@ import React from "https://esm.sh/react@18?dev";
  * @param {boolean} [props.hasExistingRooms=true] - Whether there are existing rooms to join
  * @returns {React.ReactElement} The rendered setup view component
  */
-export function gameSetupView({
+export function GameSetupView({
   isLoading,
   roomId,
   roomIdInput,
