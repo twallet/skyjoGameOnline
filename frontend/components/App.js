@@ -121,7 +121,7 @@ export function App() {
 
       if (urlRoomId) {
         const normalized = normalizeRoomId(urlRoomId);
-        setRoomId((prev) => (prev ? prev : normalized));
+        setRoomId(normalized);
         setIsJoiningExistingRoom(true);
         setIsRoomSelectionLocked(true);
         setHasCreatedRoom(false);
