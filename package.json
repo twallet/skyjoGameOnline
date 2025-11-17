@@ -13,7 +13,7 @@
     "supertest": "^7.0.0"
   },
   "scripts": {
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "test": "node --no-warnings --experimental-vm-modules ./node_modules/jest/bin/jest.js",
     "server": "node ./backend/server.js",
     "prepare": "husky"
   },

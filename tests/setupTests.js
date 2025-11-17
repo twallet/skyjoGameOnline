@@ -13,3 +13,10 @@ if (typeof globalThis.fetch === "undefined") {
     );
   };
 }
+
+// Suppress console.info messages during tests to reduce noise
+// Tests can still access console.info if needed by using jest.spyOn
+const originalConsoleInfo = console.info;
+console.info = () => {
+  // Silently ignore console.info calls during tests
+};
