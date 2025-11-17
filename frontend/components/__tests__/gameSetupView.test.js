@@ -7,7 +7,7 @@ import { GameSetupView } from "../GameSetupView.js";
 
 describe("GameSetupView component", () => {
   const defaultProps = {
-    isLoading: false,
+    isProcessing: false,
     roomId: "",
     gameStarted: false,
     playerName: "",
@@ -138,7 +138,7 @@ describe("GameSetupView component", () => {
         ...defaultProps,
         roomId: "",
         isRoomSelectionLocked: true,
-        isLoading: false,
+        isProcessing: false,
       })
     );
     const copyButton = screen.queryByTitle(/copy join link/i);
@@ -177,7 +177,7 @@ describe("GameSetupView component", () => {
         ...defaultProps,
         playerNames: ["Alice", "Bob"],
         canStartGame: true,
-        isLoading: true,
+        isProcessing: true,
       })
     );
     const startButton = screen.getByRole("button", { name: /^play$/i });
@@ -190,7 +190,7 @@ describe("GameSetupView component", () => {
         ...defaultProps,
         playerNames: ["Alice", "Bob"],
         canStartGame: false,
-        isLoading: false,
+        isProcessing: false,
       })
     );
     expect(
@@ -369,7 +369,7 @@ describe("GameSetupView component", () => {
     render(
       React.createElement(GameSetupView, {
         ...defaultProps,
-        isLoading: true,
+        isProcessing: true,
       })
     );
     const nameInput = screen.getByPlaceholderText(/your name/i);

@@ -6,7 +6,7 @@ import { GameSession } from "../../shared/models/gameSession.js";
  * enter their name, and start the game when ready.
  *
  * @param {Object} props - Component props
- * @param {boolean} props.isLoading - Whether the component is in a loading state
+ * @param {boolean} props.isProcessing - Whether the component is processing an async operation
  * @param {string} props.roomId - The current room ID (if joined/created or from URL)
  * @param {boolean} props.gameStarted - Whether the game has already started
  * @param {string} props.playerName - The current player's name input
@@ -26,7 +26,7 @@ import { GameSession } from "../../shared/models/gameSession.js";
  * @returns {React.ReactElement} The rendered setup view component
  */
 export function GameSetupView({
-  isLoading,
+  isProcessing,
   roomId,
   gameStarted,
   playerName,
@@ -49,15 +49,15 @@ export function GameSetupView({
 
   // Determine if join button should be disabled
   const joinDisabled =
-    isLoading ||
+    isProcessing ||
     !isPlayerNameValid ||
     (isJoiningRoom && trimmedRoomId.length === 0);
 
   // Determine if create button should be disabled
-  const createDisabled = isLoading || !isPlayerNameValid;
+  const createDisabled = isProcessing || !isPlayerNameValid;
 
   // Determine if start button should be disabled
-  const startDisabled = isLoading || !canStartGame || gameStarted;
+  const startDisabled = isProcessing || !canStartGame || gameStarted;
 
   // Show room info banner when room is selected and locked (not in joining flow)
   const shouldShowRoomInfo =
@@ -122,7 +122,7 @@ export function GameSetupView({
                   event.preventDefault();
                 }
               },
-              disabled: isLoading,
+              disabled: isProcessing,
             })
           : null,
       // Join actions: room banner + join button (shown when joining)
@@ -207,7 +207,7 @@ export function GameSetupView({
                       type: "button",
                       className: "setup__copy-button",
                       onClick: onCopyRoomId,
-                      disabled: isLoading || !roomId,
+                      disabled: isProcessing || !roomId,
                       title: "Copy join link",
                     },
                     "📋"

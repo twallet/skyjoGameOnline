@@ -9,7 +9,6 @@ export function GamePlayView({
   deck,
   snapshot = null,
   gameState = null,
-  sessionState = null,
   localPlayerName = "",
   logEntries = [],
   onFlipCard = null,
@@ -17,7 +16,7 @@ export function GamePlayView({
   onReplaceCard = null,
   onRevealCard = null,
   onPlayAgain = null,
-  isSubmittingAction = false,
+  isProcessing = false,
 }) {
   const players = Array.isArray(activePlayers) ? activePlayers : [];
   const gridRef = React.useRef(null);
@@ -228,8 +227,7 @@ export function GamePlayView({
     };
   }, [players, layout.columns, maxHandColumns]);
 
-  const state =
-    sessionState ?? gameState ?? (snapshot ? snapshot.state : null) ?? null;
+  const state = gameState ?? (snapshot ? snapshot.state : null) ?? null;
   const phase = state?.phase ?? null;
   const initialFlipState = state?.initialFlip ?? null;
   const initialFlipPlayers = Array.isArray(initialFlipState?.players)
@@ -262,7 +260,7 @@ export function GamePlayView({
     isLocalActive &&
     !drawnCard &&
     typeof onDrawCard === "function" &&
-    !isSubmittingAction;
+    !isProcessing;
   const canDrawFromDeck = canControlDraws;
   const canDrawFromDiscard =
     canControlDraws &&
@@ -274,7 +272,7 @@ export function GamePlayView({
   const [isLogExpanded, setIsLogExpanded] = useState(false);
   const canDropOnDiscard = drawnBelongsToLocal && !drawnFromDiscard;
   const canResolveDrawnCard =
-    drawnBelongsToLocal && !isSubmittingAction && Boolean(drawnCard);
+    drawnBelongsToLocal && !isProcessing && Boolean(drawnCard);
   const shouldShakeDiscard =
     drawnBelongsToLocal && mainActionMode === "replace" && canDropOnDiscard;
   const shouldShakeDrawSources =
@@ -542,7 +540,7 @@ export function GamePlayView({
   }, [finalRoundScores, winnerName]);
 
   const instructionMessage = useMemo(() => {
-    if (isSubmittingAction) {
+    if (isProcessing) {
       return "Processing your action...";
     }
     if (!state) {
@@ -654,7 +652,7 @@ export function GamePlayView({
 
     return "Waiting for the latest game state...";
   }, [
-    isSubmittingAction,
+    isProcessing,
     state,
     initialFlipPlayers,
     requiredInitialReveals,
@@ -779,7 +777,7 @@ export function GamePlayView({
           type: "button",
           className: "final-summary__action",
           onClick: typeof onPlayAgain === "function" ? onPlayAgain : undefined,
-          disabled: typeof onPlayAgain !== "function" || isSubmittingAction,
+          disabled: typeof onPlayAgain !== "function" || isProcessing,
         },
         "Play again"
       )
@@ -1022,7 +1020,7 @@ export function GamePlayView({
             requiredInitialReveals > flippedPositions.size &&
             isHidden &&
             !alreadyFlipped &&
-            !isSubmittingAction;
+            !isProcessing;
 
           const allowReplace =
             isLocalPlayer &&

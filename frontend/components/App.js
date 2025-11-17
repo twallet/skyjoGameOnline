@@ -65,7 +65,17 @@ export function App() {
   const playerColors = useMemo(() => buildPlayerColors(skyjo.maxPlayers), []);
 
   // Room management state
+  /**
+   * Current room ID. Empty string initially, set once when creating or joining a room,
+   * and remains unchanged for the session. Used to identify the game room on the server.
+   * Used in: GameSetupView
+   */
   const [roomId, setRoomId] = useState("");
+  /**
+   * Room state metadata including player list, game status flags, and room capabilities.
+   * Used to control UI visibility and button states in the setup view.
+   * Used in: GameSetupView
+   */
   const [roomState, setRoomState] = useState({
     players: [],
     canAddPlayer: true,
@@ -74,39 +84,131 @@ export function App() {
   });
 
   // UI state
-  const [isLoading, setIsLoading] = useState(false);
+  /**
+   * Processing indicator flag. Set to true during async operations (creating/joining rooms,
+   * loading room state, game actions) to disable UI controls and prevent duplicate actions.
+   * Used in: GameSetupView, GamePlayView
+   */
+  const [isProcessing, setIsProcessing] = useState(false);
+  /**
+   * Error message displayed to the user. Set when API calls fail or validation errors occur.
+   * Empty string when there are no errors.
+   * Used in: GameSetupView
+   */
   const [errorMessage, setErrorMessage] = useState("");
 
   // Player management state
+  /**
+   * List of all player names currently in the room. Updated when players join or leave.
+   * Used to display the player list in the setup view.
+   * Used in: GameSetupView
+   */
   const [playerNames, setPlayerNames] = useState([]);
+  /**
+   * Current value of the player name input field. Used for controlled input component.
+   * May be cleared or preserved based on room flow state.
+   * Used in: GameSetupView
+   */
   const [newPlayerName, setNewPlayerName] = useState("");
+  /**
+   * Name of the local player (the user of this browser session). Set when joining or creating a room.
+   * Used to identify which player's view to highlight in the game view.
+   * Used in: GamePlayView
+   */
   const [localPlayerName, setLocalPlayerName] = useState("");
 
   // Game state
+  /**
+   * Flag indicating whether the game has started. When true, switches from setup view to game view.
+   * Set when the game is started via API call.
+   * Used in: Internal (controls which view to render)
+   */
   const [gameStarted, setGameStarted] = useState(false);
+  /**
+   * Array of active player objects with their game state (hands, scores, etc.).
+   * Updated from server snapshots during gameplay.
+   * Used in: GamePlayView
+   */
   const [activePlayers, setActivePlayers] = useState([]);
+  /**
+   * Deck view data structure containing card information for display.
+   * Includes deck and discard pile states, formatted for UI rendering.
+   * Used in: GamePlayView
+   */
   const [deckView, setDeckView] = useState(null);
+  /**
+   * Complete game snapshot from the server, including players, deck, state, and log entries.
+   * Used to restore game state after page refresh or reconnection.
+   * Used in: GamePlayView
+   */
   const [currentSnapshot, setCurrentSnapshot] = useState(null);
-  const [sessionState, setSessionState] = useState(null);
+  /**
+   * Current game state including turn information, pending actions, and game phase.
+   * Extracted from snapshot.state, used to control game flow and validate actions.
+   * Used in: GamePlayView
+   */
+  const [gameState, setGameState] = useState(null);
+  /**
+   * Array of log entries showing game events and player actions.
+   * Updated from server snapshots to display game history.
+   * Used in: GamePlayView
+   */
   const [logEntries, setLogEntries] = useState([]);
-  const [isSubmittingAction, setIsSubmittingAction] = useState(false);
 
   // Room flow state
+  /**
+   * Flag indicating the user is in the "join existing room" flow (from URL invite link).
+   * Controls which UI elements are shown in the setup view.
+   * Used in: GameSetupView (as isJoiningRoom prop)
+   */
   const [isJoiningExistingRoom, setIsJoiningExistingRoom] = useState(false);
+  /**
+   * Flag indicating the user has successfully created a room.
+   * Used to hide the player name input and show room management UI.
+   * Used in: GameSetupView
+   */
   const [hasCreatedRoom, setHasCreatedRoom] = useState(false);
+  /**
+   * Flag indicating room selection is locked (user has created or joined a room).
+   * Prevents changing room ID and shows room-specific UI elements.
+   * Used in: GameSetupView
+   */
   const [isRoomSelectionLocked, setIsRoomSelectionLocked] = useState(false);
 
   // LAN host configuration for local network sharing
+  /**
+   * Local network IP address for sharing room links with devices on the same Wi-Fi network.
+   * Loaded from localStorage on mount, can be set via user prompt when creating a room.
+   * Used to generate shareable links with local IP instead of localhost.
+   * Used in: Internal (for generating invite links)
+   */
   const [lanHost, setLanHost] = useState(() => {
     if (typeof window !== "undefined" && window.localStorage) {
       return window.localStorage.getItem("skyjo:lanHost") ?? "";
     }
     return "";
   });
+  /**
+   * Flag indicating the user has skipped the LAN host prompt.
+   * Prevents showing the prompt again during the same session.
+   * Used in: Internal (controls LAN host prompt display)
+   */
   const [lanHostSkipped, setLanHostSkipped] = useState(false);
 
   // Refs for tracking state across renders
+  /**
+   * Counter tracking how many log entries have been logged to console.
+   * Used to avoid duplicate console logs when logEntries array updates.
+   * Persists across renders without causing re-renders.
+   * Used in: Internal (for console logging optimization)
+   */
   const loggedEventCountRef = useRef(0);
+  /**
+   * Flag tracking if a room state fetch is currently in progress.
+   * Used to prevent concurrent silent room state fetches from overlapping.
+   * Persists across renders without causing re-renders.
+   * Used in: Internal (for preventing concurrent API calls)
+   */
   const isFetchingRoomRef = useRef(false);
 
   // Parse URL parameters on mount to support invite links
@@ -204,7 +306,7 @@ export function App() {
 
     isFetchingRoomRef.current = true;
     if (!silent) {
-      setIsLoading(true);
+      setIsProcessing(true);
       consoleLogger.info(`Client action: loading room '${normalizedRoomId}'`);
     }
 
@@ -220,7 +322,7 @@ export function App() {
       const snapshot = data.snapshot ?? null;
       if (snapshot) {
         setCurrentSnapshot(snapshot);
-        setSessionState(snapshot.state ?? null);
+        setGameState(snapshot.state ?? null);
         setGameStarted(true);
         setLogEntries(
           Array.isArray(snapshot.logEntries) ? snapshot.logEntries : []
@@ -232,7 +334,7 @@ export function App() {
       } else {
         resetGameState(
           setCurrentSnapshot,
-          setSessionState,
+          setGameState,
           setGameStarted,
           setLogEntries,
           setActivePlayers,
@@ -260,7 +362,7 @@ export function App() {
         setPlayerNames([]);
         resetGameState(
           setCurrentSnapshot,
-          setSessionState,
+          setGameState,
           setGameStarted,
           setLogEntries,
           setActivePlayers,
@@ -269,7 +371,7 @@ export function App() {
       }
     } finally {
       if (!silent) {
-        setIsLoading(false);
+        setIsProcessing(false);
       }
       isFetchingRoomRef.current = false;
     }
@@ -280,8 +382,8 @@ export function App() {
     if (!roomId) {
       return;
     }
-    const pendingRemovals = Array.isArray(sessionState?.pendingColumnRemovals)
-      ? sessionState.pendingColumnRemovals
+    const pendingRemovals = Array.isArray(gameState?.pendingColumnRemovals)
+      ? gameState.pendingColumnRemovals
       : [];
     if (pendingRemovals.length === 0) {
       return;
@@ -312,7 +414,7 @@ export function App() {
         }
       });
     };
-  }, [roomId, sessionState?.pendingColumnRemovals]);
+  }, [roomId, gameState?.pendingColumnRemovals]);
 
   // Load room state when room ID changes
   useEffect(() => {
@@ -391,7 +493,7 @@ export function App() {
     };
 
     setCurrentSnapshot(snapshot);
-    setSessionState(state ?? null);
+    setGameState(state ?? null);
     setActivePlayers(Array.isArray(players) ? players : []);
     setDeckView(buildDeckView(deck));
     setLogEntries(entries);
@@ -454,7 +556,7 @@ export function App() {
       return;
     }
 
-    setIsSubmittingAction(true);
+    setIsProcessing(true);
     try {
       const {
         players = [],
@@ -473,7 +575,7 @@ export function App() {
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
     } finally {
-      setIsSubmittingAction(false);
+      setIsProcessing(false);
     }
   };
 
@@ -487,7 +589,7 @@ export function App() {
       return;
     }
 
-    setIsSubmittingAction(true);
+    setIsProcessing(true);
     try {
       const payload = await RoomApi.drawCard(roomId, playerName, source);
       applySessionPayload(payload);
@@ -495,7 +597,7 @@ export function App() {
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
     } finally {
-      setIsSubmittingAction(false);
+      setIsProcessing(false);
     }
   };
 
@@ -514,7 +616,7 @@ export function App() {
       return;
     }
 
-    setIsSubmittingAction(true);
+    setIsProcessing(true);
     try {
       try {
         await RoomApi.resetRoom(roomId);
@@ -545,7 +647,7 @@ export function App() {
         getErrorMessage(error) || "Unable to restart the game automatically."
       );
     } finally {
-      setIsSubmittingAction(false);
+      setIsProcessing(false);
     }
   };
 
@@ -559,7 +661,7 @@ export function App() {
       return;
     }
 
-    setIsSubmittingAction(true);
+    setIsProcessing(true);
     try {
       const payload = await RoomApi.replaceWithDrawnCard(
         roomId,
@@ -571,7 +673,7 @@ export function App() {
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
     } finally {
-      setIsSubmittingAction(false);
+      setIsProcessing(false);
     }
   };
 
@@ -585,7 +687,7 @@ export function App() {
       return;
     }
 
-    setIsSubmittingAction(true);
+    setIsProcessing(true);
     try {
       const payload = await RoomApi.revealAfterDiscard(
         roomId,
@@ -597,7 +699,7 @@ export function App() {
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
     } finally {
-      setIsSubmittingAction(false);
+      setIsProcessing(false);
     }
   };
 
@@ -662,7 +764,7 @@ export function App() {
         await RoomApi.getRoom(normalizedRoomId);
       } catch (lookupError) {
         setErrorMessage(getErrorMessage(lookupError));
-        setIsLoading(false);
+        setIsProcessing(false);
         return;
       }
 
@@ -680,14 +782,14 @@ export function App() {
       setIsJoiningExistingRoom(false);
       setHasCreatedRoom(false);
       setCurrentSnapshot(null);
-      setSessionState(null);
+      setGameState(null);
       consoleLogger.info(
         `Client event: joined room '${joinedRoomId}' as '${trimmedPlayerName}'. Total players: ${updatedNames.length}`
       );
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
     } finally {
-      setIsLoading(false);
+      setIsProcessing(false);
     }
   };
 
@@ -775,7 +877,7 @@ export function App() {
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
     } finally {
-      setIsLoading(false);
+      setIsProcessing(false);
     }
   };
 
@@ -869,7 +971,7 @@ export function App() {
       activePlayers,
       deck: deckView,
       snapshot: currentSnapshot,
-      sessionState,
+      gameState,
       logEntries,
       onFlipCard: handleRevealInitialCard,
       onDrawCard: handleDrawCard,
@@ -877,12 +979,12 @@ export function App() {
       onRevealCard: handleRevealAfterDiscard,
       onPlayAgain: handlePlayAgain,
       localPlayerName,
-      isSubmittingAction,
+      isProcessing,
     });
   }
 
   return React.createElement(GameSetupView, {
-    isLoading,
+    isProcessing,
     roomId,
     gameStarted: roomState.gameStarted,
     isJoiningRoom: isJoiningExistingRoom,
