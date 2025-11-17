@@ -131,8 +131,11 @@ export function App() {
     }
   }, []);
 
-  // Sync room ID with URL query parameters
-  useEffect(() => {
+  /**
+   * Syncs room ID to URL query parameters.
+   * @param {string} targetRoomId - The room ID to sync to URL
+   */
+  const syncRoomIdToUrl = (targetRoomId) => {
     if (
       typeof window === "undefined" ||
       typeof window.history?.replaceState !== "function"
@@ -142,8 +145,8 @@ export function App() {
 
     try {
       const url = new URL(window.location.href);
-      if (roomId) {
-        url.searchParams.set("roomId", roomId);
+      if (targetRoomId) {
+        url.searchParams.set("roomId", targetRoomId);
       } else {
         url.searchParams.delete("roomId");
       }
@@ -155,7 +158,7 @@ export function App() {
     } catch (error) {
       consoleLogger.error("Failed to sync room id with URL", error);
     }
-  }, [roomId]);
+  };
 
   // Log new log entries to console
   useEffect(() => {
@@ -668,6 +671,7 @@ export function App() {
         roomId: joinedRoomId = normalizedRoomId,
       } = await RoomApi.joinRoom(normalizedRoomId, trimmedPlayerName);
       setRoomId(joinedRoomId);
+      syncRoomIdToUrl(joinedRoomId);
       setLocalPlayerName(trimmedPlayerName);
       setPlayerNames(updatedNames);
       setRoomState(createRoomState(updatedNames, skyjo, false));
@@ -723,6 +727,7 @@ export function App() {
       );
       setErrorMessage("");
       setRoomId(normalizedId);
+      syncRoomIdToUrl(normalizedId);
       setLocalPlayerName(trimmedPlayerName);
       setPlayerNames(updatedNames);
       setRoomState(createRoomState(updatedNames, skyjo, false));
