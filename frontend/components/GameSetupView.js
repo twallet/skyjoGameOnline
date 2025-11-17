@@ -1,4 +1,5 @@
 import React from "https://esm.sh/react@18?dev";
+import { GameSession } from "../../shared/models/gameSession.js";
 
 /**
  * Renders the game setup view for Skyjo, allowing players to create or join rooms,
@@ -135,7 +136,11 @@ export function GameSetupView({
                 const noSelection =
                   event.currentTarget.selectionStart ===
                   event.currentTarget.selectionEnd;
-                if (isCharacterKey && noSelection && playerName.length >= 15) {
+                if (
+                  isCharacterKey &&
+                  noSelection &&
+                  playerName.length >= GameSession.MAX_PLAYER_NAME_LENGTH
+                ) {
                   event.preventDefault();
                 }
               },

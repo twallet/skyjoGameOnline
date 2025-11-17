@@ -16,6 +16,9 @@ export class GameSession {
   #mainPhaseAnnounced = false;
   #lastSnapshot = null;
   static #MAX_PLAYER_NAME_LENGTH = 15;
+  static get MAX_PLAYER_NAME_LENGTH() {
+    return GameSession.#MAX_PLAYER_NAME_LENGTH;
+  }
   #logger;
   #finalRoundTriggeredBy = null;
   #finalScoresLogged = false;

@@ -7,6 +7,7 @@ import React, {
 } from "https://esm.sh/react@18?dev";
 
 import { Game } from "../../shared/models/game.js";
+import { GameSession } from "../../shared/models/gameSession.js";
 import { consoleLogger } from "../../shared/logger.js";
 import { generateRoomId } from "../../shared/generateRoomId.js";
 import { buildPlayerColors } from "../../shared/utils/playerColors.js";
@@ -138,7 +139,7 @@ export function App() {
       }
 
       if (urlName) {
-        const cappedName = urlName.slice(0, 15);
+        const cappedName = urlName.slice(0, GameSession.MAX_PLAYER_NAME_LENGTH);
         setNewPlayerName((prev) => (prev ? prev : cappedName));
       }
     } catch (error) {
@@ -653,7 +654,9 @@ export function App() {
   // Player name validation
   const trimmedPlayerName = newPlayerName.trim();
   const playerNameLength = trimmedPlayerName.length;
-  const isPlayerNameValid = playerNameLength > 0 && playerNameLength <= 15;
+  const isPlayerNameValid =
+    playerNameLength > 0 &&
+    playerNameLength <= GameSession.MAX_PLAYER_NAME_LENGTH;
 
   /**
    * Validates player name and sets error message if invalid.
@@ -664,8 +667,10 @@ export function App() {
       setErrorMessage("Player name must not be empty.");
       return false;
     }
-    if (playerNameLength > 15) {
-      setErrorMessage("Player name must be 15 characters or fewer.");
+    if (playerNameLength > GameSession.MAX_PLAYER_NAME_LENGTH) {
+      setErrorMessage(
+        `Player name must be ${GameSession.MAX_PLAYER_NAME_LENGTH} characters or fewer.`
+      );
       return false;
     }
     setErrorMessage("");
@@ -767,7 +772,7 @@ export function App() {
       setNewPlayerName("");
       return;
     }
-    const capped = value.slice(0, 15);
+    const capped = value.slice(0, GameSession.MAX_PLAYER_NAME_LENGTH);
     setNewPlayerName(capped);
   };
 
