@@ -180,100 +180,97 @@ export function App() {
 
   /**
    * Loads room state from the server and updates local state.
-   * @param {string} [targetRoomId=roomId] - The room ID to load
+   * @param {string} targetRoomId - The room ID to load
    * @param {Object} [options={}] - Options object
    * @param {boolean} [options.silent=false] - If true, don't show loading indicator
    * @param {boolean} [options.preservePlayerName=false] - If true, don't clear player name input
    */
-  const loadRoomState = useCallback(
-    async (
-      targetRoomId = roomId,
-      { silent = false, preservePlayerName = false } = {}
-    ) => {
-      const normalizedRoomId = normalizeRoomId(targetRoomId) || roomId;
+  const loadRoomState = async (
+    targetRoomId,
+    { silent = false, preservePlayerName = false } = {}
+  ) => {
+    const normalizedRoomId = normalizeRoomId(targetRoomId);
 
-      if (!normalizedRoomId) {
-        return;
-      }
+    if (!normalizedRoomId) {
+      return;
+    }
 
-      if (silent && isFetchingRoomRef.current) {
-        return;
-      }
+    if (silent && isFetchingRoomRef.current) {
+      return;
+    }
 
-      isFetchingRoomRef.current = true;
-      if (!silent) {
-        setIsLoading(true);
-        consoleLogger.info(`Client action: loading room '${normalizedRoomId}'`);
-      }
+    isFetchingRoomRef.current = true;
+    if (!silent) {
+      setIsLoading(true);
+      consoleLogger.info(`Client action: loading room '${normalizedRoomId}'`);
+    }
 
-      try {
-        const data = await RoomApi.getRoom(normalizedRoomId);
+    try {
+      const data = await RoomApi.getRoom(normalizedRoomId);
 
-        setRoomState(
-          createRoomState(data.players ?? [], skyjo, Boolean(data.gameStarted))
+      setRoomState(
+        createRoomState(data.players ?? [], skyjo, Boolean(data.gameStarted))
+      );
+      setPlayerNames(data.players ?? []);
+      setErrorMessage("");
+
+      const snapshot = data.snapshot ?? null;
+      if (snapshot) {
+        setCurrentSnapshot(snapshot);
+        setSessionState(snapshot.state ?? null);
+        setGameStarted(true);
+        setLogEntries(
+          Array.isArray(snapshot.logEntries) ? snapshot.logEntries : []
         );
-        setPlayerNames(data.players ?? []);
-        setErrorMessage("");
-
-        const snapshot = data.snapshot ?? null;
-        if (snapshot) {
-          setCurrentSnapshot(snapshot);
-          setSessionState(snapshot.state ?? null);
-          setGameStarted(true);
-          setLogEntries(
-            Array.isArray(snapshot.logEntries) ? snapshot.logEntries : []
-          );
-          setActivePlayers(
-            Array.isArray(snapshot.players) ? snapshot.players : []
-          );
-          setDeckView(buildDeckView(snapshot.deck));
-        } else {
-          resetGameState(
-            setCurrentSnapshot,
-            setSessionState,
-            setGameStarted,
-            setLogEntries,
-            setActivePlayers,
-            setDeckView
-          );
-        }
-
-        if (!silent && !preservePlayerName) {
-          setNewPlayerName("");
-        }
-
-        if (!silent) {
-          const playerCount = Array.isArray(data.players)
-            ? data.players.length
-            : 0;
-          consoleLogger.info(
-            `Client event: loaded room '${normalizedRoomId}' with ${playerCount} players`
-          );
-        }
-      } catch (error) {
-        consoleLogger.error("Failed to load room state", error);
-        if (!silent) {
-          setErrorMessage(getErrorMessage(error));
-          setRoomState(createRoomState([], skyjo, false));
-          setPlayerNames([]);
-          resetGameState(
-            setCurrentSnapshot,
-            setSessionState,
-            setGameStarted,
-            setLogEntries,
-            setActivePlayers,
-            setDeckView
-          );
-        }
-      } finally {
-        if (!silent) {
-          setIsLoading(false);
-        }
-        isFetchingRoomRef.current = false;
+        setActivePlayers(
+          Array.isArray(snapshot.players) ? snapshot.players : []
+        );
+        setDeckView(buildDeckView(snapshot.deck));
+      } else {
+        resetGameState(
+          setCurrentSnapshot,
+          setSessionState,
+          setGameStarted,
+          setLogEntries,
+          setActivePlayers,
+          setDeckView
+        );
       }
-    },
-    [roomId]
-  );
+
+      if (!silent && !preservePlayerName) {
+        setNewPlayerName("");
+      }
+
+      if (!silent) {
+        const playerCount = Array.isArray(data.players)
+          ? data.players.length
+          : 0;
+        consoleLogger.info(
+          `Client event: loaded room '${normalizedRoomId}' with ${playerCount} players`
+        );
+      }
+    } catch (error) {
+      consoleLogger.error("Failed to load room state", error);
+      if (!silent) {
+        setErrorMessage(getErrorMessage(error));
+        setRoomState(createRoomState([], skyjo, false));
+        setPlayerNames([]);
+        resetGameState(
+          setCurrentSnapshot,
+          setSessionState,
+          setGameStarted,
+          setLogEntries,
+          setActivePlayers,
+          setDeckView
+        );
+      }
+    } finally {
+      if (!silent) {
+        setIsLoading(false);
+      }
+      isFetchingRoomRef.current = false;
+    }
+  };
 
   // Set up timers for pending column removals to refresh room state
   useEffect(() => {
@@ -312,7 +309,7 @@ export function App() {
         }
       });
     };
-  }, [roomId, sessionState?.pendingColumnRemovals, loadRoomState]);
+  }, [roomId, sessionState?.pendingColumnRemovals]);
 
   // Load room state when room ID changes
   useEffect(() => {
@@ -325,13 +322,7 @@ export function App() {
       preservePlayerName:
         hasCreatedRoom || isJoiningExistingRoom || isRoomSelectionLocked,
     });
-  }, [
-    roomId,
-    loadRoomState,
-    hasCreatedRoom,
-    isJoiningExistingRoom,
-    isRoomSelectionLocked,
-  ]);
+  }, [roomId, hasCreatedRoom, isJoiningExistingRoom, isRoomSelectionLocked]);
 
   // Poll room state every 4 seconds to keep UI in sync
   useEffect(() => {
@@ -346,7 +337,7 @@ export function App() {
     return () => {
       clearInterval(intervalId);
     };
-  }, [roomId, loadRoomState]);
+  }, [roomId]);
 
   // Update document title with room and player info
   useEffect(() => {
