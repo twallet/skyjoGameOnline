@@ -22,7 +22,6 @@ describe("GameSetupView component", () => {
     isPlayerNameValid: false,
     isJoiningRoom: false,
     hasCreatedRoom: false,
-    isRoomSelectionLocked: false,
     onCopyRoomId: jest.fn(),
   };
 
@@ -30,7 +29,7 @@ describe("GameSetupView component", () => {
     jest.clearAllMocks();
   });
 
-  it("renders the player name input when not in room selection locked state", () => {
+  it("renders the player name input when room has not been created", () => {
     render(React.createElement(GameSetupView, defaultProps));
     expect(screen.getByPlaceholderText(/your name/i)).toBeInTheDocument();
   });
@@ -107,12 +106,11 @@ describe("GameSetupView component", () => {
     expect(joinButton).toBeEnabled();
   });
 
-  it("shows room banner when room is selected and locked", () => {
+  it("shows room banner when room is selected and not joining", () => {
     render(
       React.createElement(GameSetupView, {
         ...defaultProps,
         roomId: "TEST01",
-        isRoomSelectionLocked: true,
         isJoiningRoom: false,
       })
     );
@@ -125,7 +123,6 @@ describe("GameSetupView component", () => {
       React.createElement(GameSetupView, {
         ...defaultProps,
         roomId: "TEST01",
-        isRoomSelectionLocked: true,
         isJoiningRoom: false,
       })
     );
@@ -137,7 +134,7 @@ describe("GameSetupView component", () => {
       React.createElement(GameSetupView, {
         ...defaultProps,
         roomId: "",
-        isRoomSelectionLocked: true,
+        isJoiningRoom: false,
         isProcessing: false,
       })
     );
@@ -300,7 +297,7 @@ describe("GameSetupView component", () => {
       React.createElement(GameSetupView, {
         ...defaultProps,
         roomId: "TEST01",
-        isRoomSelectionLocked: true,
+        isJoiningRoom: false,
         onCopyRoomId,
       })
     );

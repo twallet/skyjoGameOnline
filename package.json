@@ -1,4 +1,6 @@
 {
+  "name": "skijo",
+  "version": "1.0.0",
   "type": "module",
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",

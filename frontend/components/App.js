@@ -168,12 +168,6 @@ export function App() {
    * Used in: GameSetupView
    */
   const [hasCreatedRoom, setHasCreatedRoom] = useState(false);
-  /**
-   * Flag indicating room selection is locked (user has created or joined a room).
-   * Prevents changing room ID and shows room-specific UI elements.
-   * Used in: GameSetupView
-   */
-  const [isRoomSelectionLocked, setIsRoomSelectionLocked] = useState(false);
 
   // LAN host configuration for local network sharing
   /**
@@ -225,7 +219,6 @@ export function App() {
         const normalized = normalizeRoomId(urlRoomId);
         setRoomId(normalized);
         setIsJoiningExistingRoom(true);
-        setIsRoomSelectionLocked(true);
         setHasCreatedRoom(false);
       }
     } catch (error) {
@@ -424,10 +417,9 @@ export function App() {
 
     loadRoomState(roomId, {
       silent: false,
-      preservePlayerName:
-        hasCreatedRoom || isJoiningExistingRoom || isRoomSelectionLocked,
+      preservePlayerName: hasCreatedRoom || isJoiningExistingRoom,
     });
-  }, [roomId, hasCreatedRoom, isJoiningExistingRoom, isRoomSelectionLocked]);
+  }, [roomId, hasCreatedRoom, isJoiningExistingRoom]);
 
   // Poll room state every 4 seconds to keep UI in sync
   useEffect(() => {
@@ -712,14 +704,17 @@ export function App() {
 
   /**
    * Validates player name and sets error message if invalid.
+   * @param {string} playerName - The player name to validate (optional, defaults to current newPlayerName)
    * @returns {boolean} True if player name is valid
    */
-  const ensureValidPlayerName = () => {
-    if (playerNameLength === 0) {
+  const ensureValidPlayerName = (playerName = newPlayerName) => {
+    const trimmed = playerName.trim();
+    const length = trimmed.length;
+    if (length === 0) {
       setErrorMessage("Player name must not be empty.");
       return false;
     }
-    if (playerNameLength > GameSession.MAX_PLAYER_NAME_LENGTH) {
+    if (length > GameSession.MAX_PLAYER_NAME_LENGTH) {
       setErrorMessage(
         `Player name must be ${GameSession.MAX_PLAYER_NAME_LENGTH} characters or fewer.`
       );
@@ -740,7 +735,8 @@ export function App() {
    * Handles joining an existing room from URL invite link.
    */
   const handleJoinRoom = async () => {
-    if (!ensureValidPlayerName()) {
+    const currentPlayerName = newPlayerName.trim();
+    if (!ensureValidPlayerName(currentPlayerName)) {
       return;
     }
 
@@ -754,11 +750,10 @@ export function App() {
       setErrorMessage("Room ID must not be empty to join.");
       return;
     }
-
     setIsProcessing(true);
     try {
       consoleLogger.info(
-        `Client action: attempting to join room '${normalizedRoomId}' as '${trimmedPlayerName}'`
+        `Client action: attempting to join room '${normalizedRoomId}' as '${currentPlayerName}'`
       );
       try {
         await RoomApi.getRoom(normalizedRoomId);
@@ -771,20 +766,20 @@ export function App() {
       const {
         players: updatedNames = [],
         roomId: joinedRoomId = normalizedRoomId,
-      } = await RoomApi.joinRoom(normalizedRoomId, trimmedPlayerName);
+      } = await RoomApi.joinRoom(normalizedRoomId, currentPlayerName);
       setRoomId(joinedRoomId);
       syncRoomIdToUrl(joinedRoomId);
-      setLocalPlayerName(trimmedPlayerName);
+      setLocalPlayerName(currentPlayerName);
       setPlayerNames(updatedNames);
       setRoomState(createRoomState(updatedNames, skyjo, false));
       setErrorMessage("");
-      setNewPlayerName(trimmedPlayerName);
+      setNewPlayerName(currentPlayerName);
       setIsJoiningExistingRoom(false);
       setHasCreatedRoom(false);
       setCurrentSnapshot(null);
       setGameState(null);
       consoleLogger.info(
-        `Client event: joined room '${joinedRoomId}' as '${trimmedPlayerName}'. Total players: ${updatedNames.length}`
+        `Client event: joined room '${joinedRoomId}' as '${currentPlayerName}'. Total players: ${updatedNames.length}`
       );
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
@@ -810,27 +805,27 @@ export function App() {
    * Handles creating a new room and joining as the first player.
    */
   const handleCreateRoom = async () => {
-    if (!ensureValidPlayerName()) {
+    const currentPlayerName = newPlayerName.trim();
+    if (!ensureValidPlayerName(currentPlayerName)) {
       return;
     }
     setIsJoiningExistingRoom(false);
-    setIsRoomSelectionLocked(true);
     setIsProcessing(true);
     try {
       consoleLogger.info(
-        `Client action: creating new room as '${trimmedPlayerName}'`
+        `Client action: creating new room as '${currentPlayerName}'`
       );
       const { roomId: createdId = generateRoomId() } =
         await RoomApi.createRoom();
       const normalizedId = normalizeRoomId(createdId);
       const { players: updatedNames = [] } = await RoomApi.joinRoom(
         normalizedId,
-        trimmedPlayerName
+        currentPlayerName
       );
       setErrorMessage("");
       setRoomId(normalizedId);
       syncRoomIdToUrl(normalizedId);
-      setLocalPlayerName(trimmedPlayerName);
+      setLocalPlayerName(currentPlayerName);
       setPlayerNames(updatedNames);
       setRoomState(createRoomState(updatedNames, skyjo, false));
       resetGameState(
@@ -841,7 +836,7 @@ export function App() {
         setActivePlayers,
         setDeckView
       );
-      setNewPlayerName(trimmedPlayerName);
+      setNewPlayerName(currentPlayerName);
       setHasCreatedRoom(true);
       let lanHostForCopy = undefined;
       if (
@@ -868,7 +863,7 @@ export function App() {
         }
       }
       consoleLogger.info(
-        `Client event: created room '${normalizedId}' and joined as '${trimmedPlayerName}'. Total players: ${updatedNames.length}`
+        `Client event: created room '${normalizedId}' and joined as '${currentPlayerName}'. Total players: ${updatedNames.length}`
       );
       await copyInviteLinkToClipboard({
         roomIdToCopy: normalizedId,
@@ -989,7 +984,6 @@ export function App() {
     gameStarted: roomState.gameStarted,
     isJoiningRoom: isJoiningExistingRoom,
     hasCreatedRoom,
-    isRoomSelectionLocked,
     isPlayerNameValid,
     playerName: newPlayerName,
     onCreateRoom: handleCreateRoom,

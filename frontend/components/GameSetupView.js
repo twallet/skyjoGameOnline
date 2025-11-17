@@ -21,7 +21,6 @@ import { GameSession } from "../../shared/models/gameSession.js";
  * @param {boolean} props.isPlayerNameValid - Whether the player name is valid
  * @param {boolean} props.isJoiningRoom - Whether the user is in the join room flow
  * @param {boolean} props.hasCreatedRoom - Whether the user has created a room
- * @param {boolean} props.isRoomSelectionLocked - Whether room selection is locked
  * @param {Function} props.onCopyRoomId - Callback to copy the room ID
  * @returns {React.ReactElement} The rendered setup view component
  */
@@ -41,7 +40,6 @@ export function GameSetupView({
   isPlayerNameValid,
   isJoiningRoom,
   hasCreatedRoom,
-  isRoomSelectionLocked,
   onCopyRoomId,
 }) {
   // Get trimmed room ID for validation purposes
@@ -59,9 +57,8 @@ export function GameSetupView({
   // Determine if start button should be disabled
   const startDisabled = isProcessing || !canStartGame || gameStarted;
 
-  // Show room info banner when room is selected and locked (not in joining flow)
-  const shouldShowRoomInfo =
-    !isJoiningRoom && isRoomSelectionLocked && Boolean(roomId);
+  // Show room info banner when room is selected and not in joining flow
+  const shouldShowRoomInfo = !isJoiningRoom && Boolean(roomId);
 
   // Show inline start button in player list when game can start and not joining
   const showInlineStart = canStartGame && !isJoiningRoom;
@@ -74,10 +71,7 @@ export function GameSetupView({
 
   // Show create actions (new room button) when appropriate
   const showCreateActions =
-    !isJoiningRoom &&
-    !isRoomSelectionLocked &&
-    !hasCreatedRoom &&
-    isPlayerNameValid;
+    !isJoiningRoom && !hasCreatedRoom && isPlayerNameValid;
 
   return React.createElement(
     "main",
@@ -91,40 +85,38 @@ export function GameSetupView({
         alt: "Skyjo game box",
         className: "setup__hero",
       }),
-      // Player name input - shown when room not created and (room not locked OR name invalid OR joining)
+      // Player name input - shown when room not created
       hasCreatedRoom
         ? null
-        : !isRoomSelectionLocked || !isPlayerNameValid || isJoiningRoom
-          ? React.createElement("input", {
-              id: "player-name-input",
-              className: "setup__player-input",
-              type: "text",
-              placeholder: "Your Name",
-              autoFocus: true,
-              maxLength: 15,
-              value: playerName,
-              onChange: (event) => onPlayerNameChange(event.target.value),
-              // Prevent typing when at max length (unless replacing selected text)
-              onKeyDown: (event) => {
-                const isCharacterKey =
-                  event.key.length === 1 &&
-                  !event.ctrlKey &&
-                  !event.metaKey &&
-                  !event.altKey;
-                const noSelection =
-                  event.currentTarget.selectionStart ===
-                  event.currentTarget.selectionEnd;
-                if (
-                  isCharacterKey &&
-                  noSelection &&
-                  playerName.length >= GameSession.MAX_PLAYER_NAME_LENGTH
-                ) {
-                  event.preventDefault();
-                }
-              },
-              disabled: isProcessing,
-            })
-          : null,
+        : React.createElement("input", {
+            id: "player-name-input",
+            className: "setup__player-input",
+            type: "text",
+            placeholder: "Your Name",
+            autoFocus: true,
+            maxLength: 15,
+            value: playerName,
+            onChange: (event) => onPlayerNameChange(event.target.value),
+            // Prevent typing when at max length (unless replacing selected text)
+            onKeyDown: (event) => {
+              const isCharacterKey =
+                event.key.length === 1 &&
+                !event.ctrlKey &&
+                !event.metaKey &&
+                !event.altKey;
+              const noSelection =
+                event.currentTarget.selectionStart ===
+                event.currentTarget.selectionEnd;
+              if (
+                isCharacterKey &&
+                noSelection &&
+                playerName.length >= GameSession.MAX_PLAYER_NAME_LENGTH
+              ) {
+                event.preventDefault();
+              }
+            },
+            disabled: isProcessing,
+          }),
       // Join actions: room banner + join button (shown when joining)
       showJoinActions
         ? React.createElement(

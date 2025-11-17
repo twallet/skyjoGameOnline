@@ -139,8 +139,20 @@ describe("App component room selection flow", () => {
 
     render(React.createElement(App));
 
-    await user.type(screen.getByPlaceholderText(/your name/i), "Alice");
+    const nameInput = screen.getByPlaceholderText(/your name/i);
+    // Use clear and type to ensure state updates are processed
+    await user.clear(nameInput);
+    await user.type(nameInput, "Alice", { delay: 0 });
     await flushPromises();
+
+    // Wait for the input value to be fully updated (React batches state updates)
+    await waitFor(
+      () => {
+        expect(nameInput).toHaveValue("Alice");
+      },
+      { timeout: 3000 }
+    );
+
     await user.click(screen.getByRole("button", { name: /new room/i }));
     await flushPromises();
 
