@@ -13,7 +13,7 @@ import { buildPlayerColors } from "../../shared/utils/playerColors.js";
 import { RoomApi } from "../services/RoomApi.js";
 import { GamePlayView } from "./GamePlayView.js";
 import { GameSetupView } from "./GameSetupView.js";
-import { buildDeckView, normalizePlayerSnapshots } from "./appHelpers.js";
+import { buildDeckView, normalizePlayerSnapshots } from "../utils/appHelpers.js";
 
 const skyjo = new Game(
   "Skyjo",

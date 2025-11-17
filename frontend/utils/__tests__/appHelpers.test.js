@@ -21,7 +21,7 @@ describe("app helpers", () => {
 
       expect(view).toEqual({
         size: 42,
-        baseImage: "./assets/images/back.jpg",
+        baseImage: "../assets/images/back.jpg",
         firstCard: {
           image: "top.png",
           visible: false,
@@ -76,3 +76,4 @@ describe("app helpers", () => {
     });
   });
 });
+
