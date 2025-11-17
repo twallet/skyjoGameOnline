@@ -120,7 +120,6 @@ export function App() {
     try {
       const params = new URLSearchParams(window.location.search);
       const urlRoomId = params.get("roomId");
-      const urlName = params.get("name");
 
       if (urlRoomId) {
         const normalized = normalizeRoomId(urlRoomId);
@@ -129,11 +128,6 @@ export function App() {
         setIsRoomSelectionLocked(true);
         setHasCreatedRoom(false);
         setIsInviteLink(true);
-      }
-
-      if (urlName) {
-        const cappedName = urlName.slice(0, GameSession.MAX_PLAYER_NAME_LENGTH);
-        setNewPlayerName((prev) => (prev ? prev : cappedName));
       }
     } catch (error) {
       consoleLogger.error("Failed to parse join parameters from URL", error);
