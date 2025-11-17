@@ -14,7 +14,6 @@ import { GameSession } from "../../shared/models/gameSession.js";
  * @param {string[]} props.playerNames - List of all player names in the room
  * @param {string[]} props.playerColors - Array of color codes for player display
  * @param {Function} props.onPlayerNameChange - Callback when player name input changes
- * @param {Function} props.onRoomIdInputChange - Callback when room ID input changes
  * @param {Function} props.onJoinRoom - Callback to join an existing room
  * @param {Function} props.onCreateRoom - Callback to create a new room
  * @param {Function} props.onStartGame - Callback to start the game
@@ -25,7 +24,6 @@ import { GameSession } from "../../shared/models/gameSession.js";
  * @param {boolean} props.hasCreatedRoom - Whether the user has created a room
  * @param {boolean} props.isRoomSelectionLocked - Whether room selection is locked
  * @param {Function} props.onCopyRoomId - Callback to copy the room ID
- * @param {boolean} props.isRoomIdReadOnly - Whether the room ID input should be read-only
  * @returns {React.ReactElement} The rendered setup view component
  */
 export function GameSetupView({
@@ -37,7 +35,6 @@ export function GameSetupView({
   playerNames,
   playerColors,
   onPlayerNameChange,
-  onRoomIdInputChange,
   onJoinRoom,
   onCreateRoom,
   onStartGame,
@@ -48,7 +45,6 @@ export function GameSetupView({
   hasCreatedRoom,
   isRoomSelectionLocked,
   onCopyRoomId,
-  isRoomIdReadOnly,
 }) {
   // Determine which room ID to display (prefer user input if provided, otherwise use current room ID)
   const displayedRoomId =
@@ -138,42 +134,32 @@ export function GameSetupView({
               disabled: isLoading,
             })
           : null,
-      // Join actions: room input/banner + join button (shown when joining)
+      // Join actions: room banner + join button (shown when joining)
       showJoinActions
         ? React.createElement(
             "div",
             { className: "setup__actions setup__actions--joining" },
-            // Show read-only room banner if room ID is read-only, otherwise show input
-            Boolean(isRoomIdReadOnly)
-              ? React.createElement(
-                  "div",
-                  {
-                    className: "setup__room-banner setup__room-banner--inline",
-                  },
-                  React.createElement(
-                    "div",
-                    { className: "setup__current-room" },
-                    React.createElement(
-                      "span",
-                      { className: "setup__current-room-label" },
-                      "Room"
-                    ),
-                    React.createElement(
-                      "span",
-                      { className: "setup__current-room-value" },
-                      displayedRoomId
-                    )
-                  )
+            // Show read-only room banner
+            React.createElement(
+              "div",
+              {
+                className: "setup__room-banner setup__room-banner--inline",
+              },
+              React.createElement(
+                "div",
+                { className: "setup__current-room" },
+                React.createElement(
+                  "span",
+                  { className: "setup__current-room-label" },
+                  "Room"
+                ),
+                React.createElement(
+                  "span",
+                  { className: "setup__current-room-value" },
+                  displayedRoomId
                 )
-              : React.createElement("input", {
-                  id: "room-id-input",
-                  className: "setup__room-input",
-                  type: "text",
-                  placeholder: "Enter room code",
-                  value: roomIdInput,
-                  onChange: (event) => onRoomIdInputChange(event.target.value),
-                  disabled: isLoading,
-                }),
+              )
+            ),
             // Join button
             React.createElement(
               "button",

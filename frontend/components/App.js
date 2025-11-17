@@ -96,7 +96,6 @@ export function App() {
   const [isJoiningExistingRoom, setIsJoiningExistingRoom] = useState(false);
   const [hasCreatedRoom, setHasCreatedRoom] = useState(false);
   const [isRoomSelectionLocked, setIsRoomSelectionLocked] = useState(false);
-  const [isInviteLink, setIsInviteLink] = useState(false);
 
   // LAN host configuration for local network sharing
   const [lanHost, setLanHost] = useState(() => {
@@ -127,7 +126,6 @@ export function App() {
         setIsJoiningExistingRoom(true);
         setIsRoomSelectionLocked(true);
         setHasCreatedRoom(false);
-        setIsInviteLink(true);
       }
     } catch (error) {
       consoleLogger.error("Failed to parse join parameters from URL", error);
@@ -638,28 +636,10 @@ export function App() {
 
   // Reset room flow state when player name becomes invalid
   useEffect(() => {
-    if (!isPlayerNameValid && isJoiningExistingRoom) {
-      if (!isInviteLink) {
-        setIsJoiningExistingRoom(false);
-        setRoomIdInput(normalizeRoomId(roomId ?? ""));
-      }
-    }
     if (!isPlayerNameValid && hasCreatedRoom) {
       setHasCreatedRoom(false);
     }
-    if (!isPlayerNameValid && isRoomSelectionLocked) {
-      if (!isInviteLink) {
-        setIsRoomSelectionLocked(false);
-      }
-    }
-  }, [
-    isPlayerNameValid,
-    isJoiningExistingRoom,
-    roomId,
-    hasCreatedRoom,
-    isRoomSelectionLocked,
-    isInviteLink,
-  ]);
+  }, [isPlayerNameValid, hasCreatedRoom]);
 
   /**
    * Handles joining an existing room from URL invite link.
@@ -729,14 +709,6 @@ export function App() {
     }
     const capped = value.slice(0, GameSession.MAX_PLAYER_NAME_LENGTH);
     setNewPlayerName(capped);
-  };
-
-  /**
-   * Handles room ID input changes, converting to uppercase.
-   * @param {string} value - The new room ID value
-   */
-  const handleRoomIdInputChange = (value) => {
-    setRoomIdInput(value.toUpperCase());
   };
 
   /**
@@ -924,7 +896,6 @@ export function App() {
     isRoomSelectionLocked,
     isPlayerNameValid,
     playerName: newPlayerName,
-    onRoomIdInputChange: handleRoomIdInputChange,
     onCreateRoom: handleCreateRoom,
     onJoinRoom: handleJoinRoom,
     onCopyRoomId: handleCopyRoomId,
@@ -934,6 +905,5 @@ export function App() {
     onStartGame: handleStartGame,
     canStartGame: roomState.canStartGame,
     errorMessage,
-    isRoomIdReadOnly: isInviteLink && isJoiningExistingRoom,
   });
 }

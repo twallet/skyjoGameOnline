@@ -15,7 +15,6 @@ describe("GameSetupView component", () => {
     playerNames: [],
     playerColors: ["#ff0000", "#00ff00", "#0000ff"],
     onPlayerNameChange: jest.fn(),
-    onRoomIdInputChange: jest.fn(),
     onJoinRoom: jest.fn(),
     onCreateRoom: jest.fn(),
     onStartGame: jest.fn(),
@@ -26,7 +25,6 @@ describe("GameSetupView component", () => {
     hasCreatedRoom: false,
     isRoomSelectionLocked: false,
     onCopyRoomId: jest.fn(),
-    isRoomIdReadOnly: false,
   };
 
   beforeEach(() => {
@@ -71,37 +69,41 @@ describe("GameSetupView component", () => {
     expect(createButton).toBeEnabled();
   });
 
-  it("shows room input and join button when joining room", () => {
+  it("shows room banner and join button when joining room", () => {
     render(
       React.createElement(GameSetupView, {
         ...defaultProps,
         isJoiningRoom: true,
         isPlayerNameValid: true,
+        roomId: "TEST01",
+        roomIdInput: "TEST01",
       })
     );
-    expect(screen.getByPlaceholderText(/enter room code/i)).toBeInTheDocument();
+    expect(screen.getByText("TEST01")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^join$/i })).toBeInTheDocument();
   });
 
-  it("disables join button when room id is empty during join flow", () => {
+  it("disables join button when player name is invalid during join flow", () => {
     render(
       React.createElement(GameSetupView, {
         ...defaultProps,
         isJoiningRoom: true,
-        isPlayerNameValid: true,
-        roomIdInput: "",
+        isPlayerNameValid: false,
+        roomId: "TEST01",
+        roomIdInput: "TEST01",
       })
     );
     const joinButton = screen.getByRole("button", { name: /^join$/i });
     expect(joinButton).toBeDisabled();
   });
 
-  it("enables join button when room id is provided during join flow", () => {
+  it("enables join button when player name is valid during join flow", () => {
     render(
       React.createElement(GameSetupView, {
         ...defaultProps,
         isJoiningRoom: true,
         isPlayerNameValid: true,
+        roomId: "TEST01",
         roomIdInput: "TEST01",
       })
     );
@@ -247,21 +249,6 @@ describe("GameSetupView component", () => {
     expect(onPlayerNameChange).toHaveBeenCalled();
   });
 
-  it("calls onRoomIdInputChange when room id input changes", async () => {
-    const user = userEvent.setup();
-    const onRoomIdInputChange = jest.fn();
-    render(
-      React.createElement(GameSetupView, {
-        ...defaultProps,
-        isJoiningRoom: true,
-        onRoomIdInputChange,
-      })
-    );
-    const input = screen.getByPlaceholderText(/enter room code/i);
-    await user.type(input, "TEST");
-    expect(onRoomIdInputChange).toHaveBeenCalled();
-  });
-
   it("calls onCreateRoom when create button is clicked", async () => {
     const user = userEvent.setup();
     const onCreateRoom = jest.fn();
@@ -326,20 +313,16 @@ describe("GameSetupView component", () => {
     expect(onCopyRoomId).toHaveBeenCalledTimes(1);
   });
 
-  it("shows read-only room banner when isRoomIdReadOnly is true", () => {
+  it("shows read-only room banner when joining room", () => {
     render(
       React.createElement(GameSetupView, {
         ...defaultProps,
         isJoiningRoom: true,
-        isRoomIdReadOnly: true,
         roomId: "TEST01",
         roomIdInput: "TEST01",
       })
     );
     expect(screen.getByText("TEST01")).toBeInTheDocument();
-    expect(
-      screen.queryByPlaceholderText(/enter room code/i)
-    ).not.toBeInTheDocument();
   });
 
   it("displays room id from roomIdInput when provided", () => {
@@ -347,7 +330,6 @@ describe("GameSetupView component", () => {
       React.createElement(GameSetupView, {
         ...defaultProps,
         isJoiningRoom: true,
-        isRoomIdReadOnly: true,
         roomId: "OLD01",
         roomIdInput: "NEW01",
       })
@@ -360,7 +342,6 @@ describe("GameSetupView component", () => {
       React.createElement(GameSetupView, {
         ...defaultProps,
         isJoiningRoom: true,
-        isRoomIdReadOnly: true,
         roomId: "TEST01",
         roomIdInput: "",
       })

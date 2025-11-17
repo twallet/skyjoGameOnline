@@ -232,7 +232,7 @@ describe("App component room selection flow", () => {
     });
 
     expect(
-      screen.queryByRole("button", { name: /create new room/i })
+      screen.queryByRole("button", { name: /new room/i })
     ).not.toBeInTheDocument();
 
     const joinButton = await screen.findByRole("button", {
@@ -247,8 +247,5 @@ describe("App component room selection flow", () => {
     expect(
       screen.getByText(/^room$/i, { selector: "span" })
     ).toBeInTheDocument();
-    expect(
-      screen.queryByPlaceholderText(/enter room code/i)
-    ).not.toBeInTheDocument();
   });
 });
