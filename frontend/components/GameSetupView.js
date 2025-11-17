@@ -7,8 +7,7 @@ import { GameSession } from "../../shared/models/gameSession.js";
  *
  * @param {Object} props - Component props
  * @param {boolean} props.isLoading - Whether the component is in a loading state
- * @param {string} props.roomId - The current room ID (if joined/created)
- * @param {string} props.roomIdInput - The user's input for room ID
+ * @param {string} props.roomId - The current room ID (if joined/created or from URL)
  * @param {boolean} props.gameStarted - Whether the game has already started
  * @param {string} props.playerName - The current player's name input
  * @param {string[]} props.playerNames - List of all player names in the room
@@ -29,7 +28,6 @@ import { GameSession } from "../../shared/models/gameSession.js";
 export function GameSetupView({
   isLoading,
   roomId,
-  roomIdInput,
   gameStarted,
   playerName,
   playerNames,
@@ -46,15 +44,8 @@ export function GameSetupView({
   isRoomSelectionLocked,
   onCopyRoomId,
 }) {
-  // Determine which room ID to display (prefer user input if provided, otherwise use current room ID)
-  const displayedRoomId =
-    typeof roomIdInput === "string" && roomIdInput.trim().length > 0
-      ? roomIdInput.trim()
-      : roomId;
-
-  // Get trimmed room ID input for validation purposes
-  const trimmedRoomId =
-    typeof roomIdInput === "string" ? roomIdInput.trim() : "";
+  // Get trimmed room ID for validation purposes
+  const trimmedRoomId = typeof roomId === "string" ? roomId.trim() : "";
 
   // Determine if join button should be disabled
   const joinDisabled =
@@ -156,7 +147,7 @@ export function GameSetupView({
                 React.createElement(
                   "span",
                   { className: "setup__current-room-value" },
-                  displayedRoomId
+                  roomId
                 )
               )
             ),

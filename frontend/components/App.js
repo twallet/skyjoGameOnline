@@ -66,7 +66,6 @@ export function App() {
 
   // Room management state
   const [roomId, setRoomId] = useState("");
-  const [roomIdInput, setRoomIdInput] = useState("");
   const [roomState, setRoomState] = useState({
     players: [],
     canAddPlayer: true,
@@ -122,7 +121,7 @@ export function App() {
 
       if (urlRoomId) {
         const normalized = normalizeRoomId(urlRoomId);
-        setRoomIdInput((prev) => (prev ? prev : normalized));
+        setRoomId((prev) => (prev ? prev : normalized));
         setIsJoiningExistingRoom(true);
         setIsRoomSelectionLocked(true);
         setHasCreatedRoom(false);
@@ -654,7 +653,7 @@ export function App() {
       return;
     }
 
-    const normalizedRoomId = normalizeRoomId(roomIdInput);
+    const normalizedRoomId = normalizeRoomId(roomId);
     if (!normalizedRoomId) {
       setErrorMessage("Room ID must not be empty to join.");
       return;
@@ -678,7 +677,6 @@ export function App() {
         roomId: joinedRoomId = normalizedRoomId,
       } = await RoomApi.joinRoom(normalizedRoomId, trimmedPlayerName);
       setRoomId(joinedRoomId);
-      setRoomIdInput(joinedRoomId);
       setLocalPlayerName(trimmedPlayerName);
       setPlayerNames(updatedNames);
       setRoomState(createRoomState(updatedNames, skyjo, false));
@@ -728,11 +726,12 @@ export function App() {
       const { roomId: createdId = generateRoomId() } =
         await RoomApi.createRoom();
       const normalizedId = normalizeRoomId(createdId);
-      const { players: updatedNames = [], roomId: finalRoomId = normalizedId } =
-        await RoomApi.joinRoom(normalizedId, trimmedPlayerName);
+      const { players: updatedNames = [] } = await RoomApi.joinRoom(
+        normalizedId,
+        trimmedPlayerName
+      );
       setErrorMessage("");
-      setRoomId(finalRoomId);
-      setRoomIdInput(finalRoomId);
+      setRoomId(normalizedId);
       setLocalPlayerName(trimmedPlayerName);
       setPlayerNames(updatedNames);
       setRoomState(createRoomState(updatedNames, skyjo, false));
@@ -771,10 +770,10 @@ export function App() {
         }
       }
       consoleLogger.info(
-        `Client event: created room '${finalRoomId}' and joined as '${trimmedPlayerName}'. Total players: ${updatedNames.length}`
+        `Client event: created room '${normalizedId}' and joined as '${trimmedPlayerName}'. Total players: ${updatedNames.length}`
       );
       await copyInviteLinkToClipboard({
-        roomIdToCopy: finalRoomId,
+        roomIdToCopy: normalizedId,
         hostOverride: lanHostForCopy,
       });
     } catch (error) {
@@ -889,7 +888,6 @@ export function App() {
   return React.createElement(GameSetupView, {
     isLoading,
     roomId,
-    roomIdInput,
     gameStarted: roomState.gameStarted,
     isJoiningRoom: isJoiningExistingRoom,
     hasCreatedRoom,

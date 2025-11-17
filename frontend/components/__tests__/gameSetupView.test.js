@@ -9,7 +9,6 @@ describe("GameSetupView component", () => {
   const defaultProps = {
     isLoading: false,
     roomId: "",
-    roomIdInput: "",
     gameStarted: false,
     playerName: "",
     playerNames: [],
@@ -76,7 +75,6 @@ describe("GameSetupView component", () => {
         isJoiningRoom: true,
         isPlayerNameValid: true,
         roomId: "TEST01",
-        roomIdInput: "TEST01",
       })
     );
     expect(screen.getByText("TEST01")).toBeInTheDocument();
@@ -90,7 +88,6 @@ describe("GameSetupView component", () => {
         isJoiningRoom: true,
         isPlayerNameValid: false,
         roomId: "TEST01",
-        roomIdInput: "TEST01",
       })
     );
     const joinButton = screen.getByRole("button", { name: /^join$/i });
@@ -104,7 +101,6 @@ describe("GameSetupView component", () => {
         isJoiningRoom: true,
         isPlayerNameValid: true,
         roomId: "TEST01",
-        roomIdInput: "TEST01",
       })
     );
     const joinButton = screen.getByRole("button", { name: /^join$/i });
@@ -272,7 +268,7 @@ describe("GameSetupView component", () => {
         ...defaultProps,
         isJoiningRoom: true,
         isPlayerNameValid: true,
-        roomIdInput: "TEST01",
+        roomId: "TEST01",
         onJoinRoom,
       })
     );
@@ -319,31 +315,17 @@ describe("GameSetupView component", () => {
         ...defaultProps,
         isJoiningRoom: true,
         roomId: "TEST01",
-        roomIdInput: "TEST01",
       })
     );
     expect(screen.getByText("TEST01")).toBeInTheDocument();
   });
 
-  it("displays room id from roomIdInput when provided", () => {
-    render(
-      React.createElement(GameSetupView, {
-        ...defaultProps,
-        isJoiningRoom: true,
-        roomId: "OLD01",
-        roomIdInput: "NEW01",
-      })
-    );
-    expect(screen.getByText("NEW01")).toBeInTheDocument();
-  });
-
-  it("displays room id from roomId when roomIdInput is empty", () => {
+  it("displays room id from roomId", () => {
     render(
       React.createElement(GameSetupView, {
         ...defaultProps,
         isJoiningRoom: true,
         roomId: "TEST01",
-        roomIdInput: "",
       })
     );
     expect(screen.getByText("TEST01")).toBeInTheDocument();

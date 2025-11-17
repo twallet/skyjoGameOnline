@@ -89,8 +89,9 @@ describe("App component room selection flow", () => {
     const user = userEvent.setup();
     const getRoomSpy = jest
       .spyOn(RoomApi, "getRoom")
-      .mockResolvedValueOnce({}) // room existence check
-      .mockResolvedValueOnce(playerListResponse(["Alice"]));
+      .mockResolvedValueOnce(playerListResponse(["Alice"])) // initial loadRoomState call
+      .mockResolvedValueOnce({}) // room existence check in handleJoinRoom
+      .mockResolvedValueOnce(playerListResponse(["Alice"])); // after join
     const joinRoomSpy = jest.spyOn(RoomApi, "joinRoom").mockResolvedValueOnce({
       roomId: "TEST01",
       players: ["Alice"],
@@ -113,7 +114,9 @@ describe("App component room selection flow", () => {
     expect(joinRoomSpy).toHaveBeenCalledWith("TEST01", "Alice");
 
     expect(await screen.findByText("TEST01")).toBeInTheDocument();
-    expect(screen.getByText("Alice")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Alice")).toBeInTheDocument();
+    });
   });
 
   it("creates a new room and locks the room selection", async () => {
@@ -177,6 +180,10 @@ describe("App component room selection flow", () => {
     await flushPromises();
 
     await screen.findByText("TEST01");
+    
+    await waitFor(() => {
+      expect(screen.getByTitle(/copy join link/i)).toBeInTheDocument();
+    });
 
     await user.click(screen.getByTitle(/copy join link/i));
     await flushPromises();
@@ -211,6 +218,10 @@ describe("App component room selection flow", () => {
     await flushPromises();
 
     await screen.findByText("TEST01");
+    
+    await waitFor(() => {
+      expect(screen.getByTitle(/copy join link/i)).toBeInTheDocument();
+    });
 
     await user.click(screen.getByTitle(/copy join link/i));
     await flushPromises();
@@ -243,7 +254,9 @@ describe("App component room selection flow", () => {
     await user.type(screen.getByPlaceholderText(/your name/i), "Bob");
     await flushPromises();
     await screen.findByText("ROOM42");
-    expect(joinButton).not.toBeDisabled();
+    await waitFor(() => {
+      expect(joinButton).not.toBeDisabled();
+    });
     expect(
       screen.getByText(/^room$/i, { selector: "span" })
     ).toBeInTheDocument();
