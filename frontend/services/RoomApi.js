@@ -1,3 +1,5 @@
+import { normalizeRoomId } from "../utils/appHelpers.js";
+
 const DEFAULT_BASE_URL =
   typeof window !== "undefined" && window.location
     ? ""
@@ -189,13 +191,6 @@ export const RoomApi = {
     });
   },
 };
-
-function normalizeRoomId(value) {
-  if (!value) {
-    return "";
-  }
-  return String(value).trim().toUpperCase();
-}
 
 function normalizeRequiredRoomId(value) {
   const normalized = normalizeRoomId(value);
