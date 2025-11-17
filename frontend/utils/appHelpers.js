@@ -35,31 +35,3 @@ export function buildDeckView(deckSnapshot) {
       : null,
   };
 }
-
-/**
- * Normalizes an array of player snapshots into safe view models.
- * Validates and sanitizes player data to prevent rendering errors.
- * Handles missing or malformed player data gracefully.
- *
- * @param {Array|any} players - Array of player objects from game state
- * @returns {Array} Array of normalized player objects with:
- *   - name: player name (may be undefined)
- *   - color: player color or null
- *   - handMatrix: 2D array representing the player's hand layout, or empty array
- *   - handLines: number of lines in the hand matrix, or null if invalid
- */
-export function normalizePlayerSnapshots(players) {
-  if (!Array.isArray(players)) {
-    return [];
-  }
-
-  return players.map((player) => ({
-    name: player?.name,
-    color: player?.color ?? null,
-    handMatrix: Array.isArray(player?.hand?.matrix) ? player.hand.matrix : [],
-    handLines:
-      Number.isInteger(player?.hand?.lines) && player.hand.lines > 0
-        ? player.hand.lines
-        : null,
-  }));
-}

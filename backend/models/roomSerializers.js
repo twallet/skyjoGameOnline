@@ -16,14 +16,16 @@ function serializePlayerForClient(player) {
       ? cloneMatrix(player.hand.cardsMatrix())
       : [];
 
+  const handLines =
+    Number.isInteger(player.hand?.lines) && player.hand.lines > 0
+      ? player.hand.lines
+      : null;
+
   return {
     name: player.name,
-    color: player.color,
-    hand: {
-      size: player.hand.size,
-      lines: player.hand.lines,
-      matrix,
-    },
+    color: player.color ?? null,
+    handMatrix: matrix,
+    handLines,
   };
 }
 

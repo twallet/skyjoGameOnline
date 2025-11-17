@@ -1,6 +1,60 @@
 import { serializeSnapshot } from "../roomSerializers.js";
 
 describe("roomSerializers.serializeSnapshot", () => {
+  it("serializes players with handMatrix and handLines structure", () => {
+    const snapshot = {
+      players: [
+        {
+          name: "Alice",
+          color: "#fff",
+          hand: {
+            size: 12,
+            lines: 4,
+            matrix: [
+              [
+                { value: 1, image: "1.png" },
+                { value: 2, image: "2.png" },
+              ],
+            ],
+          },
+        },
+        {
+          name: "Bob",
+          color: null,
+          hand: {
+            size: 0,
+            lines: 0,
+            matrix: [],
+          },
+        },
+      ],
+      logEntries: [],
+      deck: { size: 30, topCard: null, discardSize: 5 },
+      state: null,
+    };
+
+    const serialized = serializeSnapshot(snapshot);
+    expect(serialized.players).toEqual([
+      {
+        name: "Alice",
+        color: "#fff",
+        handMatrix: [
+          [
+            { value: 1, image: "1.png" },
+            { value: 2, image: "2.png" },
+          ],
+        ],
+        handLines: 4,
+      },
+      {
+        name: "Bob",
+        color: null,
+        handMatrix: [],
+        handLines: null,
+      },
+    ]);
+  });
+
   it("includes final round winner and scores in the serialized state", () => {
     const snapshot = {
       players: [

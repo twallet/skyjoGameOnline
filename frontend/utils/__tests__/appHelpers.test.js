@@ -1,4 +1,4 @@
-import { buildDeckView, normalizePlayerSnapshots } from "../appHelpers.js";
+import { buildDeckView } from "../appHelpers.js";
 
 describe("app helpers", () => {
   describe("buildDeckView", () => {
@@ -60,36 +60,6 @@ describe("app helpers", () => {
         baseImage: null,
         firstCard: null,
       });
-    });
-  });
-
-  describe("normalizePlayerSnapshots", () => {
-    it("returns empty array for non-array input", () => {
-      expect(normalizePlayerSnapshots(null)).toEqual([]);
-      expect(normalizePlayerSnapshots({})).toEqual([]);
-    });
-
-    it("creates safe player representations", () => {
-      const players = [
-        {
-          name: "Alice",
-          color: "#fff",
-          hand: { matrix: [[1, 2]], lines: 4 },
-        },
-        {
-          name: "Bob",
-        },
-      ];
-
-      expect(normalizePlayerSnapshots(players)).toEqual([
-        {
-          name: "Alice",
-          color: "#fff",
-          handMatrix: [[1, 2]],
-          handLines: 4,
-        },
-        { name: "Bob", color: null, handMatrix: [], handLines: null },
-      ]);
     });
   });
 });

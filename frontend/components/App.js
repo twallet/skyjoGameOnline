@@ -13,10 +13,7 @@ import { buildPlayerColors } from "../../shared/utils/playerColors.js";
 import { RoomApi } from "../services/RoomApi.js";
 import { GamePlayView } from "./GamePlayView.js";
 import { GameSetupView } from "./GameSetupView.js";
-import {
-  buildDeckView,
-  normalizePlayerSnapshots,
-} from "../utils/appHelpers.js";
+import { buildDeckView } from "../utils/appHelpers.js";
 
 /**
  * Helper function to extract error message from error objects.
@@ -320,7 +317,9 @@ export function App() {
           setLogEntries(
             Array.isArray(snapshot.logEntries) ? snapshot.logEntries : []
           );
-          setActivePlayers(normalizePlayerSnapshots(snapshot.players));
+          setActivePlayers(
+            Array.isArray(snapshot.players) ? snapshot.players : []
+          );
           setDeckView(buildDeckView(snapshot.deck));
         } else {
           resetGameState(
@@ -497,7 +496,7 @@ export function App() {
 
     setCurrentSnapshot(snapshot);
     setSessionState(state ?? null);
-    setActivePlayers(normalizePlayerSnapshots(players));
+    setActivePlayers(Array.isArray(players) ? players : []);
     setDeckView(buildDeckView(deck));
     setLogEntries(entries);
   }, []);
