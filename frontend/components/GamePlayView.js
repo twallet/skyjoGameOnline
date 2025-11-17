@@ -4,7 +4,7 @@ import React, {
   useState,
 } from "https://esm.sh/react@18?dev";
 
-export function GamePlayView({
+export function gamePlayView({
   activePlayers,
   deck,
   snapshot = null,

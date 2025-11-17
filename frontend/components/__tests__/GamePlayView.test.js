@@ -3,7 +3,7 @@ import React, { act } from "react";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { GamePlayView } from "../GamePlayView.js";
+import { gamePlayView } from "../gamePlayView.js";
 
 class ResizeObserverMock {
   observe() {}
@@ -93,7 +93,7 @@ const createSnapshot = (stateOverrides = {}, logOverrides = []) => {
   };
 };
 
-describe("GamePlayView information section", () => {
+describe("gamePlayView information section", () => {
   beforeAll(() => {
     if (typeof global.ResizeObserver === "undefined") {
       global.ResizeObserver = ResizeObserverMock;
@@ -103,7 +103,7 @@ describe("GamePlayView information section", () => {
   it("prompts the local player to finish the initial flip", () => {
     const snapshot = createSnapshot();
     render(
-      React.createElement(GamePlayView, {
+      React.createElement(gamePlayView, {
         activePlayers: [createPlayer("Alice"), createPlayer("Bob")],
         deck: null,
         snapshot,
@@ -146,7 +146,7 @@ describe("GamePlayView information section", () => {
       },
     });
     render(
-      React.createElement(GamePlayView, {
+      React.createElement(gamePlayView, {
         activePlayers: [createPlayer("Alice"), createPlayer("Bob")],
         deck: { baseImage: "back.jpg", firstCard: null },
         snapshot,
@@ -165,7 +165,7 @@ describe("GamePlayView information section", () => {
     ]);
     const user = userEvent.setup();
     render(
-      React.createElement(GamePlayView, {
+      React.createElement(gamePlayView, {
         activePlayers: [createPlayer("Alice"), createPlayer("Bob")],
         deck: { baseImage: "back.jpg", firstCard: null },
         snapshot,
@@ -217,7 +217,7 @@ describe("GamePlayView information section", () => {
     );
     const playAgain = jest.fn();
     render(
-      React.createElement(GamePlayView, {
+      React.createElement(gamePlayView, {
         activePlayers: [createPlayer("Alice"), createPlayer("Bob")],
         deck: { baseImage: "back.jpg", firstCard: null },
         snapshot,

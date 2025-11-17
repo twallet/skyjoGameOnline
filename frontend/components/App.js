@@ -11,9 +11,12 @@ import { consoleLogger } from "../../shared/logger.js";
 import { generateRoomId } from "../../shared/generateRoomId.js";
 import { buildPlayerColors } from "../../shared/utils/playerColors.js";
 import { RoomApi } from "../services/RoomApi.js";
-import { GamePlayView } from "./GamePlayView.js";
-import { GameSetupView } from "./GameSetupView.js";
-import { buildDeckView, normalizePlayerSnapshots } from "../utils/appHelpers.js";
+import { gamePlayView } from "./gamePlayView.js";
+import { gameSetupView } from "./gameSetupView.js";
+import {
+  buildDeckView,
+  normalizePlayerSnapshots,
+} from "../utils/appHelpers.js";
 
 const skyjo = new Game(
   "Skyjo",
@@ -858,7 +861,7 @@ export function App() {
   };
 
   if (gameStarted) {
-    return React.createElement(GamePlayView, {
+    return React.createElement(gamePlayView, {
       activePlayers,
       deck: deckView,
       snapshot: currentSnapshot,
@@ -874,7 +877,7 @@ export function App() {
     });
   }
 
-  return React.createElement(GameSetupView, {
+  return React.createElement(gameSetupView, {
     isLoading,
     roomId,
     roomIdInput,
