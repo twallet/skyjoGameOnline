@@ -1,12 +1,12 @@
 import { jest } from "@jest/globals";
-import { Game } from "../../../shared/models/game.js";
-import { Player } from "../../../shared/models/player.js";
-import { Card } from "../../../shared/models/card.js";
+import { Game } from "../game.js";
+import { Player } from "../player.js";
+import { Card } from "../card.js";
 import {
   SkyjoEngine,
   SkyjoPhases,
   computeFinalScores,
-} from "../../../shared/models/skyjoEngine.js";
+} from "../skyjoEngine.js";
 
 class StubDeck {
   #cards;

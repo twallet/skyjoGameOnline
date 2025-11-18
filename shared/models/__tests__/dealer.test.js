@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
-import { Dealer } from "../../../shared/models/dealer.js";
-import { Game } from "../../../shared/models/game.js";
-import { Player } from "../../../shared/models/player.js";
+import { Dealer } from "../dealer.js";
+import { Game } from "../game.js";
+import { Player } from "../player.js";
 
 const buildSampleGame = () => {
   const values = [-2, -1, 0, 1, 2, 3, 4, 5, 10];

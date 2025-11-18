@@ -32,6 +32,14 @@ describe("App component room selection flow", () => {
         ) {
           return;
         }
+        // Suppress expected error logs from error handling tests
+        if (
+          typeof message === "string" &&
+          (message.includes("Failed to load room state") ||
+            message.includes("Unable to start Skyjo game"))
+        ) {
+          return;
+        }
         originalConsoleError(message, ...args);
       }));
 

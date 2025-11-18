@@ -1,6 +1,6 @@
-import { Game } from "../../../shared/models/game.js";
-import { Hand } from "../../../shared/models/hand.js";
-import { Player } from "../../../shared/models/player.js";
+import { Game } from "../game.js";
+import { Hand } from "../hand.js";
+import { Player } from "../player.js";
 
 const buildSampleGame = () => {
   const values = [-2, -1, 0, 1, 2, 3, 4, 5, 10];
