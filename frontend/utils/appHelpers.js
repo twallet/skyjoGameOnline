@@ -166,6 +166,19 @@ export function normalizePlayerName(playerName) {
 }
 
 /**
+ * Normalizes an optional string value by trimming whitespace.
+ * Returns null if the value is not a string or becomes empty after trimming.
+ * Useful for optional string fields that should be null when empty.
+ * @param {string|unknown} value - The value to normalize
+ * @returns {string|null} Trimmed string or null if invalid/empty
+ */
+export function normalizeOptionalString(value) {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
+}
+
+/**
  * Builds a possessive turn label from a player name.
  * Handles names ending in 's' correctly (e.g., "Alice" -> "Alice's turn", "James" -> "James' turn").
  * @param {string} rawName - The raw player name

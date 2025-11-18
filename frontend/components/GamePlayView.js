@@ -4,7 +4,10 @@ import React, {
   useState,
 } from "https://esm.sh/react@18?dev";
 
-import { buildPossessiveTurnLabel } from "../utils/appHelpers.js";
+import {
+  buildPossessiveTurnLabel,
+  normalizeOptionalString,
+} from "../utils/appHelpers.js";
 
 /**
  * Renders the main game play view for Skyjo, displaying player hands, deck, discard pile,
@@ -555,14 +558,8 @@ export function GamePlayView({
         const message = /[.!?]$/.test(rawMessage)
           ? rawMessage
           : `${rawMessage}.`;
-        const phase =
-          typeof entry.phase === "string" && entry.phase.length
-            ? entry.phase
-            : null;
-        const actor =
-          typeof entry.actor === "string" && entry.actor.trim().length
-            ? entry.actor.trim()
-            : null;
+        const phase = normalizeOptionalString(entry.phase);
+        const actor = normalizeOptionalString(entry.actor);
         return { message, phase, actor };
       }
       const rawMessage =
