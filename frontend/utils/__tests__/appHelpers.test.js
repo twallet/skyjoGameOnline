@@ -200,6 +200,65 @@ describe("app helpers", () => {
         firstCard: null,
       });
     });
+
+    it("handles null size by defaulting to 0", () => {
+      const deck = {
+        size: null,
+        topCard: null,
+      };
+
+      const view = buildDeckView(deck);
+
+      expect(view.size).toBe(0);
+    });
+
+    it("handles undefined size by defaulting to 0", () => {
+      const deck = {
+        topCard: null,
+      };
+
+      const view = buildDeckView(deck);
+
+      expect(view.size).toBe(0);
+    });
+
+    it("handles topCard with undefined image", () => {
+      const deck = {
+        size: 10,
+        topCard: {
+          visible: false,
+        },
+      };
+
+      const view = buildDeckView(deck);
+
+      expect(view.firstCard.image).toBeUndefined();
+      expect(view.firstCard.visible).toBe(false);
+    });
+
+    it("handles visible topCard with undefined value", () => {
+      const deck = {
+        size: 10,
+        topCard: {
+          image: "card.png",
+          visible: true,
+        },
+      };
+
+      const view = buildDeckView(deck);
+
+      expect(view.firstCard.alt).toBe("Top card undefined");
+    });
+
+    it("handles undefined topCard property", () => {
+      const deck = {
+        size: 10,
+      };
+
+      const view = buildDeckView(deck);
+
+      expect(view.firstCard).toBeNull();
+    });
   });
 
   describe("extractLogEntryMessage", () => {
@@ -228,6 +287,11 @@ describe("app helpers", () => {
     it("converts other types to strings", () => {
       expect(extractLogEntryMessage(123)).toBe("123");
       expect(extractLogEntryMessage(true)).toBe("true");
+    });
+
+    it("handles array entries as objects without message property", () => {
+      expect(extractLogEntryMessage(["item1", "item2"])).toBe("");
+      expect(extractLogEntryMessage([])).toBe("");
     });
   });
 
@@ -268,6 +332,36 @@ describe("app helpers", () => {
       const result = validatePlayerName(null, 10);
       expect(result.isValid).toBe(false);
       expect(result.errorMessage).toBe("Player name must not be empty.");
+    });
+
+    it("handles undefined maxLength by allowing any length", () => {
+      const result = validatePlayerName("VeryLongPlayerName", undefined);
+      expect(result.isValid).toBe(true);
+      expect(result.errorMessage).toBe("");
+    });
+
+    it("handles null maxLength by rejecting all non-empty names", () => {
+      const result = validatePlayerName("VeryLongPlayerName", null);
+      expect(result.isValid).toBe(false);
+      expect(result.errorMessage).toBe(
+        "Player name must be null characters or fewer."
+      );
+    });
+
+    it("handles negative maxLength by rejecting all non-empty names", () => {
+      const result = validatePlayerName("AnyLengthName", -5);
+      expect(result.isValid).toBe(false);
+      expect(result.errorMessage).toBe(
+        "Player name must be -5 characters or fewer."
+      );
+    });
+
+    it("handles zero maxLength by rejecting all non-empty names", () => {
+      const result = validatePlayerName("A", 0);
+      expect(result.isValid).toBe(false);
+      expect(result.errorMessage).toBe(
+        "Player name must be 0 characters or fewer."
+      );
     });
   });
 
