@@ -167,4 +167,186 @@ describe("Hand", () => {
     expect(hand.cards()).toEqual([1, 2, 3]);
     expect(hand.allCardsVisible()).toBe(true);
   });
+
+  test("isCardVisible returns false for hidden cards", () => {
+    const hand = new Hand();
+    hand.add(buildCard(1));
+    hand.add(buildCard(2, { visible: true }));
+
+    expect(hand.isCardVisible(0)).toBe(false);
+    expect(hand.isCardVisible(1)).toBe(true);
+  });
+
+  test("revealCard reveals a hidden card and returns card data", () => {
+    const hand = new Hand();
+    const card = buildCard(5);
+    hand.add(card);
+
+    const result = hand.revealCard(0);
+
+    expect(result.value).toBe(5);
+    expect(result.image).toBeTruthy();
+    expect(hand.isCardVisible(0)).toBe(true);
+    expect(hand.cards()[0]).toBe(5);
+  });
+
+  test("revealCard throws when card is already visible", () => {
+    const hand = new Hand();
+    hand.add(buildCard(1, { visible: true }));
+
+    expect(() => hand.revealCard(0)).toThrow("Card is already visible");
+  });
+
+  test.each([
+    ["non-integer", 1.5],
+    ["negative", -1],
+    ["out of bounds", 10],
+    ["null", null],
+    ["undefined", undefined],
+  ])(
+    "revealCard throws when position is invalid (%s)",
+    (_label, badPosition) => {
+      const hand = new Hand();
+      hand.add(buildCard(1));
+
+      expect(() => hand.revealCard(badPosition)).toThrow();
+    }
+  );
+
+  test.each([
+    ["non-integer", 1.5],
+    ["negative", -1],
+    ["out of bounds", 10],
+    ["null", null],
+  ])(
+    "replaceCard throws when position is invalid (%s)",
+    (_label, badPosition) => {
+      const hand = new Hand();
+      hand.add(buildCard(1));
+      const replacement = buildCard(2);
+
+      expect(() => hand.replaceCard(badPosition, replacement)).toThrow();
+    }
+  );
+
+  test("replaceCard throws when replacement is not a Card instance", () => {
+    const hand = new Hand();
+    hand.add(buildCard(1));
+
+    expect(() => hand.replaceCard(0, { value: 5 })).toThrow(
+      "Hand can only store card objects"
+    );
+  });
+
+  test("matrix getter returns same result as cardsMatrix", () => {
+    const hand = new Hand(2);
+    hand.add(buildCard(1, { visible: true }));
+    hand.add(buildCard(2, { visible: true }));
+
+    expect(hand.matrix).toEqual(hand.cardsMatrix());
+  });
+
+  test("columns getter returns same value as lines", () => {
+    const hand = new Hand(4);
+
+    expect(hand.columns).toBe(4);
+    expect(hand.columns).toBe(hand.lines);
+  });
+
+  test("rows getter calculates correct number of rows", () => {
+    const hand = new Hand(3);
+    expect(hand.rows).toBe(0);
+
+    hand.add(buildCard(1));
+    hand.add(buildCard(2));
+    hand.add(buildCard(3));
+    expect(hand.rows).toBe(1);
+
+    hand.add(buildCard(4));
+    hand.add(buildCard(5));
+    hand.add(buildCard(6));
+    expect(hand.rows).toBe(2);
+
+    hand.add(buildCard(7));
+    expect(hand.rows).toBe(2);
+  });
+
+  test("allCardsVisible returns false when some cards are hidden", () => {
+    const hand = new Hand();
+    hand.add(buildCard(1, { visible: true }));
+    hand.add(buildCard(2));
+    hand.add(buildCard(3, { visible: true }));
+
+    expect(hand.allCardsVisible()).toBe(false);
+  });
+
+  test("allCardsVisible returns true when all cards are visible", () => {
+    const hand = new Hand();
+    hand.add(buildCard(1, { visible: true }));
+    hand.add(buildCard(2, { visible: true }));
+
+    expect(hand.allCardsVisible()).toBe(true);
+  });
+
+  test("allCardsVisible returns true for empty hand", () => {
+    const hand = new Hand();
+    expect(hand.allCardsVisible()).toBe(true);
+  });
+
+  test("removeColumn returns empty array for empty hand", () => {
+    const hand = new Hand(3);
+    const removed = hand.removeColumn(0);
+
+    expect(removed).toEqual([]);
+    expect(hand.lines).toBe(3);
+  });
+
+  test("removeColumn maintains minimum of 1 line", () => {
+    const hand = new Hand(2);
+    hand.add(buildCard(1));
+    hand.add(buildCard(2));
+
+    hand.removeColumn(0);
+    expect(hand.lines).toBe(1);
+
+    hand.removeColumn(0);
+    expect(hand.lines).toBe(1);
+  });
+
+  test("removeColumn throws when columnIndex is not an integer", () => {
+    const hand = new Hand(3);
+    hand.add(buildCard(1));
+
+    expect(() => hand.removeColumn(1.5)).toThrow(
+      "Column index must be an integer"
+    );
+    expect(() => hand.removeColumn("1")).toThrow(
+      "Column index must be an integer"
+    );
+  });
+
+  test("show returns formatted string for empty hand", () => {
+    const hand = new Hand();
+    expect(hand.show()).toBe("(0 cards) []");
+  });
+
+  test("cardsMatrix returns empty array for empty hand", () => {
+    const hand = new Hand();
+    expect(hand.cardsMatrix()).toEqual([]);
+  });
+
+  test("cardsMatrix handles cards that span multiple rows correctly", () => {
+    const hand = new Hand(2);
+    hand.add(buildCard(1, { visible: true }));
+    hand.add(buildCard(2, { visible: true }));
+    hand.add(buildCard(3, { visible: true }));
+    hand.add(buildCard(4, { visible: true }));
+    hand.add(buildCard(5, { visible: true }));
+
+    const matrix = hand.cardsMatrix();
+    expect(matrix).toHaveLength(3);
+    expect(matrix[0]).toHaveLength(2);
+    expect(matrix[1]).toHaveLength(2);
+    expect(matrix[2]).toHaveLength(1);
+  });
 });

@@ -74,4 +74,74 @@ describe("Player", () => {
       "Player color must be a string"
     );
   });
+
+  test("accepts null color explicitly", () => {
+    const game = buildSampleGame();
+    const player = new Player("Frank", game, null);
+
+    expect(player.color).toBeNull();
+  });
+
+  test("accepts undefined color", () => {
+    const game = buildSampleGame();
+    const player = new Player("Grace", game, undefined);
+
+    expect(player.color).toBeNull();
+  });
+
+  test.each([
+    ["string", "not an object", "Player requires a game definition object"],
+    ["number", 123, "Player requires a game definition object"],
+    ["array", [], "Player requires the game to expose lines"],
+    ["function", () => {}, "Player requires a game definition object"],
+    ["undefined", undefined, "Player requires a game definition object"],
+  ])(
+    "rejects invalid game definition (%s)",
+    (_label, badGame, expectedMessage) => {
+      expect(() => new Player("Alice", badGame)).toThrow(expectedMessage);
+    }
+  );
+
+  test("rejects game with missing lines property", () => {
+    const gameWithoutLines = {
+      name: "Test",
+      values: [1, 2],
+    };
+
+    expect(() => new Player("Alice", gameWithoutLines)).toThrow(
+      "Player requires the game to expose lines"
+    );
+  });
+
+  test("rejects game with invalid lines property", () => {
+    const gameWithBadLines = {
+      name: "Test",
+      values: [1, 2],
+      lines: "not a number",
+    };
+
+    expect(() => new Player("Alice", gameWithBadLines)).toThrow(
+      "Player requires the game to expose lines"
+    );
+  });
+
+  test("rejects game with non-positive integer lines", () => {
+    const gameWithBadLines = {
+      name: "Test",
+      values: [1, 2],
+      lines: 0,
+    };
+
+    expect(() => new Player("Alice", gameWithBadLines)).toThrow(
+      "Player requires the game to expose lines"
+    );
+  });
+
+  test("hand getter returns the player's hand instance", () => {
+    const game = buildSampleGame();
+    const player = new Player("Heidi", game);
+
+    expect(player.hand).toBeInstanceOf(Hand);
+    expect(player.hand.lines).toBe(game.lines);
+  });
 });

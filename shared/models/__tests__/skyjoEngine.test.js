@@ -360,4 +360,78 @@ describe("SkyjoEngine", () => {
       "Player must resolve the previously drawn card first"
     );
   });
+
+  test("discardTopCard returns top card when discard pile has cards", () => {
+    const players = [buildPlayer("Alice", [1, 2, 3, 4], game)];
+    const deck = new StubDeck([new Card(5, game)]);
+    const dealer = { deck, players };
+
+    const engine = new SkyjoEngine(game, dealer, players);
+
+    expect(engine.discardSize).toBe(1);
+    const card = engine.discardTopCard();
+    expect(card).not.toBeNull();
+    expect(card).toEqual(
+      expect.objectContaining({
+        value: expect.any(Number),
+        image: expect.any(String),
+        visible: true,
+      })
+    );
+  });
+
+  test("discardTopCard returns null when discard pile is empty", () => {
+    const players = [buildPlayer("Alice", [1, 2, 3, 4], game)];
+    const deck = new StubDeck([]);
+    const dealer = { deck, players };
+
+    const engine = new SkyjoEngine(game, dealer, players);
+
+    expect(engine.discardSize).toBe(0);
+    expect(engine.discardTopCard()).toBeNull();
+  });
+
+  test("computeFinalScores handles tie correctly", () => {
+    const players = [
+      buildPlayer("Alice", [1, 1, 1, 1], game),
+      buildPlayer("Bob", [1, 1, 1, 1], game),
+    ];
+
+    const { scores, winner } = computeFinalScores(players);
+
+    expect(scores).toHaveLength(2);
+    expect(scores[0].total).toBe(scores[1].total);
+    expect(winner).toBe("Alice");
+  });
+
+  test("computeFinalScores handles trigger player with lowest score", () => {
+    const players = [
+      buildPlayer("Alice", [1, 1, 1, 1], game),
+      buildPlayer("Bob", [2, 2, 2, 2], game),
+    ];
+
+    const { scores, winner } = computeFinalScores(players, "Alice");
+
+    expect(scores.find((s) => s.name === "Alice").doubled).toBeUndefined();
+    expect(winner).toBe("Alice");
+  });
+
+  test("computeFinalScores handles null trigger name", () => {
+    const players = [
+      buildPlayer("Alice", [1, 1, 1, 1], game),
+      buildPlayer("Bob", [2, 2, 2, 2], game),
+    ];
+
+    const { scores, winner } = computeFinalScores(players, null);
+
+    expect(winner).toBe("Alice");
+    expect(scores.every((s) => !s.doubled)).toBe(true);
+  });
+
+  test("computeFinalScores handles empty players array", () => {
+    const { scores, winner } = computeFinalScores([], null);
+
+    expect(scores).toEqual([]);
+    expect(winner).toBeNull();
+  });
 });

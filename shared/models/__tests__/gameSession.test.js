@@ -329,5 +329,75 @@ describe("GameSession", () => {
       expect(session.canAddPlayer(7)).toBe(true);
       expect(session.canAddPlayer(8)).toBe(false);
     });
+
+    test("canStartGame handles edge cases", () => {
+      const session = new GameSession(skyjo);
+
+      expect(session.canStartGame(2)).toBe(true);
+      expect(session.canStartGame(8)).toBe(true);
+      expect(session.canStartGame(9)).toBe(true);
+      expect(session.canStartGame(1)).toBe(false);
+      expect(session.canStartGame(0)).toBe(false);
+      expect(session.canStartGame(null)).toBe(false);
+      expect(session.canStartGame("2")).toBe(false);
+      expect(session.canStartGame(1.5)).toBe(false);
+    });
+
+    test("canAddPlayer handles edge cases", () => {
+      const session = new GameSession(skyjo);
+
+      expect(session.canAddPlayer(0)).toBe(true);
+      expect(session.canAddPlayer(7)).toBe(true);
+      expect(session.canAddPlayer(8)).toBe(false);
+      expect(session.canAddPlayer(9)).toBe(false);
+      expect(session.canAddPlayer(null)).toBe(false);
+      expect(session.canAddPlayer("2")).toBe(false);
+      expect(session.canAddPlayer(1.5)).toBe(false);
+    });
+  });
+
+  describe("MAX_PLAYER_NAME_LENGTH", () => {
+    test("exposes maximum player name length constant", () => {
+      expect(GameSession.MAX_PLAYER_NAME_LENGTH).toBe(15);
+    });
+
+    test("rejects player names exceeding maximum length", () => {
+      const session = new GameSession(skyjo);
+      const longName = "A".repeat(16);
+
+      expect(() => session.addPlayer([], longName)).toThrow(
+        /must not exceed 15 characters/i
+      );
+    });
+  });
+
+  describe("getters before game start", () => {
+    test("deckSnapshot returns default when game hasn't started", () => {
+      const session = new GameSession(skyjo);
+
+      expect(session.deckSnapshot).toEqual({
+        size: 0,
+        topCard: null,
+        backImage: "./assets/images/back.jpg",
+      });
+    });
+
+    test("getSnapshot returns null when game hasn't started", () => {
+      const session = new GameSession(skyjo);
+
+      expect(session.getSnapshot()).toBeNull();
+    });
+
+    test("players getter returns empty array before start", () => {
+      const session = new GameSession(skyjo);
+
+      expect(session.players).toEqual([]);
+    });
+
+    test("logEntries getter returns empty array before start", () => {
+      const session = new GameSession(skyjo);
+
+      expect(session.logEntries).toEqual([]);
+    });
   });
 });
