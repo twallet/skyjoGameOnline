@@ -52,11 +52,6 @@ export class gameRoomService {
       service.#logger.info(
         `gameRoomService: created room '${trimmedId}' with game ${game.name}`
       );
-    } else {
-      const existing = gameRoomService.#registry.get(trimmedId);
-      existing.#logger.info(
-        `gameRoomService: reusing existing room '${trimmedId}'`
-      );
     }
 
     return gameRoomService.#registry.get(trimmedId);

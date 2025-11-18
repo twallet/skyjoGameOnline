@@ -124,7 +124,7 @@ describe("gameRoomService", () => {
     expect(() => gameRoomService.getOrCreate(null, skyjo)).toThrow(TypeError);
   });
 
-  it("reuses existing rooms and logs reuse events", () => {
+  it("reuses existing rooms without creating duplicates", () => {
     const logger = createLoggerMock();
     const colors = ["#ffaaaa", "#aaffaa"];
     const first = gameRoomService.getOrCreate("room-5", skyjo, colors, logger);
