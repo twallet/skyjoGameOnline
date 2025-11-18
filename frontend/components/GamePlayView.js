@@ -849,15 +849,8 @@ export function GamePlayView({
       return "";
     }
 
-    if (
-      state?.finalRound?.triggeredBy &&
-      instructionMessage.includes(state.finalRound.triggeredBy)
-    ) {
-      return instructionMessage.replace(/\s*\.+\s*$/, ".");
-    }
-
     return instructionMessage.replace(/\s*\.+\s*$/, ".");
-  }, [instructionMessage, state?.finalRound?.triggeredBy]);
+  }, [instructionMessage]);
 
   /**
    * Toggles the log expansion state.
@@ -1035,16 +1028,11 @@ export function GamePlayView({
       ? "Draw a card from the deck"
       : "Deck of cards";
     /**
-     * Whether the discard area allows dropping the drawn card.
-     * @type {boolean}
-     */
-    const allowDiscardDrop = canDropOnDiscard;
-    /**
      * Whether to show the pending discard card (card being discarded but not yet placed).
      * @type {boolean}
      */
     const showPendingDiscardCard =
-      pendingDiscardReveal && allowDiscardDrop && Boolean(drawnCard);
+      pendingDiscardReveal && canDropOnDiscard && Boolean(drawnCard);
     /**
      * Whether there is a visible card on top of the discard pile.
      * @type {boolean}
@@ -1079,7 +1067,7 @@ export function GamePlayView({
      */
     const discardTitle = showPendingDiscardCard
       ? "Select one of your hidden cards to reveal"
-      : allowDiscardDrop
+      : canDropOnDiscard
         ? "Click here to discard the drawn card"
         : canDrawFromDiscard
           ? "Take the top discard card"
@@ -1091,7 +1079,7 @@ export function GamePlayView({
     let discardClickHandler = undefined;
     if (showPendingDiscardCard) {
       discardClickHandler = undefined;
-    } else if (allowDiscardDrop) {
+    } else if (canDropOnDiscard) {
       discardClickHandler = handleDiscardAreaClick;
     } else if (canDrawFromDiscard) {
       discardClickHandler = handleDrawFromDiscard;
