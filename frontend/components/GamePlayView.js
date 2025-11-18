@@ -4,6 +4,27 @@ import React, {
   useState,
 } from "https://esm.sh/react@18?dev";
 
+import { buildPossessiveTurnLabel } from "../utils/appHelpers.js";
+
+/**
+ * Renders the main game play view for Skyjo, displaying player hands, deck, discard pile,
+ * game status, and handling all game interactions.
+ *
+ * @param {Object} props - Component props
+ * @param {Array<Object>} props.activePlayers - Array of active player objects with hand matrices
+ * @param {Object|null} props.deck - Deck object with baseImage and firstCard properties
+ * @param {Object|null} props.snapshot - Game snapshot containing state and log entries
+ * @param {Object|null} props.gameState - Current game state (takes precedence over snapshot)
+ * @param {string} props.localPlayerName - Name of the local player
+ * @param {Array<string|Object>} props.logEntries - Array of log entry strings or objects
+ * @param {Function|null} props.onFlipCard - Callback when a card is flipped (playerName, position)
+ * @param {Function|null} props.onDrawCard - Callback when a card is drawn (playerName, source)
+ * @param {Function|null} props.onReplaceCard - Callback when a card is replaced (playerName, position)
+ * @param {Function|null} props.onRevealCard - Callback when a card is revealed (playerName, position)
+ * @param {Function|null} props.onPlayAgain - Callback when play again button is clicked
+ * @param {boolean} props.isProcessing - Whether the component is processing an async operation
+ * @returns {React.ReactElement} The rendered game play view component
+ */
 export function GamePlayView({
   activePlayers,
   deck,
@@ -18,22 +39,18 @@ export function GamePlayView({
   onPlayAgain = null,
   isProcessing = false,
 }) {
+  // Normalize activePlayers to ensure it's always an array
   const players = Array.isArray(activePlayers) ? activePlayers : [];
+  // Reference to the grid container element for card size calculations
   const gridRef = React.useRef(null);
+  // CSS custom properties for dynamic card sizing based on available space
   const [cardSizeStyle, setCardSizeStyle] = useState({});
 
-  const buildPossessiveTurnLabel = React.useCallback((rawName) => {
-    const trimmed =
-      typeof rawName === "string" && rawName.trim().length > 0
-        ? rawName.trim()
-        : "";
-    if (!trimmed) {
-      return "Player turn";
-    }
-    const suffix = /s$/i.test(trimmed) ? "'" : "'s";
-    return `${trimmed}${suffix} turn`;
-  }, []);
-
+  /**
+   * Calculates the maximum number of columns across all player hands.
+   * Used to determine card sizing and layout constraints.
+   * @type {number}
+   */
   const maxHandColumns = React.useMemo(() => {
     if (!players.length) {
       return 4;
@@ -51,6 +68,11 @@ export function GamePlayView({
     }, 4);
   }, [players]);
 
+  /**
+   * Grid layout configurations for different player counts.
+   * Defines column/row counts, deck position, and player seat positions.
+   * @type {Object<number, Object>}
+   */
   const layouts = {
     0: {
       columns: 3,
@@ -401,50 +423,6 @@ export function GamePlayView({
     const trimmed = eventEntries.slice(-MAX_LOG_ENTRIES);
     return trimmed.reverse();
   }, [eventEntries]);
-  const logEntryCount = eventEntries.length;
-
-  const knownPlayerNames = useMemo(() => {
-    const names = new Set();
-    activePlayers.forEach((player) => {
-      if (player?.name) {
-        names.add(player.name);
-      }
-    });
-    if (Array.isArray(snapshot?.players)) {
-      snapshot.players.forEach((player) => {
-        if (player?.name) {
-          names.add(player.name);
-        }
-      });
-    }
-    eventEntries.forEach((entry) => {
-      if (entry?.actor) {
-        names.add(entry.actor);
-      }
-    });
-    return Array.from(names).sort((a, b) => b.length - a.length);
-  }, [activePlayers, snapshot?.players, eventEntries]);
-
-  const pendingLocalColumns = useMemo(() => {
-    if (!normalizedLocalName) {
-      return null;
-    }
-    let match = null;
-    pendingColumnRemovalMap.forEach((columns, playerName) => {
-      if (match) {
-        return;
-      }
-      if (
-        typeof playerName === "string" &&
-        playerName.localeCompare(normalizedLocalName, undefined, {
-          sensitivity: "accent",
-        }) === 0
-      ) {
-        match = columns;
-      }
-    });
-    return match;
-  }, [pendingColumnRemovalMap, normalizedLocalName]);
 
   const activePlayerDisplayName =
     typeof state?.activePlayer?.name === "string"
@@ -479,7 +457,7 @@ export function GamePlayView({
       default:
         return "Preparation";
     }
-  }, [state?.phase, activePlayerDisplayName, buildPossessiveTurnLabel]);
+  }, [state?.phase, activePlayerDisplayName]);
 
   const formattedLogEntries = useMemo(
     () =>
@@ -682,10 +660,18 @@ export function GamePlayView({
     return instructionMessage.replace(/\s*\.+\s*$/, ".");
   }, [instructionMessage, state?.finalRound?.triggeredBy]);
 
+  /**
+   * Toggles the log expansion state.
+   * Used to show/hide the game log panel.
+   */
   const toggleLogExpansion = () => {
     setIsLogExpanded((previous) => !previous);
   };
 
+  /**
+   * Resets the main action mode to "replace" and clears pending discard reveal.
+   * Only works if the drawn card belongs to the local player.
+   */
   const resetToReplaceMode = () => {
     if (!drawnBelongsToLocal) {
       return;
@@ -724,6 +710,11 @@ export function GamePlayView({
 
   const playerEntries = [];
 
+  /**
+   * Renders the final scores panel displayed when the game is finished.
+   * Shows ordered scores with winner highlighted, and includes a "Play again" button.
+   * @returns {React.ReactElement} Final scores panel element
+   */
   const renderFinalScoresPanel = () => {
     const hasScores =
       Array.isArray(orderedFinalRoundScores) &&
@@ -885,17 +876,13 @@ export function GamePlayView({
                 })
               : null,
             shouldShowDiscardImage && discardImageSrc
-              ? (() => {
-                  // Debug: Log discard card image path
-                  console.log("Discard card image:", discardImageSrc);
-                  return React.createElement("img", {
-                    className: topCardClasses.join(" "),
-                    src: discardImageSrc,
-                    alt: discardAltText,
-                    title: discardTitle,
-                    onClick: discardClickHandler ?? undefined,
-                  });
-                })()
+              ? React.createElement("img", {
+                  className: topCardClasses.join(" "),
+                  src: discardImageSrc,
+                  alt: discardAltText,
+                  title: discardTitle,
+                  onClick: discardClickHandler ?? undefined,
+                })
               : React.createElement("div", {
                   className: [
                     "deck-entry__drop-zone",
@@ -989,22 +976,18 @@ export function GamePlayView({
         player.name
       ),
       showInlineDrawnCard
-        ? (() => {
-            // Debug: Log drawn card image path
-            console.log("Drawn card image:", drawnCard.image);
-            return React.createElement("img", {
-              className: ["drawn-card__image", "drawn-card__image--inline"]
-                .filter(Boolean)
-                .join(" "),
-              src: drawnCard.image,
-              alt: `Drawn card ${drawnCard.value}`,
-              draggable: false,
-              onClick: drawnBelongsToLocal ? resetToReplaceMode : undefined,
-              style: {
-                cursor: drawnBelongsToLocal ? "pointer" : "default",
-              },
-            });
-          })()
+        ? React.createElement("img", {
+            className: ["drawn-card__image", "drawn-card__image--inline"]
+              .filter(Boolean)
+              .join(" "),
+            src: drawnCard.image,
+            alt: `Drawn card ${drawnCard.value}`,
+            draggable: false,
+            onClick: drawnBelongsToLocal ? resetToReplaceMode : undefined,
+            style: {
+              cursor: drawnBelongsToLocal ? "pointer" : "default",
+            },
+          })
         : null
     );
 
@@ -1078,11 +1061,6 @@ export function GamePlayView({
             cardClasses.push("player-entry__card--removal-pending");
           } else if (allowReplace || allowReveal || canFlip) {
             cardClasses.push("shake-animation");
-          }
-
-          // Debug: Log image paths for visible cards to compare with deck/drawn cards
-          if (!isHidden && cardData.image) {
-            console.log(`Hand card image (${player.name}, value ${cardValue}):`, cardData.image);
           }
 
           return React.createElement("img", {

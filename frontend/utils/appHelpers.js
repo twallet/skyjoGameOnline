@@ -164,3 +164,18 @@ export function normalizePlayerName(playerName) {
     ? playerName.trim()
     : "";
 }
+
+/**
+ * Builds a possessive turn label from a player name.
+ * Handles names ending in 's' correctly (e.g., "Alice" -> "Alice's turn", "James" -> "James' turn").
+ * @param {string} rawName - The raw player name
+ * @returns {string} Formatted possessive turn label
+ */
+export function buildPossessiveTurnLabel(rawName) {
+  const trimmed = normalizePlayerName(rawName);
+  if (!trimmed) {
+    return "Player turn";
+  }
+  const suffix = /s$/i.test(trimmed) ? "'" : "'s";
+  return `${trimmed}${suffix} turn`;
+}

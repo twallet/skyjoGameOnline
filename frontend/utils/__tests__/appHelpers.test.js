@@ -9,6 +9,7 @@ import {
   validatePlayerName,
   normalizePlayerNames,
   normalizePlayerName,
+  buildPossessiveTurnLabel,
 } from "../appHelpers.js";
 import { Game } from "../../../shared/models/game.js";
 
@@ -422,6 +423,43 @@ describe("app helpers", () => {
       expect(normalizePlayerName(null)).toBe("");
       expect(normalizePlayerName(undefined)).toBe("");
       expect(normalizePlayerName(123)).toBe("");
+    });
+  });
+
+  describe("buildPossessiveTurnLabel", () => {
+    it("builds possessive label for normal names", () => {
+      expect(buildPossessiveTurnLabel("Alice")).toBe("Alice's turn");
+      expect(buildPossessiveTurnLabel("Bob")).toBe("Bob's turn");
+      expect(buildPossessiveTurnLabel("Charlie")).toBe("Charlie's turn");
+    });
+
+    it("handles names ending in 's' correctly", () => {
+      expect(buildPossessiveTurnLabel("James")).toBe("James' turn");
+      expect(buildPossessiveTurnLabel("Chris")).toBe("Chris' turn");
+      expect(buildPossessiveTurnLabel("Lucas")).toBe("Lucas' turn");
+    });
+
+    it("handles names ending in 'S' (uppercase) correctly", () => {
+      expect(buildPossessiveTurnLabel("JAMES")).toBe("JAMES' turn");
+      expect(buildPossessiveTurnLabel("Chris")).toBe("Chris' turn");
+    });
+
+    it("returns default label for empty or invalid names", () => {
+      expect(buildPossessiveTurnLabel("")).toBe("Player turn");
+      expect(buildPossessiveTurnLabel("   ")).toBe("Player turn");
+      expect(buildPossessiveTurnLabel(null)).toBe("Player turn");
+      expect(buildPossessiveTurnLabel(undefined)).toBe("Player turn");
+      expect(buildPossessiveTurnLabel(123)).toBe("Player turn");
+    });
+
+    it("trims whitespace before processing", () => {
+      expect(buildPossessiveTurnLabel("  Alice  ")).toBe("Alice's turn");
+      expect(buildPossessiveTurnLabel("  James  ")).toBe("James' turn");
+    });
+
+    it("handles single character names", () => {
+      expect(buildPossessiveTurnLabel("A")).toBe("A's turn");
+      expect(buildPossessiveTurnLabel("S")).toBe("S' turn");
     });
   });
 });
