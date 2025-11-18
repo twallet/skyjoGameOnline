@@ -4,10 +4,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { GamePlayView } from "../GamePlayView.js";
-import {
-  normalizeOptionalString,
-  extractLogEntryMessage,
-} from "../../utils/appHelpers.js";
+import { normalizeOptionalString } from "../../utils/appHelpers.js";
 
 class ResizeObserverMock {
   observe() {}
@@ -73,15 +70,12 @@ const createSnapshot = (stateOverrides = {}, logOverrides = []) => {
         typeof entry.message === "string"
           ? entry.message
           : String(entry.message ?? "");
-      const message = /[.!?]$/.test(rawMessage)
-        ? rawMessage
-        : `${rawMessage}.`;
+      const message = /[.!?]$/.test(rawMessage) ? rawMessage : `${rawMessage}.`;
       const phase = normalizeOptionalString(entry.phase);
       const actor = normalizeOptionalString(entry.actor);
       return { message, phase, actor };
     }
-    const rawMessage =
-      typeof entry === "string" ? entry : String(entry ?? "");
+    const rawMessage = typeof entry === "string" ? entry : String(entry ?? "");
     const message = /[.!?]$/.test(rawMessage) ? rawMessage : `${rawMessage}.`;
     return { message, phase: null, actor: null };
   };
@@ -430,9 +424,7 @@ describe("GamePlayView information section", () => {
         logEntries: [],
       })
     );
-    const phaseLabel = container.querySelector(
-      ".game-status__phase--finished"
-    );
+    const phaseLabel = container.querySelector(".game-status__phase--finished");
     expect(phaseLabel).toBeInTheDocument();
     expect(phaseLabel).toHaveClass("game-status__phase--finished");
   });

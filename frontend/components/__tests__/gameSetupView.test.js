@@ -99,6 +99,21 @@ describe("GameSetupView component", () => {
     expect(createButton).toBeEnabled();
   });
 
+  it("hides create button when roomId is present (from URL)", () => {
+    render(
+      React.createElement(GameSetupView, {
+        ...defaultProps,
+        isPlayerNameValid: true,
+        roomId: "TEST01",
+        isJoiningRoom: false,
+        hasCreatedRoom: false,
+      })
+    );
+    expect(
+      screen.queryByRole("button", { name: /new room/i })
+    ).not.toBeInTheDocument();
+  });
+
   it("shows room banner and join button when joining room", () => {
     render(
       React.createElement(GameSetupView, {

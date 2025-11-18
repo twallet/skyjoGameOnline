@@ -73,9 +73,10 @@ export function GameSetupView({
   const showJoinActions = isJoiningRoom;
 
   // Show create actions (new room button) when appropriate
-  // Shown when: not joining, room not created, and player name is valid
+  // Shown when: not joining, room not created, no roomId present, and player name is valid
+  // Hidden when: joining, room created, or roomId exists (from URL)
   const showCreateActions =
-    !isJoiningRoom && !hasCreatedRoom && isPlayerNameValid;
+    !isJoiningRoom && !hasCreatedRoom && !roomId && isPlayerNameValid;
 
   /**
    * Creates a room banner element displaying the room ID.
