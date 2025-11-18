@@ -46,15 +46,18 @@ export function GameSetupView({
   const trimmedRoomId = typeof roomId === "string" ? roomId.trim() : "";
 
   // Determine if join button should be disabled
+  // Disabled when: processing, invalid player name, or (joining flow and no room ID)
   const joinDisabled =
     isProcessing ||
     !isPlayerNameValid ||
     (isJoiningRoom && trimmedRoomId.length === 0);
 
   // Determine if create button should be disabled
+  // Disabled when: processing or invalid player name
   const createDisabled = isProcessing || !isPlayerNameValid;
 
   // Determine if start button should be disabled
+  // Disabled when: processing, game cannot start, or game has already started
   const startDisabled = isProcessing || !canStartGame || gameStarted;
 
   // Show room info banner when room is selected and not in joining flow
@@ -70,8 +73,53 @@ export function GameSetupView({
   const showJoinActions = isJoiningRoom;
 
   // Show create actions (new room button) when appropriate
+  // Shown when: not joining, room not created, and player name is valid
   const showCreateActions =
     !isJoiningRoom && !hasCreatedRoom && isPlayerNameValid;
+
+  /**
+   * Creates a room banner element displaying the room ID.
+   * @param {string} bannerClassName - CSS class name for the banner container
+   * @param {boolean} showCopyButton - Whether to show the copy button
+   * @returns {React.ReactElement|null} Room banner element or null if no roomId
+   */
+  const createRoomBanner = (bannerClassName, showCopyButton) => {
+    if (!roomId) {
+      return null;
+    }
+    return React.createElement(
+      "div",
+      { className: bannerClassName },
+      React.createElement(
+        "div",
+        { className: "setup__current-room" },
+        React.createElement(
+          "span",
+          { className: "setup__current-room-label" },
+          "Room"
+        ),
+        React.createElement(
+          "span",
+          { className: "setup__current-room-value" },
+          roomId
+        ),
+        // Copy button for room ID (only shown when not in joining flow)
+        showCopyButton && showRoomBannerCopy
+          ? React.createElement(
+              "button",
+              {
+                type: "button",
+                className: "setup__copy-button",
+                onClick: onCopyRoomId,
+                disabled: isProcessing || !roomId,
+                title: "Copy join link",
+              },
+              "📋"
+            )
+          : null
+      )
+    );
+  };
 
   return React.createElement(
     "main",
@@ -101,15 +149,19 @@ export function GameSetupView({
             value: playerName,
             onChange: (event) => onPlayerNameChange(event.target.value),
             // Prevent typing when at max length (unless replacing selected text)
+            // Allows deletion, navigation, and text replacement via selection
             onKeyDown: (event) => {
+              // Check if the key is a character key (not modifier or special key)
               const isCharacterKey =
                 event.key.length === 1 &&
                 !event.ctrlKey &&
                 !event.metaKey &&
                 !event.altKey;
+              // Check if there's no text selection (cursor position only)
               const noSelection =
                 event.currentTarget.selectionStart ===
                 event.currentTarget.selectionEnd;
+              // Prevent typing if: character key, no selection, and at max length
               if (
                 isCharacterKey &&
                 noSelection &&
@@ -125,26 +177,10 @@ export function GameSetupView({
         ? React.createElement(
             "div",
             { className: "setup__actions setup__actions--joining" },
-            // Show read-only room banner
-            React.createElement(
-              "div",
-              {
-                className: "setup__room-banner setup__room-banner--inline",
-              },
-              React.createElement(
-                "div",
-                { className: "setup__current-room" },
-                React.createElement(
-                  "span",
-                  { className: "setup__current-room-label" },
-                  "Room"
-                ),
-                React.createElement(
-                  "span",
-                  { className: "setup__current-room-value" },
-                  roomId
-                )
-              )
+            // Show read-only room banner (no copy button in joining flow)
+            createRoomBanner(
+              "setup__room-banner setup__room-banner--inline",
+              false
             ),
             // Join button
             React.createElement(
@@ -177,40 +213,7 @@ export function GameSetupView({
             )
           : null,
       // Room info banner (shown when room is selected and locked)
-      shouldShowRoomInfo
-        ? React.createElement(
-            "div",
-            { className: "setup__room-banner" },
-            React.createElement(
-              "div",
-              { className: "setup__current-room" },
-              React.createElement(
-                "span",
-                { className: "setup__current-room-label" },
-                "Room"
-              ),
-              React.createElement(
-                "span",
-                { className: "setup__current-room-value" },
-                roomId
-              ),
-              // Copy button for room ID
-              showRoomBannerCopy
-                ? React.createElement(
-                    "button",
-                    {
-                      type: "button",
-                      className: "setup__copy-button",
-                      onClick: onCopyRoomId,
-                      disabled: isProcessing || !roomId,
-                      title: "Copy join link",
-                    },
-                    "📋"
-                  )
-                : null
-            )
-          )
-        : null,
+      shouldShowRoomInfo ? createRoomBanner("setup__room-banner", true) : null,
       // Players list (shown when there are players)
       playerNames.length > 0
         ? React.createElement(

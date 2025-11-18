@@ -403,4 +403,110 @@ describe("GameSetupView component", () => {
     );
     expect(screen.queryByPlaceholderText(/your name/i)).not.toBeInTheDocument();
   });
+
+  it("prevents typing when player name is at max length", async () => {
+    const user = userEvent.setup();
+    const onPlayerNameChange = jest.fn();
+    const maxLengthName = "A".repeat(15); // MAX_PLAYER_NAME_LENGTH is 15
+    render(
+      React.createElement(GameSetupView, {
+        ...defaultProps,
+        playerName: maxLengthName,
+        onPlayerNameChange,
+      })
+    );
+    const input = screen.getByPlaceholderText(/your name/i);
+    await user.type(input, "B");
+    // Should not call onChange when at max length
+    expect(onPlayerNameChange).not.toHaveBeenCalled();
+  });
+
+  it("allows deletion when player name is at max length", async () => {
+    const user = userEvent.setup();
+    const onPlayerNameChange = jest.fn();
+    const maxLengthName = "A".repeat(15);
+    render(
+      React.createElement(GameSetupView, {
+        ...defaultProps,
+        playerName: maxLengthName,
+        onPlayerNameChange,
+      })
+    );
+    const input = screen.getByPlaceholderText(/your name/i);
+    await user.type(input, "{Backspace}");
+    // Should allow deletion
+    expect(input).toHaveValue(maxLengthName);
+  });
+
+  it("disables join button when roomId is empty string during join flow", () => {
+    render(
+      React.createElement(GameSetupView, {
+        ...defaultProps,
+        isJoiningRoom: true,
+        isPlayerNameValid: true,
+        roomId: "",
+      })
+    );
+    const joinButton = screen.getByRole("button", { name: /^join$/i });
+    expect(joinButton).toBeDisabled();
+  });
+
+  it("disables join button when roomId is only whitespace during join flow", () => {
+    render(
+      React.createElement(GameSetupView, {
+        ...defaultProps,
+        isJoiningRoom: true,
+        isPlayerNameValid: true,
+        roomId: "   ",
+      })
+    );
+    const joinButton = screen.getByRole("button", { name: /^join$/i });
+    expect(joinButton).toBeDisabled();
+  });
+
+  it("disables copy button when isProcessing is true", () => {
+    render(
+      React.createElement(GameSetupView, {
+        ...defaultProps,
+        roomId: "TEST01",
+        isJoiningRoom: false,
+        isProcessing: true,
+      })
+    );
+    const copyButton = screen.getByTitle(/copy join link/i);
+    expect(copyButton).toBeDisabled();
+  });
+
+  it("handles null roomId gracefully", () => {
+    render(
+      React.createElement(GameSetupView, {
+        ...defaultProps,
+        roomId: null,
+        isJoiningRoom: false,
+      })
+    );
+    expect(screen.queryByText(/^room$/i)).not.toBeInTheDocument();
+  });
+
+  it("handles undefined roomId gracefully", () => {
+    render(
+      React.createElement(GameSetupView, {
+        ...defaultProps,
+        roomId: undefined,
+        isJoiningRoom: false,
+      })
+    );
+    expect(screen.queryByText(/^room$/i)).not.toBeInTheDocument();
+  });
+
+  it("does not show room banner when roomId is null", () => {
+    render(
+      React.createElement(GameSetupView, {
+        ...defaultProps,
+        roomId: null,
+        isJoiningRoom: false,
+      })
+    );
+    expect(screen.queryByTitle(/copy join link/i)).not.toBeInTheDocument();
+  });
 });
