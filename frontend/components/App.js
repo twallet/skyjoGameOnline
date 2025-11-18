@@ -724,13 +724,6 @@ export function App() {
     return result.isValid;
   };
 
-  // Reset room flow state when player name becomes invalid
-  useEffect(() => {
-    if (!isPlayerNameValid && hasCreatedRoom) {
-      setHasCreatedRoom(false);
-    }
-  }, [isPlayerNameValid, hasCreatedRoom]);
-
   /**
    * Handles joining an existing room from URL invite link.
    */
@@ -955,13 +948,6 @@ export function App() {
     }
   };
 
-  /**
-   * Handles copying the current room ID to clipboard.
-   */
-  const handleCopyRoomId = async () => {
-    await copyInviteLinkToClipboard();
-  };
-
   if (gameState !== null) {
     return React.createElement(GamePlayView, {
       activePlayers,
@@ -989,7 +975,7 @@ export function App() {
     playerName: newPlayerName,
     onCreateRoom: handleCreateRoom,
     onJoinRoom: handleJoinRoom,
-    onCopyRoomId: handleCopyRoomId,
+    onCopyRoomId: copyInviteLinkToClipboard,
     playerNames,
     playerColors,
     onPlayerNameChange: handleNewPlayerNameChange,
