@@ -875,13 +875,15 @@ export function GamePlayView({
             {
               className: "deck-entry__images",
             },
-            React.createElement("img", {
-              className: baseImageClasses.join(" "),
-              src: deck.baseImage,
-              alt: "Deck of cards",
-              title: deckTitle,
-              onClick: canDrawFromDeck ? handleDrawFromDeck : undefined,
-            }),
+            deck.baseImage
+              ? React.createElement("img", {
+                  className: baseImageClasses.join(" "),
+                  src: deck.baseImage,
+                  alt: "Deck of cards",
+                  title: deckTitle,
+                  onClick: canDrawFromDeck ? handleDrawFromDeck : undefined,
+                })
+              : null,
             shouldShowDiscardImage && discardImageSrc
               ? React.createElement("img", {
                   className: topCardClasses.join(" "),

@@ -157,7 +157,7 @@ describe("app helpers", () => {
       expect(view.firstCard.alt).toBe("Top card A");
     });
 
-    it("handles missing backImage gracefully", () => {
+    it("handles missing backImage gracefully with default fallback", () => {
       const deck = {
         size: 5,
         topCard: null,
@@ -167,7 +167,7 @@ describe("app helpers", () => {
 
       expect(view).toEqual({
         size: 5,
-        baseImage: null,
+        baseImage: "./assets/images/back.jpg",
         firstCard: null,
       });
     });

@@ -60,6 +60,12 @@ export function createRoomState(players, game, gameStarted = false) {
 }
 
 /**
+ * Default back image path for deck cards.
+ * @type {string}
+ */
+const DEFAULT_BACK_IMAGE = "./assets/images/back.jpg";
+
+/**
  * Transforms a deck snapshot into a view model for rendering.
  * Creates a normalized representation of the deck with size, base image,
  * and the top card information (if available).
@@ -67,7 +73,7 @@ export function createRoomState(players, game, gameStarted = false) {
  * @param {Object|null|undefined} deckSnapshot - The deck snapshot from the game state
  * @returns {Object|null} View model with:
  *   - size: number of cards remaining in deck (defaults to 0)
- *   - baseImage: path to the deck back image (from snapshot.backImage)
+ *   - baseImage: path to the deck back image (from snapshot.backImage, defaults to DEFAULT_BACK_IMAGE)
  *   - firstCard: object with image, visible flag, and alt text, or null if no top card
  */
 export function buildDeckView(deckSnapshot) {
@@ -78,7 +84,7 @@ export function buildDeckView(deckSnapshot) {
   const topCard = deckSnapshot.topCard ?? null;
   return {
     size: deckSnapshot.size ?? 0,
-    baseImage: deckSnapshot.backImage ?? null,
+    baseImage: deckSnapshot.backImage ?? DEFAULT_BACK_IMAGE,
     firstCard: topCard
       ? {
           image: topCard.image,
