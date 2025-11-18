@@ -119,12 +119,6 @@ export function App() {
 
   // Game state
   /**
-   * Flag indicating whether the game has started. When true, switches from setup view to game view.
-   * Set when the game is started via API call.
-   * Used in: Internal (controls which view to render)
-   */
-  const [gameStarted, setGameStarted] = useState(false);
-  /**
    * Array of active player objects with their game state (hands, scores, etc.).
    * Updated from server snapshots during gameplay.
    * Used in: GamePlayView
@@ -316,7 +310,6 @@ export function App() {
       if (snapshot) {
         setCurrentSnapshot(snapshot);
         setGameState(snapshot.state ?? null);
-        setGameStarted(true);
         setLogEntries(
           Array.isArray(snapshot.logEntries) ? snapshot.logEntries : []
         );
@@ -328,7 +321,6 @@ export function App() {
         resetGameState(
           setCurrentSnapshot,
           setGameState,
-          setGameStarted,
           setLogEntries,
           setActivePlayers,
           setDeckView
@@ -356,7 +348,6 @@ export function App() {
         resetGameState(
           setCurrentSnapshot,
           setGameState,
-          setGameStarted,
           setLogEntries,
           setActivePlayers,
           setDeckView
@@ -510,7 +501,6 @@ export function App() {
         deck,
         state,
       });
-      setGameStarted(true);
       // Update room state immediately for UI feedback before async refresh
       setRoomState((prev) => ({
         ...prev,
@@ -529,8 +519,7 @@ export function App() {
       setErrorMessage(getErrorMessage(error));
       resetGameState(
         setCurrentSnapshot,
-        setSessionState,
-        setGameStarted,
+        setGameState,
         setLogEntries,
         setActivePlayers,
         setDeckView
@@ -830,8 +819,7 @@ export function App() {
       setRoomState(createRoomState(updatedNames, skyjo, false));
       resetGameState(
         setCurrentSnapshot,
-        setSessionState,
-        setGameStarted,
+        setGameState,
         setLogEntries,
         setActivePlayers,
         setDeckView
@@ -961,7 +949,7 @@ export function App() {
     await copyInviteLinkToClipboard();
   };
 
-  if (gameStarted) {
+  if (gameState !== null) {
     return React.createElement(GamePlayView, {
       activePlayers,
       deck: deckView,

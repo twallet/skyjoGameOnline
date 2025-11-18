@@ -21,23 +21,20 @@ export function normalizeRoomId(roomId) {
 /**
  * Helper function to reset game state to initial values.
  * @param {Function} setCurrentSnapshot - State setter for current snapshot
- * @param {Function} setSessionState - State setter for session state
- * @param {Function} setGameStarted - State setter for game started flag
+ * @param {Function} setGameState - State setter for game state
  * @param {Function} setLogEntries - State setter for log entries
  * @param {Function} setActivePlayers - State setter for active players
  * @param {Function} setDeckView - State setter for deck view
  */
 export function resetGameState(
   setCurrentSnapshot,
-  setSessionState,
-  setGameStarted,
+  setGameState,
   setLogEntries,
   setActivePlayers,
   setDeckView
 ) {
   setCurrentSnapshot(null);
-  setSessionState(null);
-  setGameStarted(false);
+  setGameState(null);
   setLogEntries([]);
   setActivePlayers([]);
   setDeckView(null);

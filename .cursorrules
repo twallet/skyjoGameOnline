@@ -1,0 +1,9 @@
+# Cursor Rules for Skyjo Project
+
+## Code Standards
+
+- **Comments**: All comments must be in English and use JSDoc format
+- **Code Language**: All code must be in English, including error messages
+- **Testing**: Add or adjust relevant test cases after making code changes
+- **Testing**: Run all test suites after making code changes
+- **Code Quality**: Check for dead/duplicated code after making code changes

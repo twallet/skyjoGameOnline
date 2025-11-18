@@ -87,24 +87,21 @@ describe("app helpers", () => {
   describe("resetGameState", () => {
     it("calls all state setters with reset values", () => {
       const setCurrentSnapshot = jest.fn();
-      const setSessionState = jest.fn();
-      const setGameStarted = jest.fn();
+      const setGameState = jest.fn();
       const setLogEntries = jest.fn();
       const setActivePlayers = jest.fn();
       const setDeckView = jest.fn();
 
       resetGameState(
         setCurrentSnapshot,
-        setSessionState,
-        setGameStarted,
+        setGameState,
         setLogEntries,
         setActivePlayers,
         setDeckView
       );
 
       expect(setCurrentSnapshot).toHaveBeenCalledWith(null);
-      expect(setSessionState).toHaveBeenCalledWith(null);
-      expect(setGameStarted).toHaveBeenCalledWith(false);
+      expect(setGameState).toHaveBeenCalledWith(null);
       expect(setLogEntries).toHaveBeenCalledWith([]);
       expect(setActivePlayers).toHaveBeenCalledWith([]);
       expect(setDeckView).toHaveBeenCalledWith(null);
