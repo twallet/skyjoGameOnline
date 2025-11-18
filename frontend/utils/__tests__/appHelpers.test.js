@@ -82,6 +82,34 @@ describe("app helpers", () => {
       const state = createRoomState(["Alice", "Bob"], mockGame, true);
       expect(state.gameStarted).toBe(true);
     });
+
+    it("handles empty array correctly", () => {
+      const state = createRoomState([], mockGame, false);
+      expect(state).toEqual({
+        players: [],
+        canAddPlayer: true,
+        canStartGame: false,
+        gameStarted: false,
+      });
+    });
+
+    it("throws TypeError when players is null or undefined", () => {
+      expect(() => {
+        createRoomState(null, mockGame, false);
+      }).toThrow(TypeError);
+      expect(() => {
+        createRoomState(undefined, mockGame, false);
+      }).toThrow(TypeError);
+    });
+
+    it("produces incorrect results when players is not an array (string)", () => {
+      // This test documents that createRoomState expects an array
+      // Non-array inputs will produce incorrect results
+      const state = createRoomState("not an array", mockGame, false);
+      // String has length property, so it won't throw but produces wrong results
+      expect(state.players).toBe("not an array");
+      expect(typeof state.canAddPlayer).toBe("boolean");
+    });
   });
 
   describe("resetGameState", () => {

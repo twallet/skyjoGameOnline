@@ -300,10 +300,9 @@ export function App() {
     try {
       const data = await RoomApi.getRoom(normalizedRoomId);
 
-      setRoomState(
-        createRoomState(data.players ?? [], skyjo, Boolean(data.gameStarted))
-      );
-      setPlayerNames(data.players ?? []);
+      const players = Array.isArray(data.players) ? data.players : [];
+      setRoomState(createRoomState(players, skyjo, Boolean(data.gameStarted)));
+      setPlayerNames(players);
       setErrorMessage("");
 
       const snapshot = data.snapshot ?? null;
@@ -477,7 +476,7 @@ export function App() {
 
     setCurrentSnapshot(snapshot);
     setGameState(state ?? null);
-    setActivePlayers(Array.isArray(players) ? players : []);
+    setActivePlayers(players);
     setDeckView(buildDeckView(deck));
     setLogEntries(entries);
   }, []);
@@ -614,12 +613,13 @@ export function App() {
           roomId,
           name
         );
-        if (updatedNames.length > 0) {
+        if (Array.isArray(updatedNames) && updatedNames.length > 0) {
           latestPlayers = updatedNames;
         }
       }
-      setPlayerNames(latestPlayers);
-      setRoomState(createRoomState(latestPlayers, skyjo, false));
+      const safePlayers = Array.isArray(latestPlayers) ? latestPlayers : [];
+      setPlayerNames(safePlayers);
+      setRoomState(createRoomState(safePlayers, skyjo, false));
       await handleStartGame();
       setErrorMessage("");
     } catch (error) {
@@ -759,8 +759,9 @@ export function App() {
       setRoomId(joinedRoomId);
       syncRoomIdToUrl(joinedRoomId);
       setLocalPlayerName(currentPlayerName);
-      setPlayerNames(updatedNames);
-      setRoomState(createRoomState(updatedNames, skyjo, false));
+      const safePlayers = Array.isArray(updatedNames) ? updatedNames : [];
+      setPlayerNames(safePlayers);
+      setRoomState(createRoomState(safePlayers, skyjo, false));
       setErrorMessage("");
       setNewPlayerName(currentPlayerName);
       setIsJoiningExistingRoom(false);
@@ -815,8 +816,9 @@ export function App() {
       setRoomId(normalizedId);
       syncRoomIdToUrl(normalizedId);
       setLocalPlayerName(currentPlayerName);
-      setPlayerNames(updatedNames);
-      setRoomState(createRoomState(updatedNames, skyjo, false));
+      const safePlayers = Array.isArray(updatedNames) ? updatedNames : [];
+      setPlayerNames(safePlayers);
+      setRoomState(createRoomState(safePlayers, skyjo, false));
       resetGameState(
         setCurrentSnapshot,
         setGameState,
