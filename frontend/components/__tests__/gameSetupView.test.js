@@ -54,6 +54,28 @@ describe("GameSetupView component", () => {
     expect(screen.queryByPlaceholderText(/your name/i)).not.toBeInTheDocument();
   });
 
+  it("hides the player name input when players have joined and not in joining flow", () => {
+    render(
+      React.createElement(GameSetupView, {
+        ...defaultProps,
+        playerNames: ["Alice"],
+        isJoiningRoom: false,
+      })
+    );
+    expect(screen.queryByPlaceholderText(/your name/i)).not.toBeInTheDocument();
+  });
+
+  it("shows the player name input when players exist but user is in joining flow", () => {
+    render(
+      React.createElement(GameSetupView, {
+        ...defaultProps,
+        playerNames: ["Alice"],
+        isJoiningRoom: true,
+      })
+    );
+    expect(screen.getByPlaceholderText(/your name/i)).toBeInTheDocument();
+  });
+
   it("hides create button when player name is invalid", () => {
     render(
       React.createElement(GameSetupView, {

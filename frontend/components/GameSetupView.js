@@ -85,8 +85,11 @@ export function GameSetupView({
         alt: "Skyjo game box",
         className: "setup__hero",
       }),
-      // Player name input - shown when room not created and not processing
-      hasCreatedRoom || isProcessing
+      // Player name input - shown when room not created, not processing, and user hasn't joined yet
+      // Hide when: room created, processing, or (players exist and not in joining flow)
+      hasCreatedRoom ||
+        isProcessing ||
+        (playerNames.length > 0 && !isJoiningRoom)
         ? null
         : React.createElement("input", {
             id: "player-name-input",
