@@ -27,6 +27,21 @@ import {
 } from "../utils/appHelpers.js";
 
 /**
+ * Room polling interval in milliseconds.
+ * How often to refresh room state from the server to keep UI in sync.
+ * @type {number}
+ */
+const ROOM_POLL_INTERVAL_MS = 3000;
+
+/**
+ * Column removal timer buffer in milliseconds.
+ * Additional time added to column removal expiration timers to ensure
+ * state refresh happens slightly after the expiration time.
+ * @type {number}
+ */
+const COLUMN_REMOVAL_TIMER_BUFFER_MS = 50;
+
+/**
  * Skyjo game configuration instance.
  * Defines card values, quantities, images, and game rules.
  */
@@ -384,7 +399,10 @@ export function App() {
           loadRoomState(roomId, { silent: true });
           return null;
         }
-        const delay = Math.max(expiresAt - now + 50, 0);
+        const delay = Math.max(
+          expiresAt - now + COLUMN_REMOVAL_TIMER_BUFFER_MS,
+          0
+        );
         return setTimeout(() => {
           loadRoomState(roomId, { silent: true });
         }, delay);
@@ -401,18 +419,21 @@ export function App() {
   }, [roomId, gameState?.pendingColumnRemovals]);
 
   // Load room state when room ID changes
+  // Only reload when roomId changes, not when flow flags change
   useEffect(() => {
     if (!roomId) {
       return;
     }
 
+    const preservePlayerName = hasCreatedRoom || isJoiningExistingRoom;
     loadRoomState(roomId, {
       silent: false,
-      preservePlayerName: hasCreatedRoom || isJoiningExistingRoom,
+      preservePlayerName,
     });
-  }, [roomId, hasCreatedRoom, isJoiningExistingRoom]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId]);
 
-  // Poll room state every 4 seconds to keep UI in sync
+  // Poll room state periodically to keep UI in sync
   useEffect(() => {
     if (!roomId) {
       return;
@@ -420,7 +441,7 @@ export function App() {
 
     const intervalId = setInterval(() => {
       loadRoomState(roomId, { silent: true });
-    }, 4000);
+    }, ROOM_POLL_INTERVAL_MS);
 
     return () => {
       clearInterval(intervalId);
