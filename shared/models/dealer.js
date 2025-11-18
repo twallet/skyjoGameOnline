@@ -48,10 +48,16 @@ export class Dealer {
   }
 
   /**
-   * Shuffles the deck using the underlying deck implementation.
+   * Randomizes card order in place using Fisher-Yates shuffle algorithm.
    */
   shuffle() {
-    this.#deck.shuffle();
+    const cards = this.#deck.getCardsForShuffling();
+    for (let k = cards.length - 1; k >= 1; k--) {
+      const randomIndex = Math.floor(Math.random() * k);
+      const tempCard = cards[randomIndex];
+      cards[randomIndex] = cards[k];
+      cards[k] = tempCard;
+    }
   }
 
   /**

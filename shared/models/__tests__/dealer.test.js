@@ -53,6 +53,41 @@ describe("Dealer", () => {
     expect(dealer.players).toHaveLength(1);
   });
 
+  test("shuffle randomizes card order", () => {
+    const game = buildSampleGame();
+    const players = [new Player("Alice", game), new Player("Bob", game)];
+    const dealer = new Dealer(game, players);
+
+    const originalOrder = dealer.deck.cardsDeck.map((card) => {
+      card.visible = true;
+      return card.value;
+    });
+
+    dealer.shuffle();
+
+    const shuffledOrder = dealer.deck.cardsDeck.map((card) => {
+      card.visible = true;
+      return card.value;
+    });
+
+    expect(shuffledOrder).toHaveLength(originalOrder.length);
+    expect(shuffledOrder.sort()).toEqual(originalOrder.sort());
+
+    let orderChanged = false;
+    for (let i = 0; i < 10; i++) {
+      dealer.shuffle();
+      const newOrder = dealer.deck.cardsDeck.map((card) => {
+        card.visible = true;
+        return card.value;
+      });
+      if (JSON.stringify(newOrder) !== JSON.stringify(originalOrder)) {
+        orderChanged = true;
+        break;
+      }
+    }
+    expect(orderChanged).toBe(true);
+  });
+
   test("deal distributes the expected amount of cards", () => {
     const game = buildSampleGame();
     const players = [new Player("Alice", game), new Player("Bob", game)];

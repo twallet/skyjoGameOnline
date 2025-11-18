@@ -76,15 +76,13 @@ export class Deck {
   }
 
   /**
-   * Randomizes card order in place using Fisher-Yates shuffle algorithm.
+   * Gets the cards array for shuffling purposes.
+   * This method provides controlled access to the internal cards array.
+   * @returns {Card[]} Reference to the internal cards array.
+   * @package
    */
-  shuffle() {
-    for (let k = this.#cards.length - 1; k >= 1; k--) {
-      const randomIndex = Math.floor(Math.random() * k);
-      const tempCard = this.#cards[randomIndex];
-      this.#cards[randomIndex] = this.#cards[k];
-      this.#cards[k] = tempCard;
-    }
+  getCardsForShuffling() {
+    return this.#cards;
   }
 
   /**
