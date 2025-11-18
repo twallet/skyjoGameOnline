@@ -6,6 +6,7 @@ import React, {
 
 import {
   buildPossessiveTurnLabel,
+  extractLogEntryMessage,
   normalizeOptionalString,
   normalizePlayerName,
 } from "../utils/appHelpers.js";
@@ -635,12 +636,7 @@ export function GamePlayView({
    * @type {Array<string>}
    */
   const formattedLogEntries = useMemo(
-    () =>
-      visibleLogEntries.map((entry) =>
-        typeof entry.message === "string"
-          ? entry.message
-          : String(entry.message ?? "")
-      ),
+    () => visibleLogEntries.map((entry) => extractLogEntryMessage(entry)),
     [visibleLogEntries]
   );
 
