@@ -8,7 +8,6 @@ import {
   extractLogEntryMessage,
   validatePlayerName,
   normalizePlayerNames,
-  normalizePlayerName,
   trimStringValue,
   buildPossessiveTurnLabel,
 } from "../appHelpers.js";
@@ -406,24 +405,6 @@ describe("app helpers", () => {
 
     it("handles empty array", () => {
       expect(normalizePlayerNames([])).toEqual([]);
-    });
-  });
-
-  describe("normalizePlayerName", () => {
-    it("trims valid player names", () => {
-      expect(normalizePlayerName("Alice")).toBe("Alice");
-      expect(normalizePlayerName("  Alice  ")).toBe("Alice");
-    });
-
-    it("returns empty string for empty input", () => {
-      expect(normalizePlayerName("")).toBe("");
-      expect(normalizePlayerName("   ")).toBe("");
-    });
-
-    it("returns empty string for invalid inputs", () => {
-      expect(normalizePlayerName(null)).toBe("");
-      expect(normalizePlayerName(undefined)).toBe("");
-      expect(normalizePlayerName(123)).toBe("");
     });
   });
 

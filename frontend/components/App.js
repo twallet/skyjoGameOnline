@@ -23,7 +23,7 @@ import {
   extractLogEntryMessage,
   validatePlayerName,
   normalizePlayerNames,
-  normalizePlayerName,
+  trimStringValue,
 } from "../utils/appHelpers.js";
 
 /**
@@ -474,7 +474,7 @@ export function App() {
 
     const titleParts = ["Skyjo"];
     const normalizedRoomId = normalizeRoomId(roomId);
-    const normalizedPlayerName = normalizePlayerName(localPlayerName);
+    const normalizedPlayerName = trimStringValue(localPlayerName) ?? "";
 
     if (normalizedPlayerName) {
       titleParts.push(`Player ${normalizedPlayerName}`);
@@ -720,7 +720,7 @@ export function App() {
   };
 
   // Player name validation
-  const trimmedPlayerName = normalizePlayerName(newPlayerName);
+  const trimmedPlayerName = trimStringValue(newPlayerName) ?? "";
   const validationResult = validatePlayerName(
     trimmedPlayerName,
     GameSession.MAX_PLAYER_NAME_LENGTH
@@ -733,7 +733,7 @@ export function App() {
    * @returns {boolean} True if player name is valid
    */
   const ensureValidPlayerName = (playerName = newPlayerName) => {
-    const normalized = normalizePlayerName(playerName);
+    const normalized = trimStringValue(playerName) ?? "";
     const result = validatePlayerName(
       normalized,
       GameSession.MAX_PLAYER_NAME_LENGTH
@@ -746,7 +746,7 @@ export function App() {
    * Handles joining an existing room from URL invite link.
    */
   const handleJoinRoom = async () => {
-    const currentPlayerName = normalizePlayerName(newPlayerName);
+    const currentPlayerName = trimStringValue(newPlayerName) ?? "";
     if (!ensureValidPlayerName(currentPlayerName)) {
       return;
     }
@@ -817,7 +817,7 @@ export function App() {
    * Handles creating a new room and joining as the first player.
    */
   const handleCreateRoom = async () => {
-    const currentPlayerName = normalizePlayerName(newPlayerName);
+    const currentPlayerName = trimStringValue(newPlayerName) ?? "";
     if (!ensureValidPlayerName(currentPlayerName)) {
       return;
     }

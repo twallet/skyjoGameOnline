@@ -163,17 +163,8 @@ export function normalizePlayerNames(playerNames) {
     return [];
   }
   return playerNames
-    .map((name) => normalizePlayerName(name))
+    .map((name) => trimStringValue(name) ?? "")
     .filter((name) => name.length > 0);
-}
-
-/**
- * Normalizes a single player name string by trimming whitespace.
- * @param {string|unknown} playerName - The player name to normalize
- * @returns {string} Normalized player name or empty string if invalid
- */
-export function normalizePlayerName(playerName) {
-  return trimStringValue(playerName) ?? "";
 }
 
 /**
@@ -183,7 +174,7 @@ export function normalizePlayerName(playerName) {
  * @returns {string} Formatted possessive turn label
  */
 export function buildPossessiveTurnLabel(rawName) {
-  const trimmed = normalizePlayerName(rawName);
+  const trimmed = trimStringValue(rawName) ?? "";
   if (!trimmed) {
     return "Player turn";
   }

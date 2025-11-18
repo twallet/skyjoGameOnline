@@ -8,7 +8,6 @@ import {
   buildPossessiveTurnLabel,
   extractLogEntryMessage,
   trimStringValue,
-  normalizePlayerName,
 } from "../utils/appHelpers.js";
 
 /**
@@ -330,12 +329,12 @@ export function GamePlayView({
    * Normalized (trimmed) local player name for comparison.
    * @type {string}
    */
-  const normalizedLocalName = normalizePlayerName(localPlayerName);
+  const normalizedLocalName = trimStringValue(localPlayerName) ?? "";
   /**
    * Normalized (trimmed) active player name for comparison.
    * @type {string}
    */
-  const normalizedActiveName = normalizePlayerName(activeName);
+  const normalizedActiveName = trimStringValue(activeName) ?? "";
   /**
    * Whether the local player is currently the active player.
    * @type {boolean}
@@ -587,9 +586,8 @@ export function GamePlayView({
    * Display name of the currently active player, trimmed of whitespace.
    * @type {string}
    */
-  const activePlayerDisplayName = normalizePlayerName(
-    state?.activePlayer?.name
-  );
+  const activePlayerDisplayName =
+    trimStringValue(state?.activePlayer?.name) ?? "";
 
   /**
    * Color associated with the active player, if specified.
@@ -1213,7 +1211,7 @@ export function GamePlayView({
      * Normalized (trimmed) player name for comparison.
      * @type {string}
      */
-    const normalizedPlayerName = normalizePlayerName(player.name);
+    const normalizedPlayerName = trimStringValue(player.name) ?? "";
     /**
      * Whether this player is the local player.
      * @type {boolean}
