@@ -395,11 +395,12 @@ body {
   --shake-base-rotate: 0deg;
   width: var(--card-width);
   height: var(--card-height);
+  aspect-ratio: 7 / 10;
   border-radius: 8px;
   object-fit: cover;
   box-shadow: 0 6px 12px rgba(15, 23, 42, 0.25);
   border: 1px solid rgba(148, 163, 184, 0.35);
-  background-color: #ffffff;
+  background-color: transparent;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
   position: relative;
   transform-origin: center;
@@ -445,7 +446,8 @@ body {
 .drawn-card__image {
   --shake-base-rotate: 0deg;
   width: var(--card-width);
-  height: auto;
+  height: var(--card-height);
+  aspect-ratio: 7 / 10;
   border-radius: 8px;
   object-fit: cover;
   box-shadow: 0 12px 24px rgba(15, 23, 42, 0.35);

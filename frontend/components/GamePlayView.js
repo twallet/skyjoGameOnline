@@ -885,13 +885,17 @@ export function GamePlayView({
                 })
               : null,
             shouldShowDiscardImage && discardImageSrc
-              ? React.createElement("img", {
-                  className: topCardClasses.join(" "),
-                  src: discardImageSrc,
-                  alt: discardAltText,
-                  title: discardTitle,
-                  onClick: discardClickHandler ?? undefined,
-                })
+              ? (() => {
+                  // Debug: Log discard card image path
+                  console.log("Discard card image:", discardImageSrc);
+                  return React.createElement("img", {
+                    className: topCardClasses.join(" "),
+                    src: discardImageSrc,
+                    alt: discardAltText,
+                    title: discardTitle,
+                    onClick: discardClickHandler ?? undefined,
+                  });
+                })()
               : React.createElement("div", {
                   className: [
                     "deck-entry__drop-zone",
@@ -985,18 +989,22 @@ export function GamePlayView({
         player.name
       ),
       showInlineDrawnCard
-        ? React.createElement("img", {
-            className: ["drawn-card__image", "drawn-card__image--inline"]
-              .filter(Boolean)
-              .join(" "),
-            src: drawnCard.image,
-            alt: `Drawn card ${drawnCard.value}`,
-            draggable: false,
-            onClick: drawnBelongsToLocal ? resetToReplaceMode : undefined,
-            style: {
-              cursor: drawnBelongsToLocal ? "pointer" : "default",
-            },
-          })
+        ? (() => {
+            // Debug: Log drawn card image path
+            console.log("Drawn card image:", drawnCard.image);
+            return React.createElement("img", {
+              className: ["drawn-card__image", "drawn-card__image--inline"]
+                .filter(Boolean)
+                .join(" "),
+              src: drawnCard.image,
+              alt: `Drawn card ${drawnCard.value}`,
+              draggable: false,
+              onClick: drawnBelongsToLocal ? resetToReplaceMode : undefined,
+              style: {
+                cursor: drawnBelongsToLocal ? "pointer" : "default",
+              },
+            });
+          })()
         : null
     );
 
@@ -1070,6 +1078,11 @@ export function GamePlayView({
             cardClasses.push("player-entry__card--removal-pending");
           } else if (allowReplace || allowReveal || canFlip) {
             cardClasses.push("shake-animation");
+          }
+
+          // Debug: Log image paths for visible cards to compare with deck/drawn cards
+          if (!isHidden && cardData.image) {
+            console.log(`Hand card image (${player.name}, value ${cardValue}):`, cardData.image);
           }
 
           return React.createElement("img", {
