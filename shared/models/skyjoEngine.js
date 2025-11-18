@@ -1,5 +1,8 @@
-import { resolveLogger, noopLogger } from "../logger.js";
+import { resolveLogger, noopLogger } from "../utils/logger.js";
 
+/**
+ * Game phase constants for Skyjo.
+ */
 export const SkyjoPhases = Object.freeze({
   PREPARATION: "initial-flip",
   PLAYING: "main-play",
@@ -10,6 +13,9 @@ export const SkyjoPhases = Object.freeze({
 const PREPARATION_REVEALS = 2;
 const COLUMN_REMOVAL_DELAY_MS = 3000;
 
+/**
+ * Core game engine managing turn flow, card actions, and game state.
+ */
 export class SkyjoEngine {
   #game;
   #dealer;
@@ -32,6 +38,14 @@ export class SkyjoEngine {
   #finalRoundScores = [];
   #finalRoundWinner = null;
 
+  /**
+   * Creates a new Skyjo engine instance.
+   * @param {Object} game - The game definition object.
+   * @param {Object} dealer - The dealer instance managing the deck.
+   * @param {Player[]} players - Array of player instances.
+   * @param {Object} [logger=noopLogger] - Optional logger instance.
+   * @param {Object} [hooks=null] - Optional hooks object with onStateChange and onColumnsRemoved callbacks.
+   */
   constructor(game, dealer, players, logger = noopLogger, hooks = null) {
     this.#game = SkyjoEngine.#validateGame(game);
     this.#dealer = SkyjoEngine.#validateDealer(dealer);
@@ -53,14 +67,26 @@ export class SkyjoEngine {
     }
   }
 
+  /**
+   * Gets the current game phase.
+   * @returns {string} The current phase.
+   */
   get phase() {
     return this.#phase;
   }
 
+  /**
+   * Gets the index of the active player.
+   * @returns {number|null} The active player index or null if no active player.
+   */
   get activePlayerIndex() {
     return this.#activePlayerIndex;
   }
 
+  /**
+   * Gets the active player instance.
+   * @returns {Player|null} The active player or null if no active player.
+   */
   get activePlayer() {
     if (this.#activePlayerIndex === null) {
       return null;
@@ -68,10 +94,20 @@ export class SkyjoEngine {
     return this.#players[this.#activePlayerIndex] ?? null;
   }
 
+  /**
+   * Gets the size of the discard pile.
+   * @returns {number} The number of cards in the discard pile.
+   */
   get discardSize() {
     return this.#discardPile.length;
   }
 
+  /**
+   * Draws a card from the discard pile.
+   * @param {number} playerIndex - The index of the player drawing the card.
+   * @returns {{playerIndex: number, source: string, card: {value: number|string, image: string}}} Draw result.
+   * @throws {Error} If not in main play phase, wrong player, or discard pile is empty.
+   */
   drawFromDiscard(playerIndex) {
     this.#assertMainPlayPhase();
     this.#assertActivePlayer(playerIndex);
@@ -105,6 +141,12 @@ export class SkyjoEngine {
     };
   }
 
+  /**
+   * Draws a card from the deck.
+   * @param {number} playerIndex - The index of the player drawing the card.
+   * @returns {{playerIndex: number, source: string, card: {value: number|string, image: string}}} Draw result.
+   * @throws {Error} If not in main play phase, wrong player, or deck is empty.
+   */
   drawFromDeck(playerIndex) {
     this.#assertMainPlayPhase();
     this.#assertActivePlayer(playerIndex);
@@ -138,6 +180,13 @@ export class SkyjoEngine {
     };
   }
 
+  /**
+   * Replaces a card in the player's hand with the drawn card.
+   * @param {number} playerIndex - The index of the player.
+   * @param {number} position - The position of the card to replace.
+   * @returns {Object} Replace result with newCard, discarded, phase, and handCompleted status.
+   * @throws {Error} If not in main play phase, wrong player, or position is invalid.
+   */
   replaceWithDrawnCard(playerIndex, position) {
     this.#assertMainPlayPhase();
     this.#assertActivePlayer(playerIndex);
@@ -182,6 +231,13 @@ export class SkyjoEngine {
     };
   }
 
+  /**
+   * Discards the drawn card and reveals a card in the player's hand.
+   * @param {number} playerIndex - The index of the player.
+   * @param {number} position - The position of the card to reveal.
+   * @returns {Object} Reveal result with revealed card, discarded card, phase, and handCompleted status.
+   * @throws {Error} If not in main play phase, wrong player, or position is invalid.
+   */
   discardDrawnCardAndReveal(playerIndex, position) {
     this.#assertMainPlayPhase();
     this.#assertActivePlayer(playerIndex);
@@ -404,6 +460,13 @@ export class SkyjoEngine {
     this.#notifyStateChange();
   }
 
+  /**
+   * Reveals an initial card during the preparation phase.
+   * @param {number} playerIndex - The index of the player.
+   * @param {number} position - The position of the card to reveal.
+   * @returns {Object} Reveal result with card, phase, and activePlayerIndex.
+   * @throws {Error} If not in preparation phase, card already revealed, or position is invalid.
+   */
   revealInitialCard(playerIndex, position) {
     this.#assertPhase(SkyjoPhases.PREPARATION);
     const hand = this.#resolvePlayerHand(playerIndex);
@@ -444,6 +507,10 @@ export class SkyjoEngine {
     };
   }
 
+  /**
+   * Builds a snapshot of the current game state.
+   * @returns {Object} State snapshot with phase, active player, initial flip, discard, drawn card, and final round info.
+   */
   buildStateSnapshot() {
     const activePlayer = this.activePlayer;
     return {
@@ -515,6 +582,10 @@ export class SkyjoEngine {
     };
   }
 
+  /**
+   * Builds a snapshot of the deck state.
+   * @returns {{size: number, topCard: Object|null, discardSize: number, backImage: string}} Deck snapshot.
+   */
   buildDeckSnapshot() {
     return {
       size: this.#dealer.deck.size(),
@@ -524,6 +595,10 @@ export class SkyjoEngine {
     };
   }
 
+  /**
+   * Gets the top card of the discard pile.
+   * @returns {{value: number|string, image: string, visible: boolean}|null} The top card or null if discard pile is empty.
+   */
   discardTopCard() {
     if (this.#discardPile.length === 0) {
       return null;
@@ -821,6 +896,12 @@ export class SkyjoEngine {
   }
 }
 
+/**
+ * Computes final scores for all players and determines the winner.
+ * @param {Player[]} players - Array of player instances.
+ * @param {string|null} [triggerName=null] - Name of the player who triggered the final round (score doubled if not lowest).
+ * @returns {{scores: Array<{name: string, total: number, doubled?: boolean}>, winner: string|null}} Final scores and winner.
+ */
 export function computeFinalScores(players, triggerName = null) {
   const scores = players
     .map((player) => ({

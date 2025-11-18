@@ -1,11 +1,20 @@
 import { Hand } from "./hand.js";
 
+/**
+ * Represents a player in the game.
+ */
 export class Player {
   #name;
   #hand;
   #color;
 
-  // Create a player with a display name and optional color tag.
+  /**
+   * Creates a player with a display name and optional color tag.
+   * @param {string} name - The player's display name.
+   * @param {Object} game - The game definition object.
+   * @param {string} [color] - Optional color tag for the player.
+   * @throws {TypeError} If name or game are invalid.
+   */
   constructor(name, game, color) {
     this.#name = Player.#validateName(name);
     const validatedGame = Player.#validateGame(game);
@@ -14,21 +23,37 @@ export class Player {
     this.#color = Player.#validateColor(color);
   }
 
-  // Return the player's name.
+  /**
+   * Gets the player's name.
+   * @returns {string} The player's name.
+   */
   get name() {
     return this.#name;
   }
 
-  // Return the color assigned to the player, if any.
+  /**
+   * Gets the color assigned to the player, if any.
+   * @returns {string|null} The player's color or null if not set.
+   */
   get color() {
     return this.#color;
   }
 
-  // Provide access to the hand associated with the player.
+  /**
+   * Gets the hand associated with the player.
+   * @returns {Hand} The player's hand instance.
+   */
   get hand() {
     return this.#hand;
   }
 
+  /**
+   * Validates the player name.
+   * @param {string} name - The name to validate.
+   * @returns {string} The trimmed and validated name.
+   * @throws {TypeError} If name is invalid.
+   * @private
+   */
   static #validateName(name) {
     if (typeof name !== "string") {
       throw new TypeError("Player name must be a string");
@@ -42,6 +67,13 @@ export class Player {
     return trimmedName;
   }
 
+  /**
+   * Validates the game definition object.
+   * @param {Object} game - The game definition to validate.
+   * @returns {Object} The validated game object.
+   * @throws {TypeError} If game is invalid.
+   * @private
+   */
   static #validateGame(game) {
     if (!game || typeof game !== "object") {
       throw new TypeError("Player requires a game definition object");
@@ -56,6 +88,13 @@ export class Player {
     return game;
   }
 
+  /**
+   * Validates the player color.
+   * @param {string|undefined|null} color - The color to validate.
+   * @returns {string|null} The validated color or null if not provided.
+   * @throws {TypeError} If color is invalid.
+   * @private
+   */
   static #validateColor(color) {
     if (color === undefined || color === null) {
       return null;

@@ -1,26 +1,44 @@
 import { Card } from "./card.js";
 
+/**
+ * Represents a player's hand of cards arranged in a matrix.
+ */
 export class Hand {
   #cards;
   #lines;
 
-  // Initialize a hand with an empty set of cards.
+  /**
+   * Initializes a hand with an empty set of cards.
+   * @param {number} lines - Number of columns (lines) for card arrangement. Defaults to 1.
+   * @throws {TypeError} If lines is not a positive integer.
+   */
   constructor(lines = 1) {
     this.#cards = [];
     this.#lines = Hand.#validateLines(lines);
   }
 
-  // Add a card to the hand.
+  /**
+   * Adds a card to the hand.
+   * @param {Card} card - The card instance to add.
+   * @throws {TypeError} If card is not a Card instance.
+   */
   add(card) {
     this.#cards.push(this.#validateCard(card));
   }
 
-  // Return an array with the numeric values of the cards in hand.
+  /**
+   * Returns an array with the numeric values of the cards in hand.
+   * Hidden cards are represented as "X".
+   * @returns {Array<number|string>} Array of card values.
+   */
   cards() {
     return this.#cards.map((card) => card.value);
   }
 
-  // Return a string summarizing the hand content.
+  /**
+   * Returns a string summarizing the hand content.
+   * @returns {string} A formatted string representation of the hand.
+   */
   show() {
     const cardValues = this.cards();
     const rows = [];
@@ -33,7 +51,10 @@ export class Hand {
     return `(${this.size} cards) ${matrix}`;
   }
 
-  // Provide card display data arranged according to the configured lines.
+  /**
+   * Provides card display data arranged according to the configured lines.
+   * @returns {Array<Array<{value: number|string, image: string}>>} Matrix of card data organized by rows and columns.
+   */
   cardsMatrix() {
     const rows = [];
     for (let start = 0; start < this.#cards.length; start += this.#lines) {
@@ -49,24 +70,42 @@ export class Hand {
     return rows;
   }
 
-  // Getter exposing the current size of the hand.
+  /**
+   * Gets the current size of the hand.
+   * @returns {number} The number of cards in the hand.
+   */
   get size() {
     return this.#cards.length;
   }
 
-  // Getter exposing the configured number of lines.
+  /**
+   * Gets the configured number of lines (columns).
+   * @returns {number} The number of columns.
+   */
   get lines() {
     return this.#lines;
   }
 
+  /**
+   * Gets the card matrix (alias for cardsMatrix()).
+   * @returns {Array<Array<{value: number|string, image: string}>>} Matrix of card data.
+   */
   get matrix() {
     return this.cardsMatrix();
   }
 
+  /**
+   * Gets the number of columns (alias for lines).
+   * @returns {number} The number of columns.
+   */
   get columns() {
     return this.#lines;
   }
 
+  /**
+   * Gets the number of rows in the hand matrix.
+   * @returns {number} The number of rows.
+   */
   get rows() {
     if (this.#lines <= 0) {
       return 0;
@@ -74,6 +113,12 @@ export class Hand {
     return Math.floor(this.#cards.length / this.#lines);
   }
 
+  /**
+   * Reveals a card at the specified position.
+   * @param {number} position - The index of the card to reveal.
+   * @returns {{value: number|string, image: string}} The revealed card data.
+   * @throws {Error} If card is already visible or position is invalid.
+   */
   revealCard(position) {
     const card = this.#getCardAt(position);
 
@@ -88,11 +133,23 @@ export class Hand {
     };
   }
 
+  /**
+   * Checks if a card at the specified position is visible.
+   * @param {number} position - The index of the card to check.
+   * @returns {boolean} True if the card is visible, false otherwise.
+   */
   isCardVisible(position) {
     const card = this.#getCardAt(position);
     return card.value !== "X";
   }
 
+  /**
+   * Replaces a card at the specified position with a new card.
+   * @param {number} position - The index of the card to replace.
+   * @param {Card} replacement - The new card instance.
+   * @returns {Card} The card that was replaced.
+   * @throws {TypeError} If replacement is not a Card instance or position is invalid.
+   */
   replaceCard(position, replacement) {
     const card = this.#getCardAt(position);
     const nextCard = this.#validateCard(replacement);
@@ -100,6 +157,13 @@ export class Hand {
     return card;
   }
 
+  /**
+   * Removes an entire column from the hand matrix.
+   * @param {number} columnIndex - The index of the column to remove.
+   * @returns {Card[]} Array of cards that were removed.
+   * @throws {TypeError} If columnIndex is not an integer.
+   * @throws {RangeError} If columnIndex is out of bounds.
+   */
   removeColumn(columnIndex) {
     if (!Number.isInteger(columnIndex)) {
       throw new TypeError("Column index must be an integer");
@@ -137,16 +201,31 @@ export class Hand {
     return removedCards;
   }
 
+  /**
+   * Checks if all cards in the hand are visible.
+   * @returns {boolean} True if all cards are visible, false otherwise.
+   */
   allCardsVisible() {
     return this.#cards.every((card) => card.value !== "X");
   }
 
+  /**
+   * Reveals all cards in the hand.
+   */
   revealAllCards() {
     this.#cards.forEach((card) => {
       card.visible = true;
     });
   }
 
+  /**
+   * Gets the card at the specified position.
+   * @param {number} position - The index of the card.
+   * @returns {Card} The card instance.
+   * @throws {TypeError} If position is not an integer.
+   * @throws {RangeError} If position is out of bounds.
+   * @private
+   */
   #getCardAt(position) {
     if (!Number.isInteger(position)) {
       throw new TypeError("Hand card position must be an integer");
@@ -159,7 +238,13 @@ export class Hand {
     return this.#cards[position];
   }
 
-  // Ensure the provided value is a Card instance.
+  /**
+   * Validates that the provided value is a Card instance.
+   * @param {Card} card - The card to validate.
+   * @returns {Card} The validated card instance.
+   * @throws {TypeError} If card is not a Card instance.
+   * @private
+   */
   #validateCard(card) {
     if (!(card instanceof Card)) {
       throw new TypeError("Hand can only store card objects");
@@ -167,7 +252,13 @@ export class Hand {
     return card;
   }
 
-  // Ensure the provided value is a positive integer.
+  /**
+   * Validates that the provided value is a positive integer.
+   * @param {number} lines - The number of lines to validate.
+   * @returns {number} The validated number of lines.
+   * @throws {TypeError} If lines is not a positive integer.
+   * @private
+   */
   static #validateLines(lines) {
     if (!Number.isInteger(lines) || lines < 1) {
       throw new TypeError("Hand lines must be a positive integer");

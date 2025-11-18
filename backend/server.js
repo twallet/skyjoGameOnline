@@ -3,7 +3,7 @@ import express from "express";
 
 import { staticRoot, sharedRoot } from "./config/paths.js";
 import { PORT, isTestEnvironment } from "./config/environment.js";
-import { consoleLogger, resolveLogger } from "../shared/logger.js";
+import { consoleLogger, resolveLogger } from "../shared/utils/logger.js";
 import { createSkyjoGame } from "./models/gameFactory.js";
 import { buildPlayerColors } from "../shared/utils/playerColors.js";
 import { createRoomController } from "./controllers/roomController.js";

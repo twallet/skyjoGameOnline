@@ -1,4 +1,4 @@
-import { resolveLogger, noopLogger } from "../logger.js";
+import { resolveLogger, noopLogger } from "../utils/logger.js";
 import { Dealer } from "./dealer.js";
 import { Player } from "./player.js";
 import { SkyjoEngine, SkyjoPhases } from "./skyjoEngine.js";
@@ -111,6 +111,11 @@ export class GameSession {
     };
   }
 
+  /**
+   * Creates a new game session instance.
+   * @param {Object} game - The game definition object.
+   * @param {Object} [logger=noopLogger] - Optional logger instance.
+   */
   constructor(game, logger = noopLogger) {
     this.#game = GameSession.#validateGame(game);
     this.#logger = resolveLogger(logger);
@@ -218,18 +223,34 @@ export class GameSession {
     return GameSession.#cloneSnapshot(snapshot);
   }
 
+  /**
+   * Gets the dealer instance.
+   * @returns {Dealer|null} The dealer instance or null if game hasn't started.
+   */
   get dealer() {
     return this.#dealer;
   }
 
+  /**
+   * Gets a defensive copy of the players array.
+   * @returns {Player[]} Array of player instances.
+   */
   get players() {
     return [...this.#players];
   }
 
+  /**
+   * Gets a defensive copy of the log entries.
+   * @returns {Array<{message: string, phase: string|null, actor: string|null}>} Array of log entries.
+   */
   get logEntries() {
     return this.#logEntries.map(GameSession.#cloneLogEntry);
   }
 
+  /**
+   * Gets the current deck snapshot.
+   * @returns {{size: number, topCard: Object|null, discardSize: number, backImage: string|null}} The deck snapshot.
+   */
   get deckSnapshot() {
     if (!this.#deckSnapshot) {
       return {
@@ -248,6 +269,10 @@ export class GameSession {
     };
   }
 
+  /**
+   * Gets the last session snapshot.
+   * @returns {Object|null} The session snapshot or null if no snapshot exists.
+   */
   getSnapshot() {
     if (!this.#lastSnapshot) {
       return null;
@@ -256,6 +281,13 @@ export class GameSession {
     return GameSession.#cloneSnapshot(this.#lastSnapshot);
   }
 
+  /**
+   * Reveals an initial card during the preparation phase.
+   * @param {string} playerName - The name of the player.
+   * @param {number} position - The position of the card to reveal.
+   * @returns {Object} Action response with event and snapshot.
+   * @throws {Error} If game hasn't started or player/position is invalid.
+   */
   revealInitialCard(playerName, position) {
     this.#ensureGameStarted();
     const { name, index } = this.#resolvePlayer(playerName);
@@ -309,6 +341,13 @@ export class GameSession {
     });
   }
 
+  /**
+   * Draws a card from the deck or discard pile.
+   * @param {string} playerName - The name of the player drawing the card.
+   * @param {string} source - The source to draw from ("deck" or "discard").
+   * @returns {Object} Action response with event and snapshot.
+   * @throws {Error} If game hasn't started or player/source is invalid.
+   */
   drawCard(playerName, source) {
     this.#ensureGameStarted();
     const normalizedSource = source === "discard" ? "discard" : "deck";
@@ -338,6 +377,13 @@ export class GameSession {
     });
   }
 
+  /**
+   * Replaces a card in the player's hand with the drawn card.
+   * @param {string} playerName - The name of the player.
+   * @param {number} position - The position of the card to replace.
+   * @returns {Object} Action response with event and snapshot.
+   * @throws {Error} If game hasn't started or player/position is invalid.
+   */
   replaceWithDrawnCard(playerName, position) {
     this.#ensureGameStarted();
     const { name, index } = this.#resolvePlayer(playerName);
@@ -363,6 +409,13 @@ export class GameSession {
     });
   }
 
+  /**
+   * Discards the drawn card and reveals a card in the player's hand.
+   * @param {string} playerName - The name of the player.
+   * @param {number} position - The position of the card to reveal.
+   * @returns {Object} Action response with event and snapshot.
+   * @throws {Error} If game hasn't started or player/position is invalid.
+   */
   discardDrawnCardAndReveal(playerName, position) {
     this.#ensureGameStarted();
     const { name, index } = this.#resolvePlayer(playerName);
@@ -459,10 +512,11 @@ export class GameSession {
         actor: winnerName,
       });
     }
-    // TEMPORARY
-    this.#logger.info("Final logs", finalRound.scores);
   }
 
+  /**
+   * Resets the game session to its initial state.
+   */
   reset() {
     this.#dealer = null;
     this.#players = [];

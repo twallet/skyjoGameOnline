@@ -8,8 +8,8 @@ import React, {
 
 import { Game } from "../../shared/models/game.js";
 import { GameSession } from "../../shared/models/gameSession.js";
-import { consoleLogger } from "../../shared/logger.js";
-import { generateRoomId } from "../../shared/generateRoomId.js";
+import { consoleLogger } from "../../shared/utils/logger.js";
+import { generateRoomId } from "../../shared/utils/generateRoomId.js";
 import { buildPlayerColors } from "../../shared/utils/playerColors.js";
 import { RoomApi } from "../services/RoomApi.js";
 import { GamePlayView } from "./GamePlayView.js";

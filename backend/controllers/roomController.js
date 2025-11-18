@@ -1,4 +1,4 @@
-import { generateRoomId } from "../../shared/generateRoomId.js";
+import { generateRoomId } from "../../shared/utils/generateRoomId.js";
 import { gameRoomService } from "../services/gameRoomService.js";
 import { serializeSnapshot } from "../models/roomSerializers.js";
 

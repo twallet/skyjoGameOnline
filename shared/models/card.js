@@ -7,6 +7,12 @@ export class Card {
   #backImage;
   #visible;
 
+  /**
+   * Creates a new card instance.
+   * @param {number} value - The numeric value of the card.
+   * @param {Object} game - The game definition object.
+   * @throws {Error} If value is invalid or game definition is missing.
+   */
   constructor(value, game) {
     Card.#validate(value, game);
 
@@ -18,16 +24,26 @@ export class Card {
     this.#backImage = backImage;
   }
 
+  /**
+   * Gets the card value. Returns "X" if the card is hidden.
+   * @returns {number|string} The card value or "X" if hidden.
+   */
   get value() {
     return this.#visible ? this.#value : "X";
   }
 
+  /**
+   * Gets the card image. Returns the back image if the card is hidden.
+   * @returns {string} The card image path.
+   */
   get image() {
     return this.#visible ? this.#image : this.#backImage;
   }
 
   /**
-   * @param {boolean} visibility
+   * Sets the visibility of the card.
+   * @param {boolean} visibility - Whether the card should be visible.
+   * @throws {TypeError} If visibility is not a boolean.
    */
   set visible(visibility) {
     if (typeof visibility !== "boolean") {
@@ -37,6 +53,13 @@ export class Card {
     this.#visible = visibility;
   }
 
+  /**
+   * Validates card value and game definition.
+   * @param {number} value - The card value to validate.
+   * @param {Object} game - The game definition to validate.
+   * @throws {Error} If validation fails.
+   * @private
+   */
   static #validate(value, game) {
     if (value === null || value === undefined) {
       throw new Error("Card value must not be null or undefined");

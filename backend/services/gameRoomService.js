@@ -4,7 +4,7 @@ import {
   consoleLogger,
   resolveLogger,
   noopLogger,
-} from "../../shared/logger.js";
+} from "../../shared/utils/logger.js";
 
 /**
  * Provides a facade between the UI layer and the core GameSession.

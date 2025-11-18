@@ -1,13 +1,21 @@
 import { Deck } from "./deck.js";
 import { Player } from "./player.js";
 
+/**
+ * Manages deck and player distribution for a card game.
+ */
 export class Dealer {
   #game;
   #players;
   #deck;
   #handSize;
 
-  // Create a dealer that manages the deck and players for the provided game.
+  /**
+   * Creates a dealer that manages the deck and players for the provided game.
+   * @param {Object} game - The game definition object.
+   * @param {Player[]} players - Array of player instances.
+   * @throws {TypeError} If game or players are invalid.
+   */
   constructor(game, players) {
     this.#game = Dealer.#validateGame(game);
     this.#players = Dealer.#validatePlayers(players);
@@ -15,27 +23,40 @@ export class Dealer {
     this.#deck = Deck.generateDeck(this.#game);
   }
 
-  // Expose the players currently managed by the dealer.
+  /**
+   * Gets a defensive copy of the players currently managed by the dealer.
+   * @returns {Player[]} Array of player instances.
+   */
   get players() {
     return [...this.#players];
   }
 
-  // Provide access to the deck controlled by the dealer.
+  /**
+   * Gets the deck controlled by the dealer.
+   * @returns {Deck} The deck instance.
+   */
   get deck() {
     return this.#deck;
   }
 
-  // Return the configured hand size per player.
+  /**
+   * Gets the configured hand size per player.
+   * @returns {number} The number of cards per hand.
+   */
   get handSize() {
     return this.#handSize;
   }
 
-  // Shuffle the deck using the underlying deck implementation.
+  /**
+   * Shuffles the deck using the underlying deck implementation.
+   */
   shuffle() {
     this.#deck.shuffle();
   }
 
-  // Deal the required number of cards to each player.
+  /**
+   * Deals the required number of cards to each player.
+   */
   deal() {
     for (let n = 0; n < this.#handSize; n++) {
       for (let p = 0; p < this.#players.length; p++) {
@@ -44,6 +65,13 @@ export class Dealer {
     }
   }
 
+  /**
+   * Validates the game definition object.
+   * @param {Object} game - The game definition to validate.
+   * @returns {Object} The validated game object.
+   * @throws {TypeError} If game is invalid.
+   * @private
+   */
   static #validateGame(game) {
     if (!game || typeof game !== "object") {
       throw new TypeError("Dealer requires a game definition object");
@@ -65,6 +93,13 @@ export class Dealer {
     return game;
   }
 
+  /**
+   * Validates the players array.
+   * @param {Player[]} players - Array of player instances to validate.
+   * @returns {Player[]} The validated players array.
+   * @throws {TypeError} If players array is invalid.
+   * @private
+   */
   static #validatePlayers(players) {
     if (!Array.isArray(players) || players.length === 0) {
       throw new TypeError("Dealer requires at least one player");
@@ -81,6 +116,14 @@ export class Dealer {
     return players;
   }
 
+  /**
+   * Resolves the hand size from the game definition.
+   * Supports both 'handsize' and 'handSize' properties for backwards compatibility.
+   * @param {Object} game - The game definition object.
+   * @returns {number} The hand size.
+   * @throws {TypeError} If hand size is invalid or missing.
+   * @private
+   */
   static #resolveHandSize(game) {
     const handSize =
       typeof game.handsize === "number"

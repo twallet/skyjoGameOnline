@@ -1,9 +1,17 @@
 import { Card } from "./card.js";
 
+/**
+ * Represents a deck of cards for a card game.
+ */
 export class Deck {
   #cards;
 
-  // Build and return a complete deck that mirrors the game's definition.
+  /**
+   * Builds and returns a complete deck that mirrors the game's definition.
+   * @param {Object} game - The game definition object.
+   * @returns {Deck} A new deck instance with all cards.
+   * @throws {TypeError} If game definition is invalid.
+   */
   static generateDeck(game) {
     Deck.#validateGameDefinition(game);
 
@@ -18,17 +26,26 @@ export class Deck {
     return deck;
   }
 
-  // Initialize an empty deck ready to receive cards.
+  /**
+   * Initializes an empty deck ready to receive cards.
+   */
   constructor() {
     this.#cards = [];
   }
 
-  // Return a shallow copy of the internal cards for inspection.
+  /**
+   * Gets a defensive copy of the internal cards for inspection.
+   * @returns {Card[]} Array of card instances.
+   */
   get cardsDeck() {
     return [...this.#cards];
   }
 
-  // Place a validated card on top of the deck.
+  /**
+   * Places a validated card on top of the deck.
+   * @param {Card} card - The card instance to add.
+   * @throws {TypeError} If card is not a Card instance.
+   */
   add(card) {
     if (!(card instanceof Card)) {
       throw new TypeError("Deck only accepts Card instances");
@@ -37,7 +54,11 @@ export class Deck {
     this.#cards.push(card);
   }
 
-  // Remove and return the top card of the deck.
+  /**
+   * Removes and returns the top card of the deck.
+   * @returns {Card} The card that was removed from the deck.
+   * @throws {Error} If the deck is empty.
+   */
   dealNextCard() {
     if (this.#cards.length === 0) {
       throw new Error("Cannot deal from an empty deck");
@@ -46,12 +67,17 @@ export class Deck {
     return this.#cards.pop();
   }
 
-  // Provide size of the deck.
+  /**
+   * Gets the current size of the deck.
+   * @returns {number} The number of cards in the deck.
+   */
   size() {
     return this.#cards.length;
   }
 
-  // Randomize card order in place using Fisher-Yates.
+  /**
+   * Randomizes card order in place using Fisher-Yates shuffle algorithm.
+   */
   shuffle() {
     for (let k = this.#cards.length - 1; k >= 1; k--) {
       const randomIndex = Math.floor(Math.random() * k);
@@ -61,6 +87,10 @@ export class Deck {
     }
   }
 
+  /**
+   * Makes the first card in the deck visible.
+   * Does nothing if the deck is empty.
+   */
   showFirstCard() {
     if (this.#cards.length === 0) {
       return;
@@ -69,6 +99,12 @@ export class Deck {
     this.#cards[0].visible = true;
   }
 
+  /**
+   * Validates the game definition object.
+   * @param {Object} game - The game definition to validate.
+   * @throws {TypeError} If game definition is invalid.
+   * @private
+   */
   static #validateGameDefinition(game) {
     if (!game || typeof game !== "object") {
       throw new TypeError("Deck requires a game definition object");
