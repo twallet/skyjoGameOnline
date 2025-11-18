@@ -20,6 +20,10 @@ import {
   normalizeRoomId,
   resetGameState,
   createRoomState,
+  extractLogEntryMessage,
+  validatePlayerName,
+  normalizePlayerNames,
+  normalizePlayerName,
 } from "../utils/appHelpers.js";
 
 /**
@@ -260,10 +264,7 @@ export function App() {
     const newEntries = logEntries.slice(startIndex);
 
     newEntries.forEach((entry) => {
-      const message =
-        entry && typeof entry === "object" && entry !== null
-          ? (entry.message ?? "")
-          : entry;
+      const message = extractLogEntryMessage(entry);
       consoleLogger.info(`Client event: ${message}`);
     });
 
@@ -434,10 +435,7 @@ export function App() {
 
     const titleParts = ["Skyjo"];
     const normalizedRoomId = normalizeRoomId(roomId);
-    const normalizedPlayerName =
-      typeof localPlayerName === "string" && localPlayerName.trim().length > 0
-        ? localPlayerName.trim()
-        : "";
+    const normalizedPlayerName = normalizePlayerName(localPlayerName);
 
     if (normalizedPlayerName) {
       titleParts.push(`Player ${normalizedPlayerName}`);
@@ -588,9 +586,7 @@ export function App() {
     if (!roomId) {
       return;
     }
-    const preservedNames = playerNames
-      .map((name) => (typeof name === "string" ? name.trim() : ""))
-      .filter((name) => name.length > 0);
+    const preservedNames = normalizePlayerNames(playerNames);
     if (preservedNames.length === 0) {
       setErrorMessage("Cannot restart without players in the room.");
       return;
@@ -685,11 +681,12 @@ export function App() {
   };
 
   // Player name validation
-  const trimmedPlayerName = newPlayerName.trim();
-  const playerNameLength = trimmedPlayerName.length;
-  const isPlayerNameValid =
-    playerNameLength > 0 &&
-    playerNameLength <= GameSession.MAX_PLAYER_NAME_LENGTH;
+  const trimmedPlayerName = normalizePlayerName(newPlayerName);
+  const validationResult = validatePlayerName(
+    trimmedPlayerName,
+    GameSession.MAX_PLAYER_NAME_LENGTH
+  );
+  const isPlayerNameValid = validationResult.isValid;
 
   /**
    * Validates player name and sets error message if invalid.
@@ -697,20 +694,13 @@ export function App() {
    * @returns {boolean} True if player name is valid
    */
   const ensureValidPlayerName = (playerName = newPlayerName) => {
-    const trimmed = playerName.trim();
-    const length = trimmed.length;
-    if (length === 0) {
-      setErrorMessage("Player name must not be empty.");
-      return false;
-    }
-    if (length > GameSession.MAX_PLAYER_NAME_LENGTH) {
-      setErrorMessage(
-        `Player name must be ${GameSession.MAX_PLAYER_NAME_LENGTH} characters or fewer.`
-      );
-      return false;
-    }
-    setErrorMessage("");
-    return true;
+    const normalized = normalizePlayerName(playerName);
+    const result = validatePlayerName(
+      normalized,
+      GameSession.MAX_PLAYER_NAME_LENGTH
+    );
+    setErrorMessage(result.errorMessage);
+    return result.isValid;
   };
 
   // Reset room flow state when player name becomes invalid
@@ -724,7 +714,7 @@ export function App() {
    * Handles joining an existing room from URL invite link.
    */
   const handleJoinRoom = async () => {
-    const currentPlayerName = newPlayerName.trim();
+    const currentPlayerName = normalizePlayerName(newPlayerName);
     if (!ensureValidPlayerName(currentPlayerName)) {
       return;
     }
@@ -795,7 +785,7 @@ export function App() {
    * Handles creating a new room and joining as the first player.
    */
   const handleCreateRoom = async () => {
-    const currentPlayerName = newPlayerName.trim();
+    const currentPlayerName = normalizePlayerName(newPlayerName);
     if (!ensureValidPlayerName(currentPlayerName)) {
       return;
     }

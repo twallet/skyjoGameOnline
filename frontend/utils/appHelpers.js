@@ -93,3 +93,74 @@ export function buildDeckView(deckSnapshot) {
       : null,
   };
 }
+
+/**
+ * Extracts a message string from a log entry.
+ * Handles both object entries with a message property and plain string entries.
+ *
+ * @param {Object|string|unknown} entry - The log entry to extract message from
+ * @returns {string} The extracted message string
+ */
+export function extractLogEntryMessage(entry) {
+  if (entry && typeof entry === "object" && entry !== null) {
+    return entry.message ?? "";
+  }
+  return String(entry ?? "");
+}
+
+/**
+ * Validates a player name according to game rules.
+ * @param {string} playerName - The player name to validate
+ * @param {number} maxLength - Maximum allowed length for player name
+ * @returns {Object} Validation result with isValid flag and error message
+ *   - isValid: {boolean} True if player name is valid
+ *   - errorMessage: {string} Error message if invalid, empty string if valid
+ */
+export function validatePlayerName(playerName, maxLength) {
+  const trimmed = typeof playerName === "string" ? playerName.trim() : "";
+  const length = trimmed.length;
+
+  if (length === 0) {
+    return {
+      isValid: false,
+      errorMessage: "Player name must not be empty.",
+    };
+  }
+
+  if (length > maxLength) {
+    return {
+      isValid: false,
+      errorMessage: `Player name must be ${maxLength} characters or fewer.`,
+    };
+  }
+
+  return {
+    isValid: true,
+    errorMessage: "",
+  };
+}
+
+/**
+ * Normalizes an array of player names by trimming and filtering out empty strings.
+ * @param {Array} playerNames - Array of player names to normalize
+ * @returns {string[]} Array of normalized (trimmed) non-empty player names
+ */
+export function normalizePlayerNames(playerNames) {
+  if (!Array.isArray(playerNames)) {
+    return [];
+  }
+  return playerNames
+    .map((name) => (typeof name === "string" ? name.trim() : ""))
+    .filter((name) => name.length > 0);
+}
+
+/**
+ * Normalizes a single player name string by trimming whitespace.
+ * @param {string|unknown} playerName - The player name to normalize
+ * @returns {string} Normalized player name or empty string if invalid
+ */
+export function normalizePlayerName(playerName) {
+  return typeof playerName === "string" && playerName.trim().length > 0
+    ? playerName.trim()
+    : "";
+}

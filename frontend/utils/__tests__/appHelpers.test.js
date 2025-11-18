@@ -5,6 +5,10 @@ import {
   normalizeRoomId,
   createRoomState,
   resetGameState,
+  extractLogEntryMessage,
+  validatePlayerName,
+  normalizePlayerNames,
+  normalizePlayerName,
 } from "../appHelpers.js";
 import { Game } from "../../../shared/models/game.js";
 
@@ -195,6 +199,135 @@ describe("app helpers", () => {
         baseImage: "./assets/images/back.jpg",
         firstCard: null,
       });
+    });
+  });
+
+  describe("extractLogEntryMessage", () => {
+    it("extracts message from object entries", () => {
+      expect(extractLogEntryMessage({ message: "Test message" })).toBe(
+        "Test message"
+      );
+      expect(extractLogEntryMessage({ message: "" })).toBe("");
+    });
+
+    it("handles object entries without message property", () => {
+      expect(extractLogEntryMessage({ other: "value" })).toBe("");
+      expect(extractLogEntryMessage({})).toBe("");
+    });
+
+    it("converts string entries to strings", () => {
+      expect(extractLogEntryMessage("String message")).toBe("String message");
+      expect(extractLogEntryMessage("")).toBe("");
+    });
+
+    it("handles null and undefined", () => {
+      expect(extractLogEntryMessage(null)).toBe("");
+      expect(extractLogEntryMessage(undefined)).toBe("");
+    });
+
+    it("converts other types to strings", () => {
+      expect(extractLogEntryMessage(123)).toBe("123");
+      expect(extractLogEntryMessage(true)).toBe("true");
+    });
+  });
+
+  describe("validatePlayerName", () => {
+    it("returns valid for names within length limit", () => {
+      const result = validatePlayerName("Alice", 10);
+      expect(result.isValid).toBe(true);
+      expect(result.errorMessage).toBe("");
+    });
+
+    it("returns invalid for empty names", () => {
+      const result = validatePlayerName("", 10);
+      expect(result.isValid).toBe(false);
+      expect(result.errorMessage).toBe("Player name must not be empty.");
+    });
+
+    it("returns invalid for names exceeding max length", () => {
+      const result = validatePlayerName("VeryLongPlayerName", 10);
+      expect(result.isValid).toBe(false);
+      expect(result.errorMessage).toBe(
+        "Player name must be 10 characters or fewer."
+      );
+    });
+
+    it("handles whitespace-only names as empty", () => {
+      const result = validatePlayerName("   ", 10);
+      expect(result.isValid).toBe(false);
+      expect(result.errorMessage).toBe("Player name must not be empty.");
+    });
+
+    it("trims whitespace before validation", () => {
+      const result = validatePlayerName("  Alice  ", 10);
+      expect(result.isValid).toBe(true);
+      expect(result.errorMessage).toBe("");
+    });
+
+    it("handles non-string inputs", () => {
+      const result = validatePlayerName(null, 10);
+      expect(result.isValid).toBe(false);
+      expect(result.errorMessage).toBe("Player name must not be empty.");
+    });
+  });
+
+  describe("normalizePlayerNames", () => {
+    it("trims and filters valid player names", () => {
+      expect(normalizePlayerNames(["Alice", "Bob", "Charlie"])).toEqual([
+        "Alice",
+        "Bob",
+        "Charlie",
+      ]);
+    });
+
+    it("trims whitespace from names", () => {
+      expect(normalizePlayerNames(["  Alice  ", " Bob ", "Charlie"])).toEqual([
+        "Alice",
+        "Bob",
+        "Charlie",
+      ]);
+    });
+
+    it("filters out empty strings", () => {
+      expect(normalizePlayerNames(["Alice", "", "Bob", "   "])).toEqual([
+        "Alice",
+        "Bob",
+      ]);
+    });
+
+    it("handles non-string values", () => {
+      expect(normalizePlayerNames(["Alice", 123, null, "Bob"])).toEqual([
+        "Alice",
+        "Bob",
+      ]);
+    });
+
+    it("returns empty array for non-array input", () => {
+      expect(normalizePlayerNames(null)).toEqual([]);
+      expect(normalizePlayerNames(undefined)).toEqual([]);
+      expect(normalizePlayerNames("not an array")).toEqual([]);
+    });
+
+    it("handles empty array", () => {
+      expect(normalizePlayerNames([])).toEqual([]);
+    });
+  });
+
+  describe("normalizePlayerName", () => {
+    it("trims valid player names", () => {
+      expect(normalizePlayerName("Alice")).toBe("Alice");
+      expect(normalizePlayerName("  Alice  ")).toBe("Alice");
+    });
+
+    it("returns empty string for empty input", () => {
+      expect(normalizePlayerName("")).toBe("");
+      expect(normalizePlayerName("   ")).toBe("");
+    });
+
+    it("returns empty string for invalid inputs", () => {
+      expect(normalizePlayerName(null)).toBe("");
+      expect(normalizePlayerName(undefined)).toBe("");
+      expect(normalizePlayerName(123)).toBe("");
     });
   });
 });
