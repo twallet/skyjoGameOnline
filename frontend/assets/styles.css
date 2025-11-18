@@ -398,6 +398,7 @@ body {
   aspect-ratio: 7 / 10;
   border-radius: 8px;
   object-fit: cover;
+  opacity: 1;
   box-shadow: 0 6px 12px rgba(15, 23, 42, 0.25);
   border: 1px solid rgba(148, 163, 184, 0.35);
   background-color: transparent;
@@ -413,7 +414,6 @@ body {
 
 .player-entry__card--inactive {
   cursor: default;
-  opacity: 0.7;
 }
 
 .player-entry__card--interactive:hover {
