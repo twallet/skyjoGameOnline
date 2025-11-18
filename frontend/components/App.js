@@ -191,7 +191,25 @@ export function App() {
    */
   const [lanHost, setLanHost] = useState(() => {
     if (typeof window !== "undefined" && window.localStorage) {
-      return window.localStorage.getItem("skyjo:lanHost") ?? "";
+      const storedHost = window.localStorage.getItem("skyjo:lanHost");
+      const storedTimestamp = window.localStorage.getItem(
+        "skyjo:lanHostTimestamp"
+      );
+      const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+      const isExpired =
+        storedTimestamp &&
+        Number.parseInt(storedTimestamp, 10) < twentyFourHoursAgo;
+
+      if (storedHost && storedHost.length > 0) {
+        if (isExpired) {
+          // IP expired after 24 hours, remove it
+          window.localStorage.removeItem("skyjo:lanHost");
+          window.localStorage.removeItem("skyjo:lanHostTimestamp");
+          return "";
+        }
+        return storedHost;
+      }
+      return "";
     }
     return "";
   });
@@ -849,6 +867,10 @@ export function App() {
           lanHostForCopy = trimmed;
           try {
             window.localStorage?.setItem("skyjo:lanHost", trimmed);
+            window.localStorage?.setItem(
+              "skyjo:lanHostTimestamp",
+              Date.now().toString()
+            );
           } catch (storageError) {
             consoleLogger.warn("Unable to persist LAN host", storageError);
           }
@@ -910,12 +932,72 @@ export function App() {
                 if (!resolvedHost) {
                   const storedHost =
                     window.localStorage.getItem("skyjo:lanHost");
+                  const storedTimestamp = window.localStorage.getItem(
+                    "skyjo:lanHostTimestamp"
+                  );
+                  const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+                  const isExpired =
+                    storedTimestamp &&
+                    Number.parseInt(storedTimestamp, 10) < twentyFourHoursAgo;
+
                   if (storedHost && storedHost.length > 0) {
-                    resolvedHost = storedHost;
-                    setLanHost(storedHost);
+                    if (isExpired) {
+                      // IP expired after 24 hours, remove it
+                      window.localStorage.removeItem("skyjo:lanHost");
+                      window.localStorage.removeItem("skyjo:lanHostTimestamp");
+                    } else {
+                      resolvedHost = storedHost;
+                      setLanHost(storedHost);
+                    }
                   }
                 }
-                if (!resolvedHost && !lanHostSkipped && window.prompt) {
+                // If there's a stored host but no hostOverride, check if it's old and offer to update it
+                if (
+                  !hostOverride &&
+                  resolvedHost &&
+                  window.confirm &&
+                  window.prompt &&
+                  !lanHostSkipped
+                ) {
+                  const storedTimestamp = window.localStorage.getItem(
+                    "skyjo:lanHostTimestamp"
+                  );
+                  const oneHourAgo = Date.now() - 60 * 60 * 1000; // 1 hour in milliseconds
+                  const isOld =
+                    !storedTimestamp ||
+                    Number.parseInt(storedTimestamp, 10) < oneHourAgo;
+
+                  if (isOld) {
+                    const wantsToUpdate = window.confirm(
+                      `Current IP: ${resolvedHost}\nDo you want to update it?`
+                    );
+                    if (wantsToUpdate) {
+                      const prompted = window.prompt(
+                        "Enter new IP address (or leave blank to keep current)",
+                        resolvedHost
+                      );
+                      if (prompted !== null && prompted.trim().length > 0) {
+                        // User entered a new IP
+                        resolvedHost = prompted.trim();
+                        setLanHost(resolvedHost);
+                        window.localStorage.setItem(
+                          "skyjo:lanHost",
+                          resolvedHost
+                        );
+                        window.localStorage.setItem(
+                          "skyjo:lanHostTimestamp",
+                          Date.now().toString()
+                        );
+                      } else {
+                        // User kept current IP, update timestamp
+                        window.localStorage.setItem(
+                          "skyjo:lanHostTimestamp",
+                          Date.now().toString()
+                        );
+                      }
+                    }
+                  }
+                } else if (!resolvedHost && !lanHostSkipped && window.prompt) {
                   const prompted = window.prompt(
                     "Enter your local network IP so other devices can connect (leave blank to skip)",
                     hostname
@@ -924,6 +1006,10 @@ export function App() {
                     resolvedHost = prompted.trim();
                     setLanHost(resolvedHost);
                     window.localStorage.setItem("skyjo:lanHost", resolvedHost);
+                    window.localStorage.setItem(
+                      "skyjo:lanHostTimestamp",
+                      Date.now().toString()
+                    );
                   } else {
                     setLanHostSkipped(true);
                   }
