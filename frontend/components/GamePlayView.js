@@ -302,11 +302,10 @@ export function GamePlayView({
   const initialFlipState = state?.initialFlip ?? null;
   /**
    * Array of players participating in the initial flip phase.
+   * All players participate in the initial flip phase.
    * @type {Array<Object>}
    */
-  const initialFlipPlayers = Array.isArray(initialFlipState?.players)
-    ? initialFlipState.players
-    : [];
+  const initialFlipPlayers = initialFlipState?.players ?? [];
   /**
    * Number of cards each player must reveal during the initial flip phase.
    * @type {number}
