@@ -48,6 +48,7 @@ export function GamePlayView({
 
   /**
    * Calculates the maximum number of columns across all player hands.
+   * Since all rows have the same size in Skyjo, we can use the first row's length.
    * Used to determine card sizing and layout constraints.
    * @type {number}
    */
@@ -60,11 +61,12 @@ export function GamePlayView({
       const handMatrix = Array.isArray(player.handMatrix)
         ? player.handMatrix
         : [];
-      const longestRow = handMatrix.reduce(
-        (longest, row) => Math.max(longest, row.length || 0),
-        0
-      );
-      return Math.max(maxCols, Math.max(1, longestRow));
+      // All rows have the same size, so we can use the first row's length
+      const columnCount =
+        handMatrix.length > 0 && Array.isArray(handMatrix[0])
+          ? handMatrix[0].length
+          : 0;
+      return Math.max(maxCols, Math.max(1, columnCount));
     }, 4);
   }, [players]);
 
@@ -175,43 +177,61 @@ export function GamePlayView({
   const playerCount = players.length;
   const layout = layouts[playerCount] ?? layouts[Math.min(playerCount, 8)];
 
+  /**
+   * Effect hook that calculates and updates card sizes based on available space.
+   * Responds to changes in player count, layout, and hand column count.
+   * Sets up ResizeObserver and window resize listener to recalculate on size changes.
+   */
   useEffect(() => {
-    const CARD_GAP_PX = 12;
-    const PLAYER_HORIZONTAL_PADDING = 32;
-    const MAX_CARD_WIDTH = 110;
-    const MIN_CARD_WIDTH = 40;
+    // Constants for card sizing calculations
+    const CARD_GAP_PX = 12; // Gap between cards in pixels
+    const PLAYER_HORIZONTAL_PADDING = 32; // Horizontal padding per player area
+    const MAX_CARD_WIDTH = 110; // Maximum card width in pixels
+    const MIN_CARD_WIDTH = 40; // Minimum card width in pixels
 
+    /**
+     * Calculates optimal card size based on available grid space and updates CSS variables.
+     * Considers: grid dimensions, player count, hand column count, and card aspect ratio (7:10).
+     */
     const updateCardSize = () => {
       if (!gridRef.current) {
         return;
       }
 
+      // Get grid container dimensions and computed styles
       const bounding = gridRef.current.getBoundingClientRect();
       const computedGridStyle = window.getComputedStyle(gridRef.current);
       const columnGap = parseFloat(computedGridStyle.columnGap || "16");
       const rowGap = parseFloat(computedGridStyle.rowGap || "16");
 
+      // Calculate grid layout dimensions
       const playerCount = Math.max(players.length, 1);
       const gridColumns =
         layout.columns || Math.min(Math.max(playerCount, 1), 3);
       const gridRows = Math.ceil(playerCount / gridColumns);
 
+      // Calculate available space per player (accounting for gaps)
       const availableWidthPerPlayer =
         (bounding.width - columnGap * Math.max(gridColumns - 1, 0)) /
         gridColumns;
       const availableHeightPerPlayer =
         (bounding.height - rowGap * Math.max(gridRows - 1, 0)) / gridRows;
 
+      // Calculate minimum inner width needed (ensures cards don't get too small)
       const innerWidth = Math.max(
         availableWidthPerPlayer - PLAYER_HORIZONTAL_PADDING,
         MIN_CARD_WIDTH * maxHandColumns
       );
+      // Calculate card width based on available columns (accounting for gaps between cards)
       const cardWidthByColumns =
         (innerWidth - CARD_GAP_PX * Math.max(maxHandColumns - 1, 0)) /
         Math.max(maxHandColumns, 1);
+      // Calculate card height based on available rows (3 rows per hand, accounting for padding)
       const cardHeightByRows =
         (availableHeightPerPlayer - PLAYER_HORIZONTAL_PADDING) / 3;
 
+      // Determine final card width (constrained by min/max and aspect ratio)
+      // Aspect ratio: cards are 7:10 (width:height), so height-based width = (height * 7) / 10
       const computedWidth = Math.max(
         MIN_CARD_WIDTH,
         Math.min(
@@ -220,11 +240,14 @@ export function GamePlayView({
           MAX_CARD_WIDTH
         )
       );
+      // Calculate card height maintaining 7:10 aspect ratio
       const computedHeight = (computedWidth * 10) / 7;
+      // Calculate total hand width (all columns + gaps between them)
       const handWidth =
         maxHandColumns * computedWidth +
         Math.max(maxHandColumns - 1, 0) * CARD_GAP_PX;
 
+      // Update CSS custom properties for dynamic card sizing
       setCardSizeStyle({
         "--card-width": `${computedWidth}px`,
         "--card-height": `${computedHeight}px`,
@@ -234,13 +257,17 @@ export function GamePlayView({
       });
     };
 
+    // Initial calculation
     updateCardSize();
+    // Set up ResizeObserver to recalculate when grid container size changes
     const resizeObserver = new ResizeObserver(updateCardSize);
     if (gridRef.current) {
       resizeObserver.observe(gridRef.current);
     }
+    // Set up window resize listener as fallback
     window.addEventListener("resize", updateCardSize);
 
+    // Cleanup: remove listeners and observer
     return () => {
       window.removeEventListener("resize", updateCardSize);
       if (gridRef.current) {

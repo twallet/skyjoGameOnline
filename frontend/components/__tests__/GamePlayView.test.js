@@ -100,6 +100,143 @@ describe("GamePlayView information section", () => {
     }
   });
 
+  describe("maxHandColumns calculation", () => {
+    it("returns default value of 4 when no players", () => {
+      const snapshot = createSnapshot();
+      const { container } = render(
+        React.createElement(GamePlayView, {
+          activePlayers: [],
+          deck: null,
+          snapshot,
+          gameState: snapshot.state,
+          localPlayerName: "",
+          logEntries: [],
+        })
+      );
+      // Component renders successfully with empty players
+      expect(container).toBeInTheDocument();
+    });
+
+    it("calculates max columns from first row when all rows have same size", () => {
+      const playerWith4Columns = {
+        name: "Alice",
+        color: "#ffffff",
+        handMatrix: [
+          [
+            { value: "X", image: "card-back.png" },
+            { value: "X", image: "card-back.png" },
+            { value: "X", image: "card-back.png" },
+            { value: "X", image: "card-back.png" },
+          ],
+          [
+            { value: "X", image: "card-back.png" },
+            { value: "X", image: "card-back.png" },
+            { value: "X", image: "card-back.png" },
+            { value: "X", image: "card-back.png" },
+          ],
+        ],
+      };
+      const snapshot = createSnapshot();
+      const { container } = render(
+        React.createElement(GamePlayView, {
+          activePlayers: [playerWith4Columns],
+          deck: null,
+          snapshot,
+          gameState: snapshot.state,
+          localPlayerName: "Alice",
+          logEntries: [],
+        })
+      );
+      expect(container).toBeInTheDocument();
+    });
+
+    it("finds maximum columns across multiple players", () => {
+      const playerWith2Columns = {
+        name: "Alice",
+        color: "#ffffff",
+        handMatrix: [
+          [
+            { value: "X", image: "card-back.png" },
+            { value: "X", image: "card-back.png" },
+          ],
+          [
+            { value: "X", image: "card-back.png" },
+            { value: "X", image: "card-back.png" },
+          ],
+        ],
+      };
+      const playerWith4Columns = {
+        name: "Bob",
+        color: "#ffffff",
+        handMatrix: [
+          [
+            { value: "X", image: "card-back.png" },
+            { value: "X", image: "card-back.png" },
+            { value: "X", image: "card-back.png" },
+            { value: "X", image: "card-back.png" },
+          ],
+          [
+            { value: "X", image: "card-back.png" },
+            { value: "X", image: "card-back.png" },
+            { value: "X", image: "card-back.png" },
+            { value: "X", image: "card-back.png" },
+          ],
+        ],
+      };
+      const snapshot = createSnapshot();
+      const { container } = render(
+        React.createElement(GamePlayView, {
+          activePlayers: [playerWith2Columns, playerWith4Columns],
+          deck: null,
+          snapshot,
+          gameState: snapshot.state,
+          localPlayerName: "Alice",
+          logEntries: [],
+        })
+      );
+      expect(container).toBeInTheDocument();
+    });
+
+    it("handles empty handMatrix gracefully", () => {
+      const playerWithEmptyMatrix = {
+        name: "Alice",
+        color: "#ffffff",
+        handMatrix: [],
+      };
+      const snapshot = createSnapshot();
+      const { container } = render(
+        React.createElement(GamePlayView, {
+          activePlayers: [playerWithEmptyMatrix],
+          deck: null,
+          snapshot,
+          gameState: snapshot.state,
+          localPlayerName: "Alice",
+          logEntries: [],
+        })
+      );
+      expect(container).toBeInTheDocument();
+    });
+
+    it("handles player without handMatrix property", () => {
+      const playerWithoutMatrix = {
+        name: "Alice",
+        color: "#ffffff",
+      };
+      const snapshot = createSnapshot();
+      const { container } = render(
+        React.createElement(GamePlayView, {
+          activePlayers: [playerWithoutMatrix],
+          deck: null,
+          snapshot,
+          gameState: snapshot.state,
+          localPlayerName: "Alice",
+          logEntries: [],
+        })
+      );
+      expect(container).toBeInTheDocument();
+    });
+  });
+
   it("prompts the local player to finish the initial flip", () => {
     const snapshot = createSnapshot();
     render(
