@@ -140,6 +140,23 @@ export function validatePlayerName(playerName, maxLength) {
     };
   }
 
+  // Skip length validation if maxLength is undefined (allow any length)
+  if (maxLength === undefined) {
+    return {
+      isValid: true,
+      errorMessage: "",
+    };
+  }
+
+  // Validate maxLength is a valid number (null, NaN, or non-number should reject)
+  if (maxLength === null || typeof maxLength !== "number" || isNaN(maxLength)) {
+    // If maxLength is invalid, reject the name
+    return {
+      isValid: false,
+      errorMessage: `Player name must be ${maxLength} characters or fewer.`,
+    };
+  }
+
   if (length > maxLength) {
     return {
       isValid: false,
