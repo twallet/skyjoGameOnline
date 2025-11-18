@@ -150,7 +150,7 @@ export function normalizePlayerNames(playerNames) {
     return [];
   }
   return playerNames
-    .map((name) => (typeof name === "string" ? name.trim() : ""))
+    .map((name) => normalizePlayerName(name))
     .filter((name) => name.length > 0);
 }
 
