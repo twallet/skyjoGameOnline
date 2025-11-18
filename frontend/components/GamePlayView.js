@@ -174,7 +174,16 @@ export function GamePlayView({
     },
   };
 
+  /**
+   * Total number of active players in the game.
+   * @type {number}
+   */
   const playerCount = players.length;
+  /**
+   * Grid layout configuration for the current player count.
+   * Falls back to the 8-player layout if player count exceeds available layouts.
+   * @type {Object}
+   */
   const layout = layouts[playerCount] ?? layouts[Math.min(playerCount, 8)];
 
   /**
@@ -276,25 +285,69 @@ export function GamePlayView({
     };
   }, [players, layout.columns, maxHandColumns]);
 
+  /**
+   * Current game state, prioritized from gameState prop, then snapshot, or null.
+   * @type {Object|null}
+   */
   const state = gameState ?? (snapshot ? snapshot.state : null) ?? null;
+  /**
+   * Current game phase (e.g., "initial-flip", "main-play", "final-round", "finished").
+   * @type {string|null}
+   */
   const phase = state?.phase ?? null;
+  /**
+   * Initial flip phase state containing player flip information.
+   * @type {Object|null}
+   */
   const initialFlipState = state?.initialFlip ?? null;
+  /**
+   * Array of players participating in the initial flip phase.
+   * @type {Array<Object>}
+   */
   const initialFlipPlayers = Array.isArray(initialFlipState?.players)
     ? initialFlipState.players
     : [];
+  /**
+   * Number of cards each player must reveal during the initial flip phase.
+   * @type {number}
+   */
   const requiredInitialReveals = initialFlipState?.requiredReveals ?? 0;
+  /**
+   * Currently drawn card object, if any player has drawn a card.
+   * @type {Object|null}
+   */
   const drawnCard = state?.drawnCard ?? null;
+  /**
+   * Name of the currently active player.
+   * @type {string|null}
+   */
   const activeName = state?.activePlayer?.name ?? null;
+  /**
+   * Normalized (trimmed) local player name for comparison.
+   * @type {string}
+   */
   const normalizedLocalName =
     typeof localPlayerName === "string" ? localPlayerName.trim() : "";
+  /**
+   * Normalized (trimmed) active player name for comparison.
+   * @type {string}
+   */
   const normalizedActiveName =
     typeof activeName === "string" ? activeName.trim() : "";
+  /**
+   * Whether the local player is currently the active player.
+   * @type {boolean}
+   */
   const isLocalActive =
     normalizedLocalName.length > 0 &&
     normalizedActiveName.length > 0 &&
     normalizedLocalName.localeCompare(normalizedActiveName, undefined, {
       sensitivity: "accent",
     }) === 0;
+  /**
+   * Whether the currently drawn card belongs to the local player.
+   * @type {boolean}
+   */
   const drawnBelongsToLocal =
     Boolean(drawnCard) &&
     typeof drawnCard.playerName === "string" &&
@@ -302,33 +355,95 @@ export function GamePlayView({
     drawnCard.playerName.localeCompare(normalizedLocalName, undefined, {
       sensitivity: "accent",
     }) === 0;
+  /**
+   * Source of the drawn card ("deck" or "discard"), normalized to lowercase.
+   * @type {string}
+   */
   const drawnSource =
     typeof drawnCard?.source === "string" ? drawnCard.source.toLowerCase() : "";
+  /**
+   * Whether the drawn card was taken from the discard pile.
+   * @type {boolean}
+   */
   const drawnFromDiscard = drawnSource === "discard";
+  /**
+   * Whether the local player can control card draws (active, no drawn card, callback available, not processing).
+   * @type {boolean}
+   */
   const canControlDraws =
     isLocalActive &&
     !drawnCard &&
     typeof onDrawCard === "function" &&
     !isProcessing;
+  /**
+   * Whether the local player can draw from the deck.
+   * @type {boolean}
+   */
   const canDrawFromDeck = canControlDraws;
+  /**
+   * Whether the local player can draw from the discard pile (requires visible discard card).
+   * @type {boolean}
+   */
   const canDrawFromDiscard =
     canControlDraws &&
     Boolean(deck?.firstCard) &&
     deck.firstCard.visible !== false;
 
+  /**
+   * Current main action mode: "replace" (replace a card) or "reveal" (reveal a hidden card).
+   * @type {[string, Function]}
+   */
   const [mainActionMode, setMainActionMode] = useState("replace");
+  /**
+   * Whether a discard reveal is pending (player discarded and must reveal a card).
+   * @type {[boolean, Function]}
+   */
   const [pendingDiscardReveal, setPendingDiscardReveal] = useState(false);
+  /**
+   * Whether the game log panel is expanded.
+   * @type {[boolean, Function]}
+   */
   const [isLogExpanded, setIsLogExpanded] = useState(false);
+  /**
+   * Whether the local player can drop/discard the drawn card.
+   * @type {boolean}
+   */
   const canDropOnDiscard = drawnBelongsToLocal && !drawnFromDiscard;
+  /**
+   * Whether the local player can resolve the drawn card (has drawn card, not processing).
+   * @type {boolean}
+   */
   const canResolveDrawnCard =
     drawnBelongsToLocal && !isProcessing && Boolean(drawnCard);
+  /**
+   * Whether the discard area should show shake animation (indicates drop target).
+   * @type {boolean}
+   */
   const shouldShakeDiscard =
     drawnBelongsToLocal && mainActionMode === "replace" && canDropOnDiscard;
+  /**
+   * Whether draw sources (deck/discard) should show shake animation (indicates available actions).
+   * @type {boolean}
+   */
   const shouldShakeDrawSources =
     isLocalActive && !drawnCard && (canDrawFromDeck || canDrawFromDiscard);
+  /**
+   * Array of column removal notification objects to display.
+   * @type {[Array<Object>, Function]}
+   */
   const [columnRemovalNotices, setColumnRemovalNotices] = useState([]);
+  /**
+   * Set of column removal event IDs that have already been displayed.
+   * Used to prevent duplicate notifications.
+   * @type {React.MutableRefObject<Set<string>>}
+   */
   const displayedColumnRemovalIdsRef = React.useRef(new Set());
 
+  /**
+   * Map of player names to sets of column indices pending removal.
+   * Computed from game state's pendingColumnRemovals array.
+   * @type {Map<string, Set<number>>}
+   */
   const pendingColumnRemovalMap = React.useMemo(() => {
     const entries = Array.isArray(state?.pendingColumnRemovals)
       ? state.pendingColumnRemovals
@@ -356,6 +471,10 @@ export function GamePlayView({
     return map;
   }, [state?.pendingColumnRemovals]);
 
+  /**
+   * Effect hook that processes recent column removal events and adds them to notifications.
+   * Filters out events that have already been displayed to prevent duplicates.
+   */
   useEffect(() => {
     const events = Array.isArray(state?.recentColumnRemovalEvents)
       ? state.recentColumnRemovalEvents
@@ -396,6 +515,10 @@ export function GamePlayView({
     });
   }, [state?.recentColumnRemovalEvents]);
 
+  /**
+   * Effect hook that periodically removes expired column removal notifications.
+   * Runs every 200ms to clean up notifications that have passed their expiration time.
+   */
   useEffect(() => {
     if (!columnRemovalNotices.length) {
       return undefined;
@@ -411,6 +534,11 @@ export function GamePlayView({
     };
   }, [columnRemovalNotices.length]);
 
+  /**
+   * Processed log entries with normalized message formatting and metadata.
+   * Ensures messages end with punctuation and extracts phase/actor information.
+   * @type {Array<Object>}
+   */
   const eventEntries = useMemo(() => {
     const sourceEntries =
       Array.isArray(logEntries) && logEntries.length > 0
@@ -445,23 +573,44 @@ export function GamePlayView({
     });
   }, [logEntries, snapshot?.logEntries]);
 
+  /**
+   * Maximum number of log entries to display at once.
+   * @type {number}
+   */
   const MAX_LOG_ENTRIES = 20;
+  /**
+   * Visible log entries, limited to MAX_LOG_ENTRIES and reversed for newest-first display.
+   * @type {Array<Object>}
+   */
   const visibleLogEntries = useMemo(() => {
     const trimmed = eventEntries.slice(-MAX_LOG_ENTRIES);
     return trimmed.reverse();
   }, [eventEntries]);
 
+  /**
+   * Display name of the currently active player, trimmed of whitespace.
+   * @type {string}
+   */
   const activePlayerDisplayName =
     typeof state?.activePlayer?.name === "string"
       ? state.activePlayer.name.trim()
       : "";
 
+  /**
+   * Color associated with the active player, if specified.
+   * @type {string|null}
+   */
   const activePlayerColor =
     typeof state?.activePlayer?.color === "string" &&
     state.activePlayer.color.trim().length > 0
       ? state.activePlayer.color
       : null;
 
+  /**
+   * Human-readable phase label for display in the UI.
+   * Includes player name in possessive form during main-play phase.
+   * @type {string}
+   */
   const friendlyPhaseLabel = useMemo(() => {
     const phaseKey = state?.phase ?? null;
     if (!phaseKey) {
@@ -486,6 +635,11 @@ export function GamePlayView({
     }
   }, [state?.phase, activePlayerDisplayName]);
 
+  /**
+   * Log entries formatted as strings for display in the log panel.
+   * Extracts message text from event entry objects.
+   * @type {Array<string>}
+   */
   const formattedLogEntries = useMemo(
     () =>
       visibleLogEntries.map((entry) =>
@@ -496,7 +650,16 @@ export function GamePlayView({
     [visibleLogEntries]
   );
 
+  /**
+   * Whether the game is in the finished phase.
+   * @type {boolean}
+   */
   const isFinishedPhase = state?.phase === "finished";
+  /**
+   * Final round scores sorted by total (ascending), with ties broken by name.
+   * Lower scores are better in Skyjo.
+   * @type {Array<Object>|null}
+   */
   const finalRoundScores = useMemo(() => {
     if (!Array.isArray(state?.finalRound?.scores)) {
       return null;
@@ -515,11 +678,20 @@ export function GamePlayView({
     });
   }, [state?.finalRound?.scores]);
 
+  /**
+   * Name of the game winner, determined from finalRound.winner or lowest score.
+   * @type {string|null}
+   */
   const winnerName = isFinishedPhase
     ? (state?.finalRound?.winner ??
       (finalRoundScores?.length ? (finalRoundScores[0]?.name ?? null) : null))
     : null;
 
+  /**
+   * Final round scores ordered with winner first, if winner is identified.
+   * Otherwise returns scores in their original sorted order.
+   * @type {Array<Object>}
+   */
   const orderedFinalRoundScores = useMemo(() => {
     if (!Array.isArray(finalRoundScores) || finalRoundScores.length === 0) {
       return [];
@@ -544,6 +716,11 @@ export function GamePlayView({
     return [winnerEntry, ...remainingEntries];
   }, [finalRoundScores, winnerName]);
 
+  /**
+   * Current instruction message to display to the player based on game state.
+   * Provides context-specific guidance for what action the player should take.
+   * @type {string}
+   */
   const instructionMessage = useMemo(() => {
     if (isProcessing) {
       return "Processing your action...";
@@ -672,6 +849,11 @@ export function GamePlayView({
     winnerName,
   ]);
 
+  /**
+   * Final instruction message with normalized punctuation.
+   * Removes trailing periods and ensures single period at end.
+   * @type {string}
+   */
   const combinedInstruction = useMemo(() => {
     if (!instructionMessage) {
       return "";
@@ -707,6 +889,10 @@ export function GamePlayView({
     setPendingDiscardReveal(false);
   };
 
+  /**
+   * Effect hook that resets action mode to "replace" when drawn card changes.
+   * Ensures UI state stays in sync with game state when card ownership or source changes.
+   */
   useEffect(() => {
     if (!drawnBelongsToLocal || drawnFromDiscard) {
       setMainActionMode("replace");
@@ -719,12 +905,21 @@ export function GamePlayView({
     drawnCard?.value,
   ]);
 
+  /**
+   * Effect hook that automatically expands the log panel when game finishes.
+   * Ensures final scores and game log are visible at game end.
+   */
   useEffect(() => {
     if (state?.phase === "finished") {
       setIsLogExpanded(true);
     }
   }, [state?.phase]);
 
+  /**
+   * CSS styles for the players grid container.
+   * Defines grid layout with dynamic column count based on player count.
+   * @type {Object}
+   */
   const gridListStyle = {
     display: "grid",
     gridTemplateColumns: `repeat(${layout.columns}, minmax(0, 1fr))`,
@@ -735,6 +930,11 @@ export function GamePlayView({
     justifyContent: "center",
   };
 
+  /**
+   * Array of React elements representing player entries and deck/discard area.
+   * Populated during rendering based on game state.
+   * @type {Array<React.ReactElement>}
+   */
   const playerEntries = [];
 
   /**
@@ -803,6 +1003,10 @@ export function GamePlayView({
   };
 
   if (deck && !isFinishedPhase) {
+    /**
+     * Handler function for drawing a card from the deck.
+     * Validates conditions and calls onDrawCard callback with "deck" source.
+     */
     const handleDrawFromDeck = () => {
       if (!normalizedLocalName || !canDrawFromDeck) {
         return;
@@ -810,6 +1014,10 @@ export function GamePlayView({
       onDrawCard?.(normalizedLocalName, "deck");
     };
 
+    /**
+     * Handler function for drawing a card from the discard pile.
+     * Validates conditions and calls onDrawCard callback with "discard" source.
+     */
     const handleDrawFromDiscard = () => {
       if (!normalizedLocalName || !canDrawFromDiscard) {
         return;
@@ -817,6 +1025,10 @@ export function GamePlayView({
       onDrawCard?.(normalizedLocalName, "discard");
     };
 
+    /**
+     * Handler function for clicking the discard area.
+     * Switches to "reveal" mode and sets pending discard reveal flag.
+     */
     const handleDiscardAreaClick = () => {
       if (!canDropOnDiscard || mainActionMode === "reveal") {
         return;
@@ -825,23 +1037,56 @@ export function GamePlayView({
       setPendingDiscardReveal(true);
     };
 
+    /**
+     * Title text for the deck image, varies based on whether player can draw.
+     * @type {string}
+     */
     const deckTitle = canDrawFromDeck
       ? "Draw a card from the deck"
       : "Deck of cards";
+    /**
+     * Whether the discard area allows dropping the drawn card.
+     * @type {boolean}
+     */
     const allowDiscardDrop = canDropOnDiscard;
+    /**
+     * Whether to show the pending discard card (card being discarded but not yet placed).
+     * @type {boolean}
+     */
     const showPendingDiscardCard =
       pendingDiscardReveal && allowDiscardDrop && Boolean(drawnCard);
+    /**
+     * Whether there is a visible card on top of the discard pile.
+     * @type {boolean}
+     */
     const hasVisibleDiscardCard =
       Boolean(deck?.firstCard) && deck.firstCard.visible !== false;
+    /**
+     * Whether the discard area should display a card image.
+     * @type {boolean}
+     */
     const shouldShowDiscardImage =
       showPendingDiscardCard || hasVisibleDiscardCard;
 
+    /**
+     * Image source URL for the discard card display.
+     * Shows pending discard card if available, otherwise top discard card.
+     * @type {string|null}
+     */
     const discardImageSrc = showPendingDiscardCard
       ? (drawnCard?.image ?? null)
       : (deck?.firstCard?.image ?? null);
+    /**
+     * Alt text for the discard card image.
+     * @type {string}
+     */
     const discardAltText = showPendingDiscardCard
       ? `Pending discard ${drawnCard?.value ?? ""}`.trim()
       : (deck?.firstCard?.alt ?? "Visible top card");
+    /**
+     * Title/tooltip text for the discard area, varies based on current game state.
+     * @type {string}
+     */
     const discardTitle = showPendingDiscardCard
       ? "Select one of your hidden cards to reveal"
       : allowDiscardDrop
@@ -849,6 +1094,10 @@ export function GamePlayView({
         : canDrawFromDiscard
           ? "Take the top discard card"
           : (deck?.firstCard?.alt ?? "Visible top card");
+    /**
+     * Click handler function for the discard area, or undefined if not clickable.
+     * @type {Function|undefined}
+     */
     let discardClickHandler = undefined;
     if (showPendingDiscardCard) {
       discardClickHandler = undefined;
@@ -858,6 +1107,11 @@ export function GamePlayView({
       discardClickHandler = handleDrawFromDiscard;
     }
 
+    /**
+     * CSS class names for the deck base image.
+     * Includes interactive and shake animation classes when appropriate.
+     * @type {Array<string>}
+     */
     const baseImageClasses = ["deck-entry__image", "deck-entry__image--base"];
     if (canDrawFromDeck) {
       baseImageClasses.push("deck-entry__image--interactive");
@@ -866,6 +1120,11 @@ export function GamePlayView({
       }
     }
 
+    /**
+     * CSS class names for the discard pile top card image.
+     * Includes interactive and shake animation classes when appropriate.
+     * @type {Array<string>}
+     */
     const topCardClasses = ["deck-entry__image", "deck-entry__image--top-card"];
     if (canDrawFromDiscard || canDropOnDiscard) {
       topCardClasses.push("deck-entry__image--interactive");
@@ -930,49 +1189,108 @@ export function GamePlayView({
   }
 
   players.forEach((player, index) => {
+    /**
+     * Grid seat position for this player in the layout.
+     * Falls back to last seat if index exceeds available seats.
+     * @type {Object}
+     */
     const seat = layout.seats[index] ?? layout.seats[layout.seats.length - 1];
+    /**
+     * Player's hand matrix (2D array of card data).
+     * @type {Array<Array<Object>>}
+     */
     const handMatrix = Array.isArray(player.handMatrix)
       ? player.handMatrix
       : [];
+    /**
+     * Initial flip phase information for this player, if available.
+     * @type {Object|undefined}
+     */
     const initialFlipInfo = initialFlipPlayers.find(
       (entry) => entry?.name === player.name
     );
+    /**
+     * Set of card positions that have been flipped during initial flip phase.
+     * @type {Set<number>}
+     */
     const flippedPositions = new Set(
       Array.isArray(initialFlipInfo?.flippedPositions)
         ? initialFlipInfo.flippedPositions
         : []
     );
+    /**
+     * Normalized (trimmed) player name for comparison.
+     * @type {string}
+     */
     const normalizedPlayerName =
       typeof player.name === "string" ? player.name.trim() : "";
+    /**
+     * Whether this player is the local player.
+     * @type {boolean}
+     */
     const isLocalPlayer =
       normalizedLocalName.length > 0 &&
       normalizedPlayerName.length > 0 &&
       normalizedLocalName.localeCompare(normalizedPlayerName, undefined, {
         sensitivity: "accent",
       }) === 0;
+    /**
+     * Whether this player owns the currently drawn card.
+     * @type {boolean}
+     */
     const isDrawnCardOwner =
       Boolean(drawnCard?.playerName) &&
       normalizedPlayerName.length > 0 &&
       drawnCard.playerName.localeCompare(normalizedPlayerName, undefined, {
         sensitivity: "accent",
       }) === 0;
+    /**
+     * Whether this player is currently taking their turn.
+     * @type {boolean}
+     */
     const isCurrentTurn =
       normalizedActiveName.length > 0 &&
       normalizedPlayerName.length > 0 &&
       normalizedActiveName.localeCompare(normalizedPlayerName, undefined, {
         sensitivity: "accent",
       }) === 0;
+    /**
+     * Whether this player has a drawn card that should be displayed inline.
+     * @type {boolean}
+     */
     const hasInlineDrawnCard = isDrawnCardOwner && Boolean(drawnCard);
+    /**
+     * Whether to show the drawn card inline in this player's hand label.
+     * Hidden when discard reveal is pending.
+     * @type {boolean}
+     */
     const showInlineDrawnCard = hasInlineDrawnCard && !pendingDiscardReveal;
+    /**
+     * Whether this player needs to flip more cards during initial flip phase.
+     * @type {boolean}
+     */
     const needsInitialFlipIndicator =
       phase === "initial-flip" &&
       requiredInitialReveals > 0 &&
       flippedPositions.size < requiredInitialReveals;
+    /**
+     * Whether to show the turn indicator for this player.
+     * @type {boolean}
+     */
     const shouldShowIndicator = needsInitialFlipIndicator || isCurrentTurn;
+    /**
+     * Set of column indices pending removal for this player, if any.
+     * @type {Set<number>|null}
+     */
     const playerColumnSet =
       pendingColumnRemovalMap.get(player.name) ??
       pendingColumnRemovalMap.get(normalizedPlayerName) ??
       null;
+    /**
+     * Array of row offset values for calculating card positions.
+     * Each index contains the cumulative card count up to that row.
+     * @type {Array<number>}
+     */
     const rowOffsets = [];
     handMatrix.reduce((offset, row, rowIndex) => {
       rowOffsets[rowIndex] = offset;
@@ -1029,10 +1347,30 @@ export function GamePlayView({
           },
         },
         row.map((cardData, cardIndex) => {
+          /**
+           * Absolute position index of this card in the player's hand.
+           * @type {number}
+           */
           const position = rowOffsets[rowIndex] + cardIndex;
+          /**
+           * Value of this card ("X" for hidden cards, number for revealed).
+           * @type {string|number}
+           */
           const cardValue = cardData.value;
+          /**
+           * Whether this card is hidden (value is "X").
+           * @type {boolean}
+           */
           const isHidden = cardValue === "X";
+          /**
+           * Whether this card has already been flipped during initial flip phase.
+           * @type {boolean}
+           */
           const alreadyFlipped = flippedPositions.has(position);
+          /**
+           * Whether this card can be flipped during initial flip phase.
+           * @type {boolean}
+           */
           const canFlip =
             phase === "initial-flip" &&
             isLocalPlayer &&
@@ -1042,18 +1380,34 @@ export function GamePlayView({
             !alreadyFlipped &&
             !isProcessing;
 
+          /**
+           * Whether this card can be replaced with the drawn card.
+           * @type {boolean}
+           */
           const allowReplace =
             isLocalPlayer &&
             canResolveDrawnCard &&
             mainActionMode === "replace" &&
             typeof onReplaceCard === "function";
+          /**
+           * Whether this hidden card can be revealed (after discarding).
+           * @type {boolean}
+           */
           const allowReveal =
             isLocalPlayer &&
             canResolveDrawnCard &&
             mainActionMode === "reveal" &&
             typeof onRevealCard === "function" &&
             isHidden;
+          /**
+           * Click handler function for this card, or null if not clickable.
+           * @type {Function|null}
+           */
           let onCardClick = null;
+          /**
+           * Title/tooltip text for this card.
+           * @type {string}
+           */
           let cardTitle = `${player.name} card ${cardValue}`;
 
           if (canFlip) {
@@ -1075,6 +1429,11 @@ export function GamePlayView({
             cardTitle = "Reveal this hidden card after discarding";
           }
 
+          /**
+           * CSS class names for this card element.
+           * Includes state-based classes for interactivity, drop targets, and animations.
+           * @type {Array<string>}
+           */
           const cardClasses = ["player-entry__card"];
           if (allowReplace) {
             cardClasses.push("player-entry__card--drop-target");
