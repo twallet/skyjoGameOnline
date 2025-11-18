@@ -6,7 +6,6 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^14.2.1",
     "@testing-library/user-event": "^14.5.2",
-    "husky": "^9.1.7",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^30.2.0",
     "prettier": "3.6.2",
@@ -17,8 +16,7 @@
   "scripts": {
     "pretest": "node scripts/check-deps.js",
     "test": "node --no-warnings --experimental-vm-modules ./node_modules/jest/bin/jest.js",
-    "server": "node ./backend/server.js",
-    "prepare": "husky"
+    "server": "node ./backend/server.js"
   },
   "dependencies": {
     "express": "^5.1.0"

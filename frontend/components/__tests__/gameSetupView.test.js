@@ -44,6 +44,16 @@ describe("GameSetupView component", () => {
     expect(screen.queryByPlaceholderText(/your name/i)).not.toBeInTheDocument();
   });
 
+  it("hides the player name input when processing", () => {
+    render(
+      React.createElement(GameSetupView, {
+        ...defaultProps,
+        isProcessing: true,
+      })
+    );
+    expect(screen.queryByPlaceholderText(/your name/i)).not.toBeInTheDocument();
+  });
+
   it("hides create button when player name is invalid", () => {
     render(
       React.createElement(GameSetupView, {
@@ -362,14 +372,13 @@ describe("GameSetupView component", () => {
     expect(charlieItem).toHaveStyle({ backgroundColor: "#ff0000" });
   });
 
-  it("disables all inputs when loading", () => {
+  it("hides player name input when loading", () => {
     render(
       React.createElement(GameSetupView, {
         ...defaultProps,
         isProcessing: true,
       })
     );
-    const nameInput = screen.getByPlaceholderText(/your name/i);
-    expect(nameInput).toBeDisabled();
+    expect(screen.queryByPlaceholderText(/your name/i)).not.toBeInTheDocument();
   });
 });

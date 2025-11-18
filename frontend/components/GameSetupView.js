@@ -85,8 +85,8 @@ export function GameSetupView({
         alt: "Skyjo game box",
         className: "setup__hero",
       }),
-      // Player name input - shown when room not created
-      hasCreatedRoom
+      // Player name input - shown when room not created and not processing
+      hasCreatedRoom || isProcessing
         ? null
         : React.createElement("input", {
             id: "player-name-input",
