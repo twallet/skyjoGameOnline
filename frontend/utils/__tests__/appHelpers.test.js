@@ -9,7 +9,7 @@ import {
   validatePlayerName,
   normalizePlayerNames,
   normalizePlayerName,
-  normalizeOptionalString,
+  trimStringValue,
   buildPossessiveTurnLabel,
 } from "../appHelpers.js";
 import { Game } from "../../../shared/models/game.js";
@@ -427,39 +427,39 @@ describe("app helpers", () => {
     });
   });
 
-  describe("normalizeOptionalString", () => {
+  describe("trimStringValue", () => {
     it("trims and returns valid string values", () => {
-      expect(normalizeOptionalString("Alice")).toBe("Alice");
-      expect(normalizeOptionalString("  Bob  ")).toBe("Bob");
-      expect(normalizeOptionalString("Charlie")).toBe("Charlie");
+      expect(trimStringValue("Alice")).toBe("Alice");
+      expect(trimStringValue("  Bob  ")).toBe("Bob");
+      expect(trimStringValue("Charlie")).toBe("Charlie");
     });
 
     it("returns null for empty strings", () => {
-      expect(normalizeOptionalString("")).toBeNull();
-      expect(normalizeOptionalString("   ")).toBeNull();
-      expect(normalizeOptionalString("\t\n")).toBeNull();
+      expect(trimStringValue("")).toBeNull();
+      expect(trimStringValue("   ")).toBeNull();
+      expect(trimStringValue("\t\n")).toBeNull();
     });
 
     it("returns null for non-string inputs", () => {
-      expect(normalizeOptionalString(null)).toBeNull();
-      expect(normalizeOptionalString(undefined)).toBeNull();
-      expect(normalizeOptionalString(123)).toBeNull();
-      expect(normalizeOptionalString(true)).toBeNull();
-      expect(normalizeOptionalString({})).toBeNull();
-      expect(normalizeOptionalString([])).toBeNull();
+      expect(trimStringValue(null)).toBeNull();
+      expect(trimStringValue(undefined)).toBeNull();
+      expect(trimStringValue(123)).toBeNull();
+      expect(trimStringValue(true)).toBeNull();
+      expect(trimStringValue({})).toBeNull();
+      expect(trimStringValue([])).toBeNull();
     });
 
     it("preserves non-empty trimmed strings", () => {
-      expect(normalizeOptionalString("  Test  ")).toBe("Test");
-      expect(normalizeOptionalString("\nNewline\n")).toBe("Newline");
-      expect(normalizeOptionalString("\tTab\t")).toBe("Tab");
+      expect(trimStringValue("  Test  ")).toBe("Test");
+      expect(trimStringValue("\nNewline\n")).toBe("Newline");
+      expect(trimStringValue("\tTab\t")).toBe("Tab");
     });
 
     it("handles strings with only whitespace as null", () => {
-      expect(normalizeOptionalString(" ")).toBeNull();
-      expect(normalizeOptionalString("\n")).toBeNull();
-      expect(normalizeOptionalString("\t")).toBeNull();
-      expect(normalizeOptionalString(" \n\t ")).toBeNull();
+      expect(trimStringValue(" ")).toBeNull();
+      expect(trimStringValue("\n")).toBeNull();
+      expect(trimStringValue("\t")).toBeNull();
+      expect(trimStringValue(" \n\t ")).toBeNull();
     });
   });
 

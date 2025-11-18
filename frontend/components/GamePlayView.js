@@ -7,7 +7,7 @@ import React, {
 import {
   buildPossessiveTurnLabel,
   extractLogEntryMessage,
-  normalizeOptionalString,
+  trimStringValue,
   normalizePlayerName,
 } from "../utils/appHelpers.js";
 
@@ -558,8 +558,8 @@ export function GamePlayView({
         const message = /[.!?]$/.test(rawMessage)
           ? rawMessage
           : `${rawMessage}.`;
-        const phase = normalizeOptionalString(entry.phase);
-        const actor = normalizeOptionalString(entry.actor);
+        const phase = trimStringValue(entry.phase);
+        const actor = trimStringValue(entry.actor);
         return { message, phase, actor };
       }
       const rawMessage =

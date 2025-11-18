@@ -4,7 +4,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { GamePlayView } from "../GamePlayView.js";
-import { normalizeOptionalString } from "../../utils/appHelpers.js";
+import { trimStringValue } from "../../utils/appHelpers.js";
 
 class ResizeObserverMock {
   observe() {}
@@ -71,8 +71,8 @@ const createSnapshot = (stateOverrides = {}, logOverrides = []) => {
           ? entry.message
           : String(entry.message ?? "");
       const message = /[.!?]$/.test(rawMessage) ? rawMessage : `${rawMessage}.`;
-      const phase = normalizeOptionalString(entry.phase);
-      const actor = normalizeOptionalString(entry.actor);
+      const phase = trimStringValue(entry.phase);
+      const actor = trimStringValue(entry.actor);
       return { message, phase, actor };
     }
     const rawMessage = typeof entry === "string" ? entry : String(entry ?? "");

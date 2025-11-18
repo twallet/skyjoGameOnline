@@ -109,6 +109,19 @@ export function extractLogEntryMessage(entry) {
 }
 
 /**
+ * Trims and validates a string value.
+ * Returns null if the value is not a string or becomes empty after trimming.
+ * Useful for optional string fields that should be null when empty.
+ * @param {string|unknown} value - The value to trim and validate
+ * @returns {string|null} Trimmed string if valid, null if invalid or empty
+ */
+export function trimStringValue(value) {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
+}
+
+/**
  * Validates a player name according to game rules.
  * @param {string} playerName - The player name to validate
  * @param {number} maxLength - Maximum allowed length for player name
@@ -117,8 +130,8 @@ export function extractLogEntryMessage(entry) {
  *   - errorMessage: {string} Error message if invalid, empty string if valid
  */
 export function validatePlayerName(playerName, maxLength) {
-  const trimmed = typeof playerName === "string" ? playerName.trim() : "";
-  const length = trimmed.length;
+  const trimmed = trimStringValue(playerName);
+  const length = trimmed?.length ?? 0;
 
   if (length === 0) {
     return {
@@ -160,22 +173,7 @@ export function normalizePlayerNames(playerNames) {
  * @returns {string} Normalized player name or empty string if invalid
  */
 export function normalizePlayerName(playerName) {
-  return typeof playerName === "string" && playerName.trim().length > 0
-    ? playerName.trim()
-    : "";
-}
-
-/**
- * Normalizes an optional string value by trimming whitespace.
- * Returns null if the value is not a string or becomes empty after trimming.
- * Useful for optional string fields that should be null when empty.
- * @param {string|unknown} value - The value to normalize
- * @returns {string|null} Trimmed string or null if invalid/empty
- */
-export function normalizeOptionalString(value) {
-  return typeof value === "string" && value.trim().length > 0
-    ? value.trim()
-    : null;
+  return trimStringValue(playerName) ?? "";
 }
 
 /**
