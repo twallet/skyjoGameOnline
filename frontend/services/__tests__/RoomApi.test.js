@@ -246,4 +246,178 @@ describe("RoomApi", () => {
       expect.objectContaining({ type: "reveal", playerName: "Alice" })
     );
   });
+
+  it("creates a room without roomId parameter", async () => {
+    const response = createJsonResponse(201, { roomId: "GENERATED" });
+    global.fetch.mockResolvedValueOnce(response);
+
+    const payload = await RoomApi.createRoom();
+
+    const callArgs = global.fetch.mock.calls[0];
+    expect(callArgs[0]).toBe("http://localhost:4000/rooms");
+    expect(callArgs[1].method).toBe("POST");
+    expect(callArgs[1].headers).toEqual({});
+    expect(callArgs[1].body).toBeUndefined();
+    expect(payload).toEqual({ roomId: "GENERATED" });
+  });
+
+  it("draws a card from discard pile", async () => {
+    const response = createJsonResponse(200, {
+      roomId: "ROOM10",
+      players: [],
+      deck: { size: 10, topCard: null },
+      logEntries: [],
+      state: { phase: "main-play", drawnCard: { playerName: "Alice" } },
+      event: { type: "draw", playerName: "Alice", source: "discard" },
+    });
+    global.fetch.mockResolvedValueOnce(response);
+
+    const payload = await RoomApi.drawCard("room10", "Alice", "discard");
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "http://localhost:4000/rooms/ROOM10/main/draw",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerName: "Alice", source: "discard" }),
+      }
+    );
+    expect(payload.event.source).toBe("discard");
+  });
+
+  it("draws a card defaults to deck when source is not discard", async () => {
+    const response = createJsonResponse(200, {
+      roomId: "ROOM10",
+      players: [],
+      deck: { size: 10, topCard: null },
+      logEntries: [],
+      state: { phase: "main-play", drawnCard: { playerName: "Alice" } },
+      event: { type: "draw", playerName: "Alice", source: "deck" },
+    });
+    global.fetch.mockResolvedValueOnce(response);
+
+    const payload = await RoomApi.drawCard("room10", "Alice", "invalid");
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "http://localhost:4000/rooms/ROOM10/main/draw",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerName: "Alice", source: "deck" }),
+      }
+    );
+    expect(payload.event.source).toBe("deck");
+  });
+
+  it("throws error when room ID is empty", async () => {
+    await expect(RoomApi.getRoom("")).rejects.toThrow(
+      "Room id must not be empty."
+    );
+    await expect(RoomApi.getRoom(null)).rejects.toThrow(
+      "Room id must not be empty."
+    );
+    await expect(RoomApi.getRoom(undefined)).rejects.toThrow(
+      "Room id must not be empty."
+    );
+  });
+
+  it("throws error when player name is empty in revealInitialCard", async () => {
+    await expect(RoomApi.revealInitialCard("ROOM1", "", 0)).rejects.toThrow(
+      "Player name must not be empty."
+    );
+    await expect(RoomApi.revealInitialCard("ROOM1", "   ", 0)).rejects.toThrow(
+      "Player name must not be empty."
+    );
+    await expect(RoomApi.revealInitialCard("ROOM1", null, 0)).rejects.toThrow(
+      "Player name must not be empty."
+    );
+  });
+
+  it("throws error when player name is empty in drawCard", async () => {
+    await expect(RoomApi.drawCard("ROOM1", "", "deck")).rejects.toThrow(
+      "Player name must not be empty."
+    );
+  });
+
+  it("throws error when player name is empty in replaceWithDrawnCard", async () => {
+    await expect(RoomApi.replaceWithDrawnCard("ROOM1", "", 0)).rejects.toThrow(
+      "Player name must not be empty."
+    );
+  });
+
+  it("throws error when player name is empty in revealAfterDiscard", async () => {
+    await expect(RoomApi.revealAfterDiscard("ROOM1", "", 0)).rejects.toThrow(
+      "Player name must not be empty."
+    );
+  });
+
+  it("throws error when position is not an integer in revealInitialCard", async () => {
+    await expect(
+      RoomApi.revealInitialCard("ROOM1", "Alice", 1.5)
+    ).rejects.toThrow("Card position must be an integer.");
+    await expect(
+      RoomApi.revealInitialCard("ROOM1", "Alice", "0")
+    ).rejects.toThrow("Card position must be an integer.");
+    await expect(
+      RoomApi.revealInitialCard("ROOM1", "Alice", null)
+    ).rejects.toThrow("Card position must be an integer.");
+  });
+
+  it("throws error when position is not an integer in replaceWithDrawnCard", async () => {
+    await expect(
+      RoomApi.replaceWithDrawnCard("ROOM1", "Alice", 1.5)
+    ).rejects.toThrow("Card position must be an integer.");
+  });
+
+  it("throws error when position is not an integer in revealAfterDiscard", async () => {
+    await expect(
+      RoomApi.revealAfterDiscard("ROOM1", "Alice", "3")
+    ).rejects.toThrow("Card position must be an integer.");
+  });
+
+  it("handles baseUrl with trailing slash correctly", async () => {
+    RoomApi.configure({ baseUrl: "http://localhost:4000/" });
+    const response = createJsonResponse(200, { roomId: "TEST" });
+    global.fetch.mockResolvedValueOnce(response);
+
+    await RoomApi.getRoom("test");
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "http://localhost:4000/rooms/TEST",
+      expect.any(Object)
+    );
+  });
+
+  it("handles empty baseUrl correctly", async () => {
+    RoomApi.configure({ baseUrl: "" });
+    const response = createJsonResponse(200, { roomId: "TEST" });
+    global.fetch.mockResolvedValueOnce(response);
+
+    await RoomApi.getRoom("test");
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/rooms/TEST",
+      expect.any(Object)
+    );
+  });
+
+  it("handles error responses with message field", async () => {
+    const response = createJsonResponse(400, {
+      message: "Invalid request.",
+    });
+    response.ok = false;
+    global.fetch.mockResolvedValueOnce(response);
+
+    await expect(RoomApi.getRoom("test")).rejects.toThrow("Invalid request.");
+  });
+
+  it("handles error responses without error or message fields", async () => {
+    const response = createJsonResponse(500, {});
+    response.ok = false;
+    global.fetch.mockResolvedValueOnce(response);
+
+    await expect(RoomApi.getRoom("test")).rejects.toThrow(
+      /Request to .* failed with status 500/
+    );
+  });
 });

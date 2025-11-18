@@ -123,14 +123,6 @@ export const RoomApi = {
   },
 
   /**
-   * Gets the current base URL used for API requests.
-   * @returns {string} Current base URL
-   */
-  getBaseUrl() {
-    return baseUrl;
-  },
-
-  /**
    * Creates a new game room.
    * @param {string} [roomId] - Optional room ID (will be generated if not provided)
    * @returns {Promise<Object>} Room creation response with roomId
@@ -142,23 +134,6 @@ export const RoomApi = {
       body: normalized ? { roomId: normalized } : undefined,
     });
     return response;
-  },
-
-  /**
-   * Lists all available game rooms.
-   * @returns {Promise<Object>} Response containing rooms array
-   */
-  async listRooms() {
-    const response = await request("/rooms");
-    return response ?? { rooms: [] };
-  },
-
-  /**
-   * Gets scores for all rooms.
-   * @returns {Promise<Object>} Response containing room scores
-   */
-  async getRoomScores() {
-    return request("/rooms/scores");
   },
 
   /**
