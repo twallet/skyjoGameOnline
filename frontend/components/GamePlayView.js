@@ -1111,6 +1111,11 @@ export function GamePlayView({
       }
     }
 
+    /**
+     * Renders the deck and discard pile area in the game grid.
+     * Includes deck base image (clickable when player can draw) and discard pile
+     * (shows top card or drop zone for discarding).
+     */
     playerEntries.push(
       React.createElement(
         "div",
@@ -1163,9 +1168,17 @@ export function GamePlayView({
       )
     );
   } else if (isFinishedPhase) {
+    /**
+     * Renders the final scores panel when the game is finished.
+     * Replaces the deck/discard area with game results.
+     */
     playerEntries.push(renderFinalScoresPanel());
   }
 
+  /**
+   * Iterates through all players and renders their hand entries.
+   * Each player entry includes their name, turn indicator, hand cards, and drawn card (if applicable).
+   */
   players.forEach((player, index) => {
     /**
      * Grid seat position for this player in the layout.
@@ -1273,6 +1286,11 @@ export function GamePlayView({
       rowOffsets[rowIndex] = offset;
       return offset + row.length;
     }, 0);
+    /**
+     * Player label row element containing indicator, player name, and inline drawn card (if applicable).
+     * Shows turn indicator or initial flip indicator based on game state.
+     * @type {React.ReactElement}
+     */
     const labelRowElement = React.createElement(
       "div",
       {
@@ -1313,6 +1331,11 @@ export function GamePlayView({
         : null
     );
 
+    /**
+     * Array of card row elements for this player's hand.
+     * Each row contains cards laid out in a grid matching the hand matrix structure.
+     * @type {Array<React.ReactElement>}
+     */
     const cardRowElements = handMatrix.map((row, rowIndex) =>
       React.createElement(
         "div",
@@ -1439,6 +1462,10 @@ export function GamePlayView({
       )
     );
 
+    /**
+     * Adds this player's entry to the playerEntries array.
+     * Includes the player's hand (label row and card rows) positioned according to the layout grid.
+     */
     playerEntries.push(
       React.createElement(
         "div",
@@ -1462,18 +1489,34 @@ export function GamePlayView({
     );
   });
 
+  /**
+   * Main component return structure.
+   * Contains two sections: players grid (with hands and deck/discard) and game status (phase, instructions, log).
+   * @returns {React.ReactElement} The complete game play view
+   */
   return React.createElement(
     "main",
     { className: "app-container" },
+    /**
+     * Players section containing game title, column removal notifications, and the grid of player hands.
+     */
     React.createElement(
       "section",
       { className: "players" },
       React.createElement("h2", null, "Skyjo"),
+      /**
+       * Column removal notifications displayed when columns are removed from player hands.
+       * Shows which columns were removed for which players.
+       */
       columnRemovalNotices.length
         ? React.createElement(
             "div",
             { className: "column-removal-notifications" },
             columnRemovalNotices.map((notice) => {
+              /**
+               * Formatted column label string (1-indexed for display).
+               * @type {string}
+               */
               const columnLabel =
                 Array.isArray(notice.columns) && notice.columns.length
                   ? notice.columns.map((column) => column + 1).join(", ")
@@ -1489,6 +1532,10 @@ export function GamePlayView({
             })
           )
         : null,
+      /**
+       * Grid container for all player entries and deck/discard area.
+       * Uses dynamic card sizing styles and grid layout configuration.
+       */
       React.createElement(
         "div",
         {
@@ -1499,6 +1546,9 @@ export function GamePlayView({
         playerEntries
       )
     ),
+    /**
+     * Game status section containing phase label, instruction message, and expandable game log.
+     */
     React.createElement(
       "section",
       { className: "game-status", "aria-live": "polite" },
