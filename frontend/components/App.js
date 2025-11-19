@@ -182,44 +182,6 @@ export function App() {
    */
   const [hasCreatedRoom, setHasCreatedRoom] = useState(false);
 
-  // LAN host configuration for local network sharing
-  /**
-   * Local network IP address for sharing room links with devices on the same Wi-Fi network.
-   * Loaded from localStorage on mount, can be set via user prompt when creating a room.
-   * Used to generate shareable links with local IP instead of localhost.
-   * Used in: Internal (for generating invite links)
-   */
-  const [lanHost, setLanHost] = useState(() => {
-    if (typeof window !== "undefined" && window.localStorage) {
-      const storedHost = window.localStorage.getItem("skyjo:lanHost");
-      const storedTimestamp = window.localStorage.getItem(
-        "skyjo:lanHostTimestamp"
-      );
-      const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-      const isExpired =
-        storedTimestamp &&
-        Number.parseInt(storedTimestamp, 10) < twentyFourHoursAgo;
-
-      if (storedHost && storedHost.length > 0) {
-        if (isExpired) {
-          // IP expired after 24 hours, remove it
-          window.localStorage.removeItem("skyjo:lanHost");
-          window.localStorage.removeItem("skyjo:lanHostTimestamp");
-          return "";
-        }
-        return storedHost;
-      }
-      return "";
-    }
-    return "";
-  });
-  /**
-   * Flag indicating the user has skipped the LAN host prompt.
-   * Prevents showing the prompt again during the same session.
-   * Used in: Internal (controls LAN host prompt display)
-   */
-  const [lanHostSkipped, setLanHostSkipped] = useState(false);
-
   // Refs for tracking state across renders
   /**
    * Counter tracking how many log entries have been logged to console.
@@ -850,40 +812,11 @@ export function App() {
       );
       setNewPlayerName(currentPlayerName);
       setHasCreatedRoom(true);
-      let lanHostForCopy = undefined;
-      if (
-        !lanHostSkipped &&
-        !lanHost &&
-        typeof window !== "undefined" &&
-        window.prompt
-      ) {
-        const promptResult = window.prompt(
-          "Optional: enter the local IP address so other devices on your Wi-Fi can join (or leave blank to skip)",
-          ""
-        );
-        if (promptResult && promptResult.trim().length > 0) {
-          const trimmed = promptResult.trim();
-          setLanHost(trimmed);
-          lanHostForCopy = trimmed;
-          try {
-            window.localStorage?.setItem("skyjo:lanHost", trimmed);
-            window.localStorage?.setItem(
-              "skyjo:lanHostTimestamp",
-              Date.now().toString()
-            );
-          } catch (storageError) {
-            consoleLogger.warn("Unable to persist LAN host", storageError);
-          }
-        } else {
-          setLanHostSkipped(true);
-        }
-      }
       consoleLogger.info(
         `Client event: created room '${normalizedId}' and joined as '${currentPlayerName}'. Total players: ${updatedNames.length}`
       );
       await copyInviteLinkToClipboard({
         roomIdToCopy: normalizedId,
-        hostOverride: lanHostForCopy,
       });
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
@@ -893,15 +826,11 @@ export function App() {
   };
 
   /**
-   * Copies the invite link to clipboard, handling local network IP resolution.
+   * Copies the invite link to clipboard.
    * @param {Object} [options={}] - Options object
    * @param {string} [options.roomIdToCopy] - Room ID to copy (defaults to current roomId)
-   * @param {string} [options.hostOverride] - Override host for local network
    */
-  const copyInviteLinkToClipboard = async ({
-    roomIdToCopy,
-    hostOverride,
-  } = {}) => {
+  const copyInviteLinkToClipboard = async ({ roomIdToCopy } = {}) => {
     const targetRoomId = roomIdToCopy ?? roomId;
     if (!targetRoomId) {
       return;
@@ -920,107 +849,7 @@ export function App() {
           try {
             const url = new URL(window.location.href);
             url.searchParams.set("roomId", targetRoomId);
-            const hostname = window.location.hostname;
-            const isLocalHost =
-              hostname === "localhost" ||
-              hostname === "127.0.0.1" ||
-              hostname === "0.0.0.0";
-            if (isLocalHost) {
-              const port = window.location.port || "4000";
-              let resolvedHost = hostOverride ?? lanHost;
-              if (typeof window !== "undefined" && window.localStorage) {
-                if (!resolvedHost) {
-                  const storedHost =
-                    window.localStorage.getItem("skyjo:lanHost");
-                  const storedTimestamp = window.localStorage.getItem(
-                    "skyjo:lanHostTimestamp"
-                  );
-                  const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-                  const isExpired =
-                    storedTimestamp &&
-                    Number.parseInt(storedTimestamp, 10) < twentyFourHoursAgo;
-
-                  if (storedHost && storedHost.length > 0) {
-                    if (isExpired) {
-                      // IP expired after 24 hours, remove it
-                      window.localStorage.removeItem("skyjo:lanHost");
-                      window.localStorage.removeItem("skyjo:lanHostTimestamp");
-                    } else {
-                      resolvedHost = storedHost;
-                      setLanHost(storedHost);
-                    }
-                  }
-                }
-                // If there's a stored host but no hostOverride, check if it's old and offer to update it
-                if (
-                  !hostOverride &&
-                  resolvedHost &&
-                  window.confirm &&
-                  window.prompt &&
-                  !lanHostSkipped
-                ) {
-                  const storedTimestamp = window.localStorage.getItem(
-                    "skyjo:lanHostTimestamp"
-                  );
-                  const oneHourAgo = Date.now() - 60 * 60 * 1000; // 1 hour in milliseconds
-                  const isOld =
-                    !storedTimestamp ||
-                    Number.parseInt(storedTimestamp, 10) < oneHourAgo;
-
-                  if (isOld) {
-                    const wantsToUpdate = window.confirm(
-                      `Current IP: ${resolvedHost}\nDo you want to update it?`
-                    );
-                    if (wantsToUpdate) {
-                      const prompted = window.prompt(
-                        "Enter new IP address (or leave blank to keep current)",
-                        resolvedHost
-                      );
-                      if (prompted !== null && prompted.trim().length > 0) {
-                        // User entered a new IP
-                        resolvedHost = prompted.trim();
-                        setLanHost(resolvedHost);
-                        window.localStorage.setItem(
-                          "skyjo:lanHost",
-                          resolvedHost
-                        );
-                        window.localStorage.setItem(
-                          "skyjo:lanHostTimestamp",
-                          Date.now().toString()
-                        );
-                      } else {
-                        // User kept current IP, update timestamp
-                        window.localStorage.setItem(
-                          "skyjo:lanHostTimestamp",
-                          Date.now().toString()
-                        );
-                      }
-                    }
-                  }
-                } else if (!resolvedHost && !lanHostSkipped && window.prompt) {
-                  const prompted = window.prompt(
-                    "Enter your local network IP so other devices can connect (leave blank to skip)",
-                    hostname
-                  );
-                  if (prompted && prompted.trim().length > 0) {
-                    resolvedHost = prompted.trim();
-                    setLanHost(resolvedHost);
-                    window.localStorage.setItem("skyjo:lanHost", resolvedHost);
-                    window.localStorage.setItem(
-                      "skyjo:lanHostTimestamp",
-                      Date.now().toString()
-                    );
-                  } else {
-                    setLanHostSkipped(true);
-                  }
-                }
-              }
-              inviteLink = resolvedHost
-                ? `http://${resolvedHost}:${port}/?roomId=${targetRoomId}`
-                : url.toString();
-            } else {
-              inviteLink = url.toString();
-            }
+            inviteLink = url.toString();
           } catch (error) {
             consoleLogger.error("Failed to build invite link", error);
           }
