@@ -1,11 +1,11 @@
 /**
- * React library import from CDN (development mode)
+ * React library import from CDN (production mode)
  */
-import React from "https://esm.sh/react@18?dev";
+import React from "https://esm.sh/react@18";
 /**
  * React DOM client API for creating root and rendering
  */
-import { createRoot } from "https://esm.sh/react-dom@18/client?dev";
+import { createRoot } from "https://esm.sh/react-dom@18/client";
 
 /**
  * Main application component

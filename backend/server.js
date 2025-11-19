@@ -45,9 +45,9 @@ export function createSkyjoServer({ logger = consoleLogger } = {}) {
 // Start the server only when not running in test mode.
 if (!isTestEnvironment) {
   const app = createSkyjoServer({ logger: consoleLogger });
-  app.listen(PORT, () => {
+  app.listen(PORT, "0.0.0.0", () => {
     consoleLogger.info(
-      `Server listening on http://localhost:${PORT} (pid ${process.pid})`
+      `Server listening on http://0.0.0.0:${PORT} (pid ${process.pid})`
     );
   });
 }

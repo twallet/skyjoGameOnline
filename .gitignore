@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+
+# Test coverage
+coverage/
+*.lcov
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+.cursorrules
+
+# Build artifacts
+dist/
+build/
+*.tsbuildinfo
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
